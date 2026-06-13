@@ -19,10 +19,14 @@ export function BracketView({
   bracket,
   opponents,
   onExit,
+  onOpenStats,
+  onOpenHelp,
 }: {
   bracket: BracketResult
   opponents: HistoricalTeam[]
   onExit?: () => void
+  onOpenStats?: () => void
+  onOpenHelp?: () => void
 }) {
   const [view, setView] = useState<View>({ kind: 'bracket' })
   const { rounds, champion } = bracket
@@ -113,7 +117,29 @@ export function BracketView({
   // ── Bracket (4 rodadas) ─────────────────────────────────────────────────────
   return (
     <main className={SHELL}>
-      <header className="text-center">
+      <header className="relative text-center">
+        <div className="absolute right-0 top-0 flex gap-1">
+          {onOpenHelp && (
+            <button
+              type="button"
+              onClick={onOpenHelp}
+              aria-label="Como jogar"
+              className="border-2 border-zinc-900 px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
+            >
+              ?
+            </button>
+          )}
+          {onOpenStats && (
+            <button
+              type="button"
+              onClick={onOpenStats}
+              aria-label="Estatísticas"
+              className="border-2 border-zinc-900 px-2 py-1 text-lg leading-none dark:border-zinc-100"
+            >
+              📊
+            </button>
+          )}
+        </div>
         <h1 className="text-2xl font-black uppercase italic">Seu Playoff</h1>
         {champion ? (
           <div className="mt-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-lg font-black uppercase text-zinc-900 dark:border-zinc-100">

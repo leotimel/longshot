@@ -114,9 +114,15 @@ function PlayerCard({
 export function DraftScreen({
   draft,
   onStartPlayoff,
+  onOpenStats,
+  onOpenHelp,
+  challengeTarget,
 }: {
   draft: DailyDraft
   onStartPlayoff: (picks: number[]) => void
+  onOpenStats?: () => void
+  onOpenHelp?: () => void
+  challengeTarget?: string
 }) {
   const [picks, setPicks] = useState<(0 | 1 | null)[]>(() => POSITIONS.map(() => null))
   const chosen = picks.filter((p) => p !== null).length
@@ -133,10 +139,37 @@ export function DraftScreen({
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <header className="flex items-baseline justify-between">
+      <header className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-black uppercase italic tracking-tight">🏀 Longshot</h1>
-        <span className="text-[11px] font-bold uppercase opacity-60">Draft do dia</span>
+        <div className="flex items-center gap-1">
+          {onOpenHelp && (
+            <button
+              type="button"
+              onClick={onOpenHelp}
+              aria-label="Como jogar"
+              className="border-2 border-zinc-900 px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
+            >
+              ?
+            </button>
+          )}
+          {onOpenStats && (
+            <button
+              type="button"
+              onClick={onOpenStats}
+              aria-label="Estatísticas"
+              className="border-2 border-zinc-900 px-2 py-1 text-lg leading-none dark:border-zinc-100"
+            >
+              📊
+            </button>
+          )}
+        </div>
       </header>
+
+      {challengeTarget && (
+        <div className="border-2 border-zinc-900 bg-fuchsia-500 px-3 py-2 text-center text-sm font-black uppercase text-white dark:border-zinc-100">
+          🎯 Supere: {challengeTarget}
+        </div>
+      )}
 
       {/* Bracket do dia */}
       <section>

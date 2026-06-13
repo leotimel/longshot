@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react'
-import { dailyDraft } from './engine/draft'
-import { simulateBracket } from './engine/bracket'
+import { usePlayoff } from './hooks/usePlayoff'
 import { DraftScreen } from './components/DraftScreen'
 import { BracketView } from './components/BracketView'
+import { ResultModal } from './components/ResultModal'
+import { Onboarding } from './components/Onboarding'
+import { buildShareText, shareText } from './lib/share'
+import { challengeTarget, challengeUrl, readChallenge } from './lib/challenge'
+import { hasOnboarded, setOnboarded } from './lib/storage'
 
 /** Data local de hoje no formato YYYY-MM-DD. */
 function todayISO(): string {
@@ -14,28 +18,63 @@ function todayISO(): string {
 
 function App() {
   const date = todayISO()
-  const draft = useMemo(() => dailyDraft(date), [date])
-  const [picks, setPicks] = useState<number[] | null>(null)
+  const { draft, locked, day, bracket, stats, confirm } = usePlayoff(date)
+  const [statsOpen, setStatsOpen] = useState(false)
+  const [showHelp, setShowHelp] = useState(() => !hasOnboarded())
 
-  // O bracket inteiro já é calculado pelo motor; a UI só navega.
-  const bracket = useMemo(
-    () =>
-      picks
-        ? simulateBracket(
-            draft.playerPool.map((pair, i) => pair[picks[i]]),
-            date,
-            picks,
-          )
-        : null,
-    [picks, draft, date],
-  )
-
-  if (picks && bracket) {
-    // Sem persistência ainda — a trava real do draft vem na Fase 4.1.
-    return <BracketView bracket={bracket} opponents={draft.bracket} onExit={() => setPicks(null)} />
+  const dismissHelp = () => {
+    setOnboarded()
+    setShowHelp(false)
   }
 
-  return <DraftScreen draft={draft} onStartPlayoff={setPicks} />
+  // Desafio no hash da URL: só vale "Supere: X" se for do mesmo dia.
+  const challenge = useMemo(() => readChallenge(), [])
+  const challengeBanner =
+    challenge && challenge.date === date ? challengeTarget(challenge.badge) : undefined
+
+  const handleStart = (picks: number[]) => {
+    confirm(picks)
+    setStatsOpen(true) // revela o resultado ao terminar o draft
+  }
+
+  const handleShare = () => {
+    if (!day) return
+    const text = buildShareText(day, stats.streak)
+    const url = challengeUrl({ date: day.date, badge: day.badge })
+    void shareText(`${text}\n${url}`)
+  }
+
+  return (
+    <>
+      {locked && bracket ? (
+        <BracketView
+          bracket={bracket}
+          opponents={draft.bracket}
+          onOpenStats={() => setStatsOpen(true)}
+          onOpenHelp={() => setShowHelp(true)}
+        />
+      ) : (
+        <DraftScreen
+          draft={draft}
+          onStartPlayoff={handleStart}
+          onOpenStats={() => setStatsOpen(true)}
+          onOpenHelp={() => setShowHelp(true)}
+          challengeTarget={challengeBanner}
+        />
+      )}
+
+      {statsOpen && (
+        <ResultModal
+          stats={stats}
+          day={day}
+          onShare={handleShare}
+          onClose={() => setStatsOpen(false)}
+        />
+      )}
+
+      {showHelp && <Onboarding onClose={dismissHelp} />}
+    </>
+  )
 }
 
 export default App
