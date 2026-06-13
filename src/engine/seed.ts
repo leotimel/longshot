@@ -34,3 +34,14 @@ export function hashString(input: string): number {
 export function seedFromDayAndPicks(date: string, picks: number[]): number {
   return hashString(`${date}|${picks.join(',')}`)
 }
+
+/**
+ * Seed da série de uma rodada do bracket = hash(data + picks + índice da
+ * rodada). Mesmos picks → mesmo resultado em cada rodada; rodadas diferentes
+ * têm seeds diferentes.
+ *
+ * @param roundIndex 0=First Round … 3=Finals
+ */
+export function seedForSeries(date: string, picks: number[], roundIndex: number): number {
+  return hashString(`${date}|${picks.join(',')}|${roundIndex}`)
+}
