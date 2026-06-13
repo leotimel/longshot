@@ -1,35 +1,9 @@
 import { useMemo, useState } from 'react'
 import { POSITIONS, type Player, type PlayerRatings } from '../engine/types'
 import type { DailyDraft } from '../engine/draft'
+import { strings as S } from '../lib/strings'
 
-const RATING_LABELS: Record<keyof PlayerRatings, string> = {
-  speed: 'VEL',
-  shooting: 'ARR',
-  threePoint: '3PT',
-  defense: 'DEF',
-  passing: 'PAS',
-  rebounding: 'REB',
-  clutch: 'CLU',
-}
-
-const POSITION_LABELS: Record<string, string> = {
-  PG: 'Armador',
-  SG: 'Ala-armador',
-  SF: 'Ala',
-  PF: 'Ala-pivô',
-  C: 'Pivô',
-}
-
-const ROUND_TAGS = ['1R', '2R', 'CF', 'F']
-const ROUND_NAMES = ['First Round', 'Second Round', 'Conf. Finals', 'Finais']
-
-const TEAM_RATINGS: readonly [keyof DailyDraft['bracket'][number]['teamRatings'], string][] = [
-  ['offense', 'Ataque'],
-  ['defense', 'Defesa'],
-  ['pace', 'Ritmo'],
-  ['threePointRate', 'Bola de 3'],
-  ['clutch', 'Clutch'],
-]
+const TEAM_RATING_KEYS = ['offense', 'defense', 'pace', 'threePointRate', 'clutch'] as const
 
 function overall(p: Player): number {
   const r = p.ratings
@@ -40,7 +14,7 @@ function overall(p: Player): number {
 
 function topRatings(p: Player, n: number): { label: string; value: number }[] {
   return (Object.keys(p.ratings) as (keyof PlayerRatings)[])
-    .map((k) => ({ label: RATING_LABELS[k], value: p.ratings[k] }))
+    .map((k) => ({ label: S.ratings[k], value: p.ratings[k] }))
     .sort((a, b) => b.value - a.value)
     .slice(0, n)
 }
@@ -89,13 +63,13 @@ function PlayerCard({
         {selected && <span aria-hidden className="text-base font-black">✓</span>}
       </div>
       <div className="text-[10px] uppercase opacity-70">
-        {POSITION_LABELS[player.position]} · {player.era}
+        {S.positions[player.position]} · {player.era}
       </div>
       <div className="my-0.5 flex items-baseline gap-1">
         <span className="text-2xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
           {overall(player)}
         </span>
-        <span className="text-[9px] font-bold uppercase opacity-60">ovr</span>
+        <span className="text-[9px] font-bold uppercase opacity-60">{S.draft.ovr}</span>
       </div>
       <div className="flex flex-wrap gap-1">
         {topRatings(player, 3).map((t) => (
@@ -140,13 +114,13 @@ export function DraftScreen({
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <header className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-black uppercase italic tracking-tight">🏀 Longshot</h1>
+        <h1 className="text-2xl font-black uppercase italic tracking-tight">{S.appName}</h1>
         <div className="flex items-center gap-1">
           {onOpenHelp && (
             <button
               type="button"
               onClick={onOpenHelp}
-              aria-label="Como jogar"
+              aria-label={S.a11y.help}
               className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
             >
               ?
@@ -156,7 +130,7 @@ export function DraftScreen({
             <button
               type="button"
               onClick={onOpenStats}
-              aria-label="Estatísticas"
+              aria-label={S.a11y.stats}
               className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg leading-none dark:border-zinc-100"
             >
               📊
@@ -167,15 +141,13 @@ export function DraftScreen({
 
       {challengeTarget && (
         <div className="border-2 border-zinc-900 bg-fuchsia-500 px-3 py-2 text-center text-sm font-black uppercase text-white dark:border-zinc-100">
-          🎯 Supere: {challengeTarget}
+          {S.draft.beat(challengeTarget)}
         </div>
       )}
 
       {/* Bracket do dia */}
       <section>
-        <h2 className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-70">
-          Seu caminho até o título
-        </h2>
+        <h2 className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-70">{S.draft.path}</h2>
         <ol className="flex gap-1">
           {draft.bracket.map((t, i) => (
             <li
@@ -187,7 +159,7 @@ export function DraftScreen({
                   : 'bg-white/70 opacity-70 dark:bg-zinc-900/70',
               ].join(' ')}
             >
-              <div className="text-[9px] font-black uppercase">{ROUND_TAGS[i]}</div>
+              <div className="text-[9px] font-black uppercase">{S.rounds.tags[i]}</div>
               <div className="truncate text-[11px] font-bold leading-tight">{shortName(t.name)}</div>
               <div className="text-[9px] opacity-80">{t.season}</div>
             </li>
@@ -195,11 +167,11 @@ export function DraftScreen({
         </ol>
         <div className="mt-2 border-2 border-zinc-900 bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
           <div className="mb-1 text-[11px] font-black uppercase">
-            {ROUND_NAMES[0]} · {fr.name} {fr.season}
+            {S.rounds.names[0]} · {fr.name} {fr.season}
           </div>
           <div className="flex flex-col gap-0.5">
-            {TEAM_RATINGS.map(([key, label]) => (
-              <RatingBar key={key} label={label} value={fr.teamRatings[key]} />
+            {TEAM_RATING_KEYS.map((key) => (
+              <RatingBar key={key} label={S.teamRatings[key]} value={fr.teamRatings[key]} />
             ))}
           </div>
         </div>
@@ -232,23 +204,23 @@ export function DraftScreen({
         {allChosen ? (
           <div className="flex flex-col gap-2">
             <p className="text-[11px] leading-snug">
-              <span className="font-black uppercase">Seu quinteto:</span>{' '}
+              <span className="font-black uppercase">{S.draft.summaryLabel}</span>{' '}
               {team.map((p) => `${shortName(p.name)} (${overall(p)})`).join(' · ')}
             </p>
             <p className="text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-400">
-              Decisão irreversível — você não pode refazer hoje.
+              {S.draft.irreversible}
             </p>
             <button
               type="button"
               onClick={() => onStartPlayoff(picks as number[])}
               className="border-2 border-zinc-900 bg-yellow-400 py-3 text-base font-black uppercase tracking-wide text-zinc-900 shadow-[4px_4px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[4px_4px_0_0_#fafafa]"
             >
-              Iniciar Playoff →
+              {S.draft.start}
             </button>
           </div>
         ) : (
           <div className="text-center text-xs font-bold uppercase tracking-wide opacity-70">
-            Escolha seu quinteto — {chosen}/{POSITIONS.length}
+            {S.draft.progress(chosen, POSITIONS.length)}
           </div>
         )}
       </footer>

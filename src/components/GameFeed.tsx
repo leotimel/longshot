@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { GameResult } from '../engine/types'
+import { strings as S } from '../lib/strings'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
@@ -39,13 +40,13 @@ export function GameFeed({
   return (
     <div className="flex flex-col gap-3">
       <div className="text-[11px] font-bold uppercase tracking-wide opacity-80">
-        Jogo {gameNumber} de {totalGames}
+        {S.game.of(gameNumber, totalGames)}
       </div>
 
       {/* Placar final (revelado com suspense) */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-2 border-zinc-900 bg-white p-3 dark:border-zinc-100 dark:bg-zinc-900">
         <div className={revealed && !playerWon ? 'opacity-50' : ''}>
-          <div className="text-[10px] font-black uppercase">Seu time</div>
+          <div className="text-[10px] font-black uppercase">{S.game.yourTeam}</div>
           <div className="text-3xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
             {revealed ? (
               <span className="ls-pop inline-block">{game.homeScore}</span>
@@ -69,7 +70,7 @@ export function GameFeed({
 
       {/* Play-by-play */}
       <div>
-        <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-80">Lances</h3>
+        <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-80">{S.game.plays}</h3>
         <ul className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-2 border-zinc-900 bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
           {game.playByPlay.map((line, i) => (
             <li key={i} className="font-mono text-[12px] leading-snug">
@@ -82,7 +83,7 @@ export function GameFeed({
       {/* Box score (só pontos) */}
       <div>
         <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-80">
-          Box score · seu time {revealed ? game.homeScore : ''}
+          {S.game.boxScore} · {S.game.yourTeam.toLowerCase()} {revealed ? game.homeScore : ''}
         </h3>
         <ul className="border-2 border-zinc-900 bg-white dark:border-zinc-100 dark:bg-zinc-900">
           {box.map((e) => (
@@ -107,7 +108,7 @@ export function GameFeed({
           onClick={onBackToSeries}
           className="min-h-11 flex-1 border-2 border-zinc-900 bg-white py-2 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
         >
-          Ver Série
+          {S.game.backToSeries}
         </button>
         {onNext && (
           <button
@@ -115,7 +116,7 @@ export function GameFeed({
             onClick={onNext}
             className="min-h-11 flex-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-sm font-black uppercase text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
           >
-            Próximo Jogo →
+            {S.game.next}
           </button>
         )}
       </div>

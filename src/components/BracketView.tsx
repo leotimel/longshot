@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import type { BracketResult, HistoricalTeam } from '../engine/types'
+import { strings as S } from '../lib/strings'
 import { GameFeed } from './GameFeed'
 
-const ROUND_NAMES = ['First Round', 'Second Round', 'Conf. Finals', 'Finais']
-const ROUND_TAGS = ['1R', '2R', 'CF', 'F']
-const ROUND_BADGES = ['🥉', '🥈', '🥇', '🏆']
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
 const SHELL =
@@ -31,7 +29,7 @@ export function BracketView({
   const [view, setView] = useState<View>({ kind: 'bracket' })
   const { rounds, champion } = bracket
   const roundsWon = rounds.filter((s) => s.winner === 'player').length
-  const dayBadge = roundsWon > 0 ? ROUND_BADGES[roundsWon - 1] : null
+  const dayBadge = roundsWon > 0 ? S.badges.emoji[roundsWon - 1] : null
 
   // ── Jogo ──────────────────────────────────────────────────────────────────
   if (view.kind === 'game') {
@@ -39,9 +37,9 @@ export function BracketView({
     return (
       <main className={SHELL}>
         <header className="flex items-baseline justify-between gap-2">
-          <h1 className="text-lg font-black uppercase italic">{ROUND_NAMES[view.round]}</h1>
-          <span className="truncate text-[11px] font-bold opacity-70">
-            vs {shortName(opponents[view.round].name)}
+          <h1 className="text-lg font-black uppercase italic">{S.rounds.names[view.round]}</h1>
+          <span className="truncate text-[11px] font-bold opacity-80">
+            {S.bracket.vs(shortName(opponents[view.round].name))}
           </span>
         </header>
         <GameFeed
@@ -74,18 +72,18 @@ export function BracketView({
             onClick={() => setView({ kind: 'bracket' })}
             className="inline-flex min-h-11 items-center text-[11px] font-bold uppercase tracking-wide opacity-80"
           >
-            ← Bracket
+            {S.bracket.back}
           </button>
-          <h1 className="mt-1 text-xl font-black uppercase italic">{ROUND_NAMES[view.round]}</h1>
+          <h1 className="mt-1 text-xl font-black uppercase italic">{S.rounds.names[view.round]}</h1>
           <div className="text-sm font-bold">
-            vs {opp.name} <span className="opacity-60">{opp.season}</span>
+            {S.bracket.vs(opp.name)} <span className="opacity-60">{opp.season}</span>
           </div>
           <div className="mt-1 text-2xl font-black">
             {series.gamesWon}
             <span className="opacity-40">-</span>
             {series.gamesLost}{' '}
             <span className={`text-sm ${won ? 'text-teal-600 dark:text-teal-400' : 'text-fuchsia-600 dark:text-fuchsia-400'}`}>
-              {won ? 'venceu ✓' : 'perdeu ✗'}
+              {won ? S.bracket.won : S.bracket.lost}
             </span>
           </div>
         </header>
@@ -99,11 +97,11 @@ export function BracketView({
                   onClick={() => setView({ kind: 'game', round: view.round, game: i })}
                   className="flex min-h-11 w-full items-center justify-between border-2 border-zinc-900 bg-white px-3 py-2 font-bold shadow-[3px_3px_0_0_#18181b] dark:border-zinc-100 dark:bg-zinc-900 dark:shadow-[3px_3px_0_0_#fafafa]"
                 >
-                  <span className="text-sm uppercase">Jogo {i + 1}</span>
+                  <span className="text-sm uppercase">{S.bracket.game(i + 1)}</span>
                   <span className="font-mono">
                     {g.homeScore}-{g.awayScore}{' '}
                     <span className={gWon ? 'text-teal-600 dark:text-teal-400' : 'text-fuchsia-600 dark:text-fuchsia-400'}>
-                      {gWon ? 'V' : 'D'}
+                      {gWon ? S.bracket.wonShort : S.bracket.lostShort}
                     </span>
                   </span>
                 </button>
@@ -124,7 +122,7 @@ export function BracketView({
             <button
               type="button"
               onClick={onOpenHelp}
-              aria-label="Como jogar"
+              aria-label={S.a11y.help}
               className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
             >
               ?
@@ -134,24 +132,24 @@ export function BracketView({
             <button
               type="button"
               onClick={onOpenStats}
-              aria-label="Estatísticas"
+              aria-label={S.a11y.stats}
               className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg leading-none dark:border-zinc-100"
             >
               📊
             </button>
           )}
         </div>
-        <h1 className="text-2xl font-black uppercase italic">Seu Playoff</h1>
+        <h1 className="text-2xl font-black uppercase italic">{S.bracket.title}</h1>
         {champion ? (
           <div className="mt-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-lg font-black uppercase text-zinc-900 dark:border-zinc-100">
-            🏆 Campeão!
+            {S.bracket.champion}
           </div>
         ) : dayBadge ? (
           <div className="mt-1 text-lg font-black">
-            {dayBadge} {ROUND_NAMES[roundsWon - 1]}
+            {dayBadge} {S.rounds.names[roundsWon - 1]}
           </div>
         ) : (
-          <div className="mt-1 text-sm font-bold opacity-70">Eliminado no First Round</div>
+          <div className="mt-1 text-sm font-bold opacity-70">{S.bracket.eliminated}</div>
         )}
       </header>
 
@@ -174,9 +172,9 @@ export function BracketView({
                 ].join(' ')}
               >
                 <span className="w-6 shrink-0 text-center text-lg">
-                  {series ? (won ? ROUND_BADGES[i] : '⬜') : '🔒'}
+                  {series ? (won ? S.badges.emoji[i] : '⬜') : '🔒'}
                 </span>
-                <span className="w-7 shrink-0 text-[11px] font-black uppercase">{ROUND_TAGS[i]}</span>
+                <span className="w-7 shrink-0 text-[11px] font-black uppercase">{S.rounds.tags[i]}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-bold">{shortName(opp.name)}</span>
                   <span className="block text-[10px] opacity-60">{opp.season}</span>
@@ -200,7 +198,7 @@ export function BracketView({
           onClick={onExit}
           className="border-2 border-zinc-900 bg-white py-2 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
         >
-          Voltar ao draft
+          {S.bracket.exit}
         </button>
       )}
     </main>

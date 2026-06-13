@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { DayRecord, Stats } from '../lib/storage'
-
-const BADGE_EMOJI = ['🥉', '🥈', '🥇', '🏆']
-const BADGE_LABELS = [
-  'First Round Survivor',
-  'Conference Semis',
-  'Conference Finals',
-  'Champion!',
-]
+import { strings as S } from '../lib/strings'
 
 /** Milissegundos até a próxima meia-noite local (próximo draft). */
 function msToMidnight(): number {
@@ -57,7 +50,7 @@ export function ResultModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Resultado e estatísticas"
+      aria-label={S.a11y.resultDialog}
       onClick={onClose}
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center"
     >
@@ -70,11 +63,11 @@ export function ResultModal({
           <div className="mb-3 border-2 border-zinc-900 bg-yellow-300 p-3 text-center text-zinc-900 dark:border-zinc-100">
             {badge !== null ? (
               <>
-                <div className="text-4xl leading-none">{BADGE_EMOJI[badge]}</div>
-                <div className="mt-1 text-lg font-black uppercase italic">{BADGE_LABELS[badge]}</div>
+                <div className="text-4xl leading-none">{S.badges.emoji[badge]}</div>
+                <div className="mt-1 text-lg font-black uppercase italic">{S.badges.labels[badge]}</div>
               </>
             ) : (
-              <div className="text-base font-black uppercase">Eliminado no First Round</div>
+              <div className="text-base font-black uppercase">{S.result.eliminated}</div>
             )}
           </div>
         )}
@@ -83,21 +76,21 @@ export function ResultModal({
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div className="border-2 border-zinc-900 p-2 text-center dark:border-zinc-100">
             <div className="text-2xl font-black text-fuchsia-600 dark:text-fuchsia-400">🔥 {stats.streak}</div>
-            <div className="text-[10px] font-bold uppercase opacity-70">streak</div>
+            <div className="text-[10px] font-bold uppercase opacity-70">{S.result.streak}</div>
           </div>
           <div className="border-2 border-zinc-900 p-2 text-center dark:border-zinc-100">
             <div className="text-2xl font-black">{stats.bestStreak}</div>
-            <div className="text-[10px] font-bold uppercase opacity-70">melhor</div>
+            <div className="text-[10px] font-bold uppercase opacity-70">{S.result.best}</div>
           </div>
         </div>
 
         {/* Coleção de selos */}
         <div className="mb-3">
           <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-70">
-            Selos conquistados
+            {S.result.badgesTitle}
           </h3>
           <div className="grid grid-cols-4 gap-2">
-            {BADGE_EMOJI.map((emoji, i) => (
+            {S.badges.emoji.map((emoji, i) => (
               <div
                 key={i}
                 className={[
@@ -114,7 +107,7 @@ export function ResultModal({
 
         {/* Contador */}
         <div className="mb-4 text-center">
-          <div className="text-[11px] font-bold uppercase opacity-70">Próximo draft em</div>
+          <div className="text-[11px] font-bold uppercase opacity-70">{S.result.nextDraft}</div>
           <div className="font-mono text-xl font-black">{fmtCountdown(countdown)}</div>
         </div>
 
@@ -126,7 +119,7 @@ export function ResultModal({
               onClick={onShare}
               className="flex-1 border-2 border-zinc-900 bg-fuchsia-500 py-3 font-black uppercase text-white shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
             >
-              Compartilhar
+              {S.result.share}
             </button>
           )}
           <button
@@ -134,7 +127,7 @@ export function ResultModal({
             onClick={onClose}
             className="flex-1 border-2 border-zinc-900 bg-yellow-400 py-3 font-black uppercase text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
           >
-            {day ? 'Ver Bracket' : 'Fechar'}
+            {day ? S.result.viewBracket : S.result.close}
           </button>
         </div>
       </div>
