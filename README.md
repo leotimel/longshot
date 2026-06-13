@@ -8,7 +8,7 @@ históricos. Simulação automática estilo 2K, com box score, play-by-play resu
 e momentum. Igual ao Wordle: **o mesmo bracket para todo mundo no dia**, fácil de
 comparar e compartilhar.
 
-> **Demo:** em breve em `playlongshot.vercel.app`
+> **▶️ Jogar:** **[playlongshot.vercel.app](https://playlongshot.vercel.app)**
 >
 > Sem backend, sem login, sem banco. Estado 100% em `localStorage`. Determinístico
 > pela data — mesmos picks, mesmo resultado.
