@@ -61,6 +61,8 @@ export const strings = {
     start: 'Iniciar Playoff →',
     progress: (chosen: number, total: number) => `Escolha seu quinteto — ${chosen}/${total}`,
     beat: (target: string) => `🎯 Supere: ${target}`,
+    choose: (pos: string) => `Escolha seu ${pos}`,
+    stepOf: (n: number, total: number) => `${n} de ${total}`,
   },
 
   bracket: {
@@ -75,6 +77,13 @@ export const strings = {
     exit: 'Voltar ao draft',
     game: (n: number) => `Jogo ${n}`,
     vs: (name: string) => `vs ${name}`,
+    toPlay: 'A jogar',
+    hidden: '🔒',
+    playByGame: 'Partida por partida',
+    simRound: 'Simular round',
+    fastForward: '⏩ Acelerar pro fim',
+    nextRound: 'Próximo round →',
+    seeResult: 'Ver resultado',
   },
 
   game: {

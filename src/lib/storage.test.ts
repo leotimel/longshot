@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   confirmDay,
   getDay,
+  getPlayerSeed,
   hasOnboarded,
   isLocked,
   loadStats,
@@ -61,6 +62,12 @@ describe('storage', () => {
     expect(hasOnboarded()).toBe(false)
     setOnboarded()
     expect(hasOnboarded()).toBe(true)
+  })
+
+  it('getPlayerSeed é estável e persiste', () => {
+    const seed = getPlayerSeed()
+    expect(seed).toBeTruthy()
+    expect(getPlayerSeed()).toBe(seed)
   })
 
   it('resiliente a localStorage corrompido', () => {

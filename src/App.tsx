@@ -18,7 +18,7 @@ function todayISO(): string {
 
 function App() {
   const date = todayISO()
-  const { draft, locked, day, bracket, stats, confirm } = usePlayoff(date)
+  const { draft, locked, day, bracket, stats, confirm, justConfirmed } = usePlayoff(date)
   const [statsOpen, setStatsOpen] = useState(false)
   const [showHelp, setShowHelp] = useState(() => !hasOnboarded())
 
@@ -33,8 +33,7 @@ function App() {
     challenge && challenge.date === date ? challengeTarget(challenge.badge) : undefined
 
   const handleStart = (picks: number[]) => {
-    confirm(picks)
-    setStatsOpen(true) // revela o resultado ao terminar o draft
+    confirm(picks) // o resultado é revelado ao fim do playoff gradual
   }
 
   const handleShare = () => {
@@ -50,6 +49,8 @@ function App() {
         <BracketView
           bracket={bracket}
           opponents={draft.bracket}
+          gradual={justConfirmed}
+          onPlayoffEnd={() => setStatsOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
           onOpenHelp={() => setShowHelp(true)}
         />

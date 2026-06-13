@@ -11,6 +11,8 @@ export function GameFeed({
   totalGames,
   onNext,
   onBackToSeries,
+  nextLabel = S.game.next,
+  backLabel = S.game.backToSeries,
 }: {
   game: GameResult
   opponentName: string
@@ -18,6 +20,8 @@ export function GameFeed({
   totalGames: number
   onNext?: () => void
   onBackToSeries: () => void
+  nextLabel?: string
+  backLabel?: string
 }) {
   const playerWon = game.homeScore > game.awayScore
   const topScorer = game.boxScore.reduce(
@@ -108,7 +112,7 @@ export function GameFeed({
           onClick={onBackToSeries}
           className="min-h-11 flex-1 border-2 border-zinc-900 bg-white py-2 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
         >
-          {S.game.backToSeries}
+          {backLabel}
         </button>
         {onNext && (
           <button
@@ -116,7 +120,7 @@ export function GameFeed({
             onClick={onNext}
             className="min-h-11 flex-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-sm font-black uppercase text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
           >
-            {S.game.next}
+            {nextLabel}
           </button>
         )}
       </div>

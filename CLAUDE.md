@@ -2,7 +2,7 @@
 
 ## O jogo
 Jogo **diário** de basquete. O jogador drafta um **quinteto da NBA** (5 escolhas
-binárias a partir de 10 sorteados — 2 por posição: PG, SG, SF, PF, C),
+— uma posição por vez, **3 opções cada**, de 15 sorteados),
 **conhece o adversário antes de escolher**, e então assiste a um **playoff
 melhor de 7** — 4 rodadas (First Round → Second Round → Conference Finals →
 Finals) contra **times históricos**. **Simulação automática** estilo 2K: box
@@ -19,12 +19,15 @@ login; estado em `localStorage`; deploy estático.
   `src/engine/**`). Rode `npm run lint`.
 
 ## Invariantes do motor — não quebrar
-- **Bracket determinístico pela data:** os **4 adversários** (todas as rodadas)
-  são definidos **só pela data**, independente dos picks — todo mundo enfrenta o
-  mesmo bracket no mesmo dia. Só o time draftado muda entre jogadores.
+- **Adversários determinísticos pela data:** os **4 adversários** (todas as
+  rodadas) são definidos **só pela data**, iguais para todos no dia — é o que
+  sustenta o "mesmo gauntlet" do share/desafio. O **pool de jogadores é sorteado
+  POR JOGADOR** (`dailyDraft(date, poolSalt)`; salt local em `longshot:player:v1`),
+  então as opções de draft variam entre jogadores.
 - **Seed de cada série = `hash(data + picks + índice da rodada)`**. Sem
   `Math.random` no engine.
-- **Mesmos picks = mesmo resultado** (comparabilidade social do share).
+- **Determinístico:** mesmo time (pool+picks) + data = mesmo resultado. Picks são
+  índices 0–2 (3 opções por posição).
 - Cada série termina entre **4 e 7 jogos**; o vencedor tem **exatamente 4**
   vitórias; o box score **soma o placar final**.
 

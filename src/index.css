@@ -37,8 +37,24 @@ a:focus-visible,
   animation: ls-pop 300ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
 }
 
+/* Reveal de uma posição/round (sobe e aparece). */
+@keyframes ls-rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.ls-rise {
+  animation: ls-rise 260ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ls-pop {
+  .ls-pop,
+  .ls-rise {
     animation: none;
   }
 }

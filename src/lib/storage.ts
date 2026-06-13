@@ -15,6 +15,8 @@ export interface DayRecord {
   finalRound: number
   champion: boolean
   badge: number | null
+  /** Sal do pool usado no confirm — recompõe o mesmo sorteio no reload. */
+  poolSalt?: string
 }
 
 export interface Stats {
@@ -114,5 +116,23 @@ export function setOnboarded(): void {
     localStorage.setItem(ONBOARDED_KEY, '1')
   } catch {
     // ignora (quota cheia / modo privado)
+  }
+}
+
+const PLAYER_KEY = 'longshot:player:v1'
+
+/**
+ * Sal estável por jogador (gerado uma vez e guardado) — personaliza o sorteio
+ * do pool de jogadores. É só um id local; o motor segue determinístico.
+ */
+export function getPlayerSeed(): string {
+  try {
+    const existing = localStorage.getItem(PLAYER_KEY)
+    if (existing) return existing
+    const seed = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)
+    localStorage.setItem(PLAYER_KEY, seed)
+    return seed
+  } catch {
+    return ''
   }
 }

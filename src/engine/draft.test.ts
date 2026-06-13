@@ -2,17 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { POSITIONS } from './types'
 import { dailyDraft } from './draft'
 
-const poolIds = (d: ReturnType<typeof dailyDraft>) =>
-  d.playerPool.flat().map((p) => p.id)
+const poolIds = (d: ReturnType<typeof dailyDraft>) => d.playerPool.flat().map((p) => p.id)
 const bracketIds = (d: ReturnType<typeof dailyDraft>) => d.bracket.map((t) => t.id)
 const strength = (t: { teamRatings: { offense: number; defense: number; clutch: number } }) =>
   t.teamRatings.offense + t.teamRatings.defense + t.teamRatings.clutch
 
 describe('dailyDraft', () => {
-  it('mesmo dia → mesmos 10 jogadores e mesmos 4 adversários', () => {
-    const a = dailyDraft('2026-06-11')
-    const b = dailyDraft('2026-06-11')
-    expect(a).toEqual(b)
+  it('mesma data + mesmo salt → mesmo sorteio', () => {
+    expect(dailyDraft('2026-06-11', 'abc')).toEqual(dailyDraft('2026-06-11', 'abc'))
   })
 
   it('dias diferentes → pools e brackets diferentes', () => {
@@ -20,6 +17,14 @@ describe('dailyDraft', () => {
     const b = dailyDraft('2026-06-12')
     expect(poolIds(a)).not.toEqual(poolIds(b))
     expect(bracketIds(a)).not.toEqual(bracketIds(b))
+  })
+
+  it('salts diferentes → pools diferentes, mas os MESMOS adversários', () => {
+    const a = dailyDraft('2026-06-11', 'jogador-1')
+    const b = dailyDraft('2026-06-11', 'jogador-2')
+    expect(poolIds(a)).not.toEqual(poolIds(b))
+    // adversários são definidos pela data → independem do salt do jogador
+    expect(bracketIds(a)).toEqual(bracketIds(b))
   })
 
   it('os 4 adversários são sempre distintos', () => {
@@ -30,16 +35,16 @@ describe('dailyDraft', () => {
     }
   })
 
-  it('o pool tem 2 jogadores por posição (10 distintos, na ordem de POSITIONS)', () => {
+  it('o pool tem 3 jogadores por posição (15 distintos, na ordem de POSITIONS)', () => {
     const d = dailyDraft('2026-06-11')
     expect(d.playerPool).toHaveLength(POSITIONS.length)
-    d.playerPool.forEach((pair, i) => {
-      expect(pair).toHaveLength(2)
-      for (const player of pair) {
+    d.playerPool.forEach((opts, i) => {
+      expect(opts).toHaveLength(3)
+      for (const player of opts) {
         expect(player.position).toBe(POSITIONS[i])
       }
     })
-    expect(new Set(poolIds(d)).size).toBe(10)
+    expect(new Set(poolIds(d)).size).toBe(15)
   })
 
   it('o bracket está em escalada crescente de força (First Round → Finals)', () => {

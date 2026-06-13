@@ -1,9 +1,10 @@
 /**
  * Draft diário — monta o "dia" do Longshot.
  *
- * Engine puro (sem DOM). A partir SÓ da data, sorteia 2 jogadores por posição
- * (10 opções) e os 4 adversários do bracket — determinístico (mesmo dia = mesmo
- * sorteio para todos). O bracket independe dos picks; é definido pela data.
+ * Engine puro (sem DOM). Sorteia 3 jogadores por posição (15 opções) e os 4
+ * adversários do bracket. Os **adversários são definidos só pela data** (iguais
+ * para todos no dia, independentes dos picks). O **pool** usa um `poolSalt`
+ * opcional: vazio = igual para todos; um salt por jogador = sorteio pessoal.
  */
 import { POSITIONS, type HistoricalTeam, type Player } from './types'
 import { PLAYERS_BY_POSITION } from './data/players'
@@ -16,7 +17,7 @@ export type Bracket = [HistoricalTeam, HistoricalTeam, HistoricalTeam, Historica
 
 export interface DailyDraft {
   date: string
-  /** Uma dupla de jogadores por posição, na ordem de POSITIONS. */
+  /** Três jogadores por posição (opções do draft), na ordem de POSITIONS. */
   playerPool: Player[][]
   /** Adversários por rodada (First Round → Finals), em escalada de força. */
   bracket: Bracket
@@ -31,13 +32,15 @@ function teamStrength(team: HistoricalTeam): number {
 /**
  * Sorteio determinístico do dia.
  *
- * @param date data no formato YYYY-MM-DD
+ * @param date     data no formato YYYY-MM-DD
+ * @param poolSalt sal opcional do pool: vazio = igual para todos; por jogador =
+ *                 sorteio pessoal. NÃO afeta os adversários (sempre pela data).
  */
-export function dailyDraft(date: string): DailyDraft {
-  // Pool: 2 jogadores por posição. Stream próprio (salt `players`).
-  const poolRng = mulberry32(hashString(`${date}|players`))
+export function dailyDraft(date: string, poolSalt = ''): DailyDraft {
+  // Pool: 3 jogadores por posição. Stream próprio (salt do jogador + data).
+  const poolRng = mulberry32(hashString(`${poolSalt}|${date}|players`))
   const playerPool = POSITIONS.map((pos) =>
-    shuffle(PLAYERS_BY_POSITION[pos], poolRng).slice(0, 2),
+    shuffle(PLAYERS_BY_POSITION[pos], poolRng).slice(0, 3),
   )
 
   // Bracket: 4 adversários distintos, definidos só pela data (salt `bracket`),

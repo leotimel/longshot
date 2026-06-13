@@ -33,45 +33,21 @@ function RatingBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-function PlayerCard({
-  player,
-  selected,
-  dimmed,
-  onSelect,
-}: {
-  player: Player
-  selected: boolean
-  dimmed: boolean
-  onSelect: () => void
-}) {
+function PlayerCard({ player, onSelect }: { player: Player; onSelect: () => void }) {
   return (
     <button
       type="button"
       onClick={onSelect}
-      aria-pressed={selected}
-      className={[
-        'flex-1 basis-0 min-w-0 border-2 border-zinc-900 p-2 text-left transition dark:border-zinc-100',
-        'shadow-[3px_3px_0_0_#18181b] dark:shadow-[3px_3px_0_0_#fafafa]',
-        selected
-          ? 'bg-yellow-300 text-zinc-900 -translate-x-0.5 -translate-y-0.5'
-          : 'bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50',
-        dimmed ? 'opacity-50' : '',
-      ].join(' ')}
+      className="min-w-0 border-2 border-zinc-900 bg-white p-2 text-left text-zinc-900 shadow-[3px_3px_0_0_#18181b] transition active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-50 dark:shadow-[3px_3px_0_0_#fafafa]"
     >
-      <div className="flex items-center justify-between gap-1">
-        <span className="truncate text-[13px] font-extrabold uppercase leading-tight">{player.name}</span>
-        {selected && <span aria-hidden className="text-base font-black">✓</span>}
-      </div>
-      <div className="text-[10px] uppercase opacity-70">
-        {S.positions[player.position]} · {player.era}
-      </div>
-      <div className="my-0.5 flex items-baseline gap-1">
-        <span className="text-2xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-sm font-extrabold uppercase leading-tight">{player.name}</span>
+        <span className="shrink-0 text-2xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
           {overall(player)}
         </span>
-        <span className="text-[9px] font-bold uppercase opacity-60">{S.draft.ovr}</span>
       </div>
-      <div className="flex flex-wrap gap-1">
+      <div className="text-[10px] uppercase opacity-70">{player.era}</div>
+      <div className="mt-1 flex flex-wrap gap-1">
         {topRatings(player, 3).map((t) => (
           <span
             key={t.label}
@@ -98,18 +74,23 @@ export function DraftScreen({
   onOpenHelp?: () => void
   challengeTarget?: string
 }) {
-  const [picks, setPicks] = useState<(0 | 1 | null)[]>(() => POSITIONS.map(() => null))
-  const chosen = picks.filter((p) => p !== null).length
-  const allChosen = chosen === POSITIONS.length
+  const [picks, setPicks] = useState<(number | null)[]>(() => POSITIONS.map(() => null))
+  const current = picks.findIndex((p) => p === null) // -1 quando todas escolhidas
+  const allChosen = current === -1
   const fr = draft.bracket[0]
 
   const team = useMemo(
-    () => (allChosen ? draft.playerPool.map((pair, i) => pair[picks[i] as 0 | 1]) : []),
+    () => (allChosen ? draft.playerPool.map((opts, i) => opts[picks[i] as number]) : []),
     [allChosen, draft.playerPool, picks],
   )
 
-  const select = (posIndex: number, choice: 0 | 1) =>
-    setPicks((prev) => prev.map((p, i) => (i === posIndex ? choice : p)))
+  const pick = (c: number) =>
+    setPicks((prev) => prev.map((p, i) => (i === current ? c : p)))
+
+  const back = () => {
+    const last = current === -1 ? POSITIONS.length - 1 : current - 1
+    if (last >= 0) setPicks((prev) => prev.map((p, i) => (i === last ? null : p)))
+  }
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -177,31 +158,56 @@ export function DraftScreen({
         </div>
       </section>
 
-      {/* Duplas por posição */}
+      {/* Draft: uma posição por vez, 3 opções */}
       <section className="flex flex-1 flex-col gap-2">
-        {POSITIONS.map((pos, i) => (
-          <div key={pos}>
-            <div className="text-[10px] font-black uppercase tracking-widest text-teal-700 dark:text-teal-300">
-              {pos}
+        {!allChosen && (
+          <>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-sm font-black uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                {S.draft.choose(S.positions[POSITIONS[current]])}
+              </span>
+              <span className="text-[11px] font-bold opacity-60">
+                {S.draft.stepOf(current + 1, POSITIONS.length)}
+              </span>
             </div>
-            <div className="flex gap-2">
-              {([0, 1] as const).map((c) => (
-                <PlayerCard
-                  key={draft.playerPool[i][c].id}
-                  player={draft.playerPool[i][c]}
-                  selected={picks[i] === c}
-                  dimmed={picks[i] !== null && picks[i] !== c}
-                  onSelect={() => select(i, c)}
-                />
+            <div key={current} className="ls-rise grid grid-cols-1 gap-2">
+              {draft.playerPool[current].map((player, c) => (
+                <PlayerCard key={player.id} player={player} onSelect={() => pick(c)} />
               ))}
             </div>
+          </>
+        )}
+
+        {/* Quinteto montado até aqui */}
+        {picks.some((p) => p !== null) && (
+          <div className="flex flex-wrap gap-1">
+            {POSITIONS.map((pos, i) =>
+              picks[i] !== null ? (
+                <span
+                  key={pos}
+                  className="border border-zinc-900 bg-teal-300 px-1 text-[10px] font-bold text-zinc-900 dark:border-zinc-100"
+                >
+                  {pos} {shortName(draft.playerPool[i][picks[i] as number].name)}
+                </span>
+              ) : null,
+            )}
           </div>
-        ))}
+        )}
+
+        {!allChosen && current > 0 && (
+          <button
+            type="button"
+            onClick={back}
+            className="inline-flex min-h-11 items-center self-start text-[11px] font-bold uppercase tracking-wide opacity-70"
+          >
+            ← {S.positions[POSITIONS[current - 1]]}
+          </button>
+        )}
       </section>
 
       {/* Resumo + ação */}
-      <footer className="border-t-2 border-dashed border-zinc-400 pt-2">
-        {allChosen ? (
+      {allChosen && (
+        <footer className="border-t-2 border-dashed border-zinc-400 pt-2">
           <div className="flex flex-col gap-2">
             <p className="text-[11px] leading-snug">
               <span className="font-black uppercase">{S.draft.summaryLabel}</span>{' '}
@@ -210,20 +216,25 @@ export function DraftScreen({
             <p className="text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-400">
               {S.draft.irreversible}
             </p>
-            <button
-              type="button"
-              onClick={() => onStartPlayoff(picks as number[])}
-              className="border-2 border-zinc-900 bg-yellow-400 py-3 text-base font-black uppercase tracking-wide text-zinc-900 shadow-[4px_4px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[4px_4px_0_0_#fafafa]"
-            >
-              {S.draft.start}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={back}
+                className="min-h-11 border-2 border-zinc-900 bg-white px-3 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => onStartPlayoff(picks as number[])}
+                className="min-h-11 flex-1 border-2 border-zinc-900 bg-yellow-400 py-3 text-base font-black uppercase tracking-wide text-zinc-900 shadow-[4px_4px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[4px_4px_0_0_#fafafa]"
+              >
+                {S.draft.start}
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="text-center text-xs font-bold uppercase tracking-wide opacity-70">
-            {S.draft.progress(chosen, POSITIONS.length)}
-          </div>
-        )}
-      </footer>
+        </footer>
+      )}
     </main>
   )
 }
