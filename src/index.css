@@ -13,3 +13,32 @@ body,
 body {
   margin: 0;
 }
+
+/* Foco visível e de alto contraste para navegação por teclado. */
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #d946ef;
+  outline-offset: 2px;
+}
+
+/* Revelação do placar (jogo a jogo) — "estouro" de tensão. */
+@keyframes ls-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.ls-pop {
+  animation: ls-pop 300ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-pop {
+    animation: none;
+  }
+}

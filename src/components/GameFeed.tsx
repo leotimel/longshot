@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { GameResult } from '../engine/types'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
@@ -24,30 +25,51 @@ export function GameFeed({
   )
   const box = [...game.boxScore].sort((a, b) => b.points - a.points)
 
+  // Revelação do placar: pequena suspense antes de mostrar quem venceu.
+  // Quem prefere menos movimento já começa revelado (sem delay).
+  const [revealed, setRevealed] = useState(
+    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+  )
+  useEffect(() => {
+    if (revealed) return
+    const id = setTimeout(() => setRevealed(true), 700)
+    return () => clearTimeout(id)
+  }, [revealed])
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-[11px] font-bold uppercase tracking-wide opacity-70">
+      <div className="text-[11px] font-bold uppercase tracking-wide opacity-80">
         Jogo {gameNumber} de {totalGames}
       </div>
 
-      {/* Placar final */}
+      {/* Placar final (revelado com suspense) */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-2 border-zinc-900 bg-white p-3 dark:border-zinc-100 dark:bg-zinc-900">
-        <div className={playerWon ? '' : 'opacity-50'}>
+        <div className={revealed && !playerWon ? 'opacity-50' : ''}>
           <div className="text-[10px] font-black uppercase">Seu time</div>
           <div className="text-3xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
-            {game.homeScore}
+            {revealed ? (
+              <span className="ls-pop inline-block">{game.homeScore}</span>
+            ) : (
+              <span className="animate-pulse opacity-40">··</span>
+            )}
           </div>
         </div>
         <div className="text-xs font-black opacity-50">×</div>
-        <div className={`text-right ${playerWon ? 'opacity-50' : ''}`}>
+        <div className={`text-right ${revealed && playerWon ? 'opacity-50' : ''}`}>
           <div className="truncate text-[10px] font-black uppercase">{shortName(opponentName)}</div>
-          <div className="text-3xl font-black leading-none">{game.awayScore}</div>
+          <div className="text-3xl font-black leading-none">
+            {revealed ? (
+              <span className="ls-pop inline-block">{game.awayScore}</span>
+            ) : (
+              <span className="animate-pulse opacity-40">··</span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Play-by-play */}
       <div>
-        <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-70">Lances</h3>
+        <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-80">Lances</h3>
         <ul className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-2 border-zinc-900 bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
           {game.playByPlay.map((line, i) => (
             <li key={i} className="font-mono text-[12px] leading-snug">
@@ -59,8 +81,8 @@ export function GameFeed({
 
       {/* Box score (só pontos) */}
       <div>
-        <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-70">
-          Box score · seu time {game.homeScore}
+        <h3 className="mb-1 text-[11px] font-black uppercase tracking-wide opacity-80">
+          Box score · seu time {revealed ? game.homeScore : ''}
         </h3>
         <ul className="border-2 border-zinc-900 bg-white dark:border-zinc-100 dark:bg-zinc-900">
           {box.map((e) => (
@@ -83,7 +105,7 @@ export function GameFeed({
         <button
           type="button"
           onClick={onBackToSeries}
-          className="flex-1 border-2 border-zinc-900 bg-white py-2 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
+          className="min-h-11 flex-1 border-2 border-zinc-900 bg-white py-2 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
         >
           Ver Série
         </button>
@@ -91,7 +113,7 @@ export function GameFeed({
           <button
             type="button"
             onClick={onNext}
-            className="flex-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-sm font-black uppercase text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
+            className="min-h-11 flex-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-sm font-black uppercase text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
           >
             Próximo Jogo →
           </button>

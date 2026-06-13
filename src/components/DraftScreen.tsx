@@ -147,7 +147,7 @@ export function DraftScreen({
               type="button"
               onClick={onOpenHelp}
               aria-label="Como jogar"
-              className="border-2 border-zinc-900 px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
+              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
             >
               ?
             </button>
@@ -157,7 +157,7 @@ export function DraftScreen({
               type="button"
               onClick={onOpenStats}
               aria-label="Estatísticas"
-              className="border-2 border-zinc-900 px-2 py-1 text-lg leading-none dark:border-zinc-100"
+              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg leading-none dark:border-zinc-100"
             >
               📊
             </button>

@@ -45,6 +45,7 @@ export function BracketView({
           </span>
         </header>
         <GameFeed
+          key={`${view.round}-${view.game}`}
           game={series.games[view.game]}
           opponentName={opponents[view.round].name}
           gameNumber={view.game + 1}
@@ -71,7 +72,7 @@ export function BracketView({
           <button
             type="button"
             onClick={() => setView({ kind: 'bracket' })}
-            className="text-[11px] font-bold uppercase tracking-wide opacity-70"
+            className="inline-flex min-h-11 items-center text-[11px] font-bold uppercase tracking-wide opacity-80"
           >
             ← Bracket
           </button>
@@ -96,7 +97,7 @@ export function BracketView({
                 <button
                   type="button"
                   onClick={() => setView({ kind: 'game', round: view.round, game: i })}
-                  className="flex w-full items-center justify-between border-2 border-zinc-900 bg-white px-3 py-2 font-bold shadow-[3px_3px_0_0_#18181b] dark:border-zinc-100 dark:bg-zinc-900 dark:shadow-[3px_3px_0_0_#fafafa]"
+                  className="flex min-h-11 w-full items-center justify-between border-2 border-zinc-900 bg-white px-3 py-2 font-bold shadow-[3px_3px_0_0_#18181b] dark:border-zinc-100 dark:bg-zinc-900 dark:shadow-[3px_3px_0_0_#fafafa]"
                 >
                   <span className="text-sm uppercase">Jogo {i + 1}</span>
                   <span className="font-mono">
@@ -124,7 +125,7 @@ export function BracketView({
               type="button"
               onClick={onOpenHelp}
               aria-label="Como jogar"
-              className="border-2 border-zinc-900 px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
+              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
             >
               ?
             </button>
@@ -134,7 +135,7 @@ export function BracketView({
               type="button"
               onClick={onOpenStats}
               aria-label="Estatísticas"
-              className="border-2 border-zinc-900 px-2 py-1 text-lg leading-none dark:border-zinc-100"
+              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg leading-none dark:border-zinc-100"
             >
               📊
             </button>
@@ -166,7 +167,7 @@ export function BracketView({
                 disabled={!series}
                 onClick={() => series && setView({ kind: 'series', round: i })}
                 className={[
-                  'flex w-full items-center gap-2 border-2 border-zinc-900 px-3 py-2 text-left dark:border-zinc-100',
+                  'flex min-h-11 w-full items-center gap-2 border-2 border-zinc-900 px-3 py-2 text-left dark:border-zinc-100',
                   series
                     ? 'bg-white shadow-[3px_3px_0_0_#18181b] dark:bg-zinc-900 dark:shadow-[3px_3px_0_0_#fafafa]'
                     : 'opacity-50',
