@@ -49,9 +49,9 @@ export function ResultModal({
   }, [onClose])
 
   const badge = day?.badge ?? null
-  const statCard = 'rounded-xl border border-zinc-200 p-2 text-center dark:border-zinc-800'
-  const statLabel = 'text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400'
-  const sectionTitle = 'mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400'
+  const statCard = 'rounded-lg border border-stone-300 p-2 text-center dark:border-stone-700'
+  const statLabel = 'text-[10px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400'
+  const sectionTitle = 'mb-1 text-[11px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400'
   const topPoints = hist.scorers[0]?.points ?? 0
 
   return (
@@ -64,18 +64,20 @@ export function ResultModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[90svh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+        className="flex max-h-[90svh] w-full max-w-md flex-col overflow-y-auto rounded-xl border border-stone-300 bg-amber-50 p-4 text-stone-900 shadow-xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
       >
         {/* Resultado do dia */}
         {day && (
-          <div className="mb-3 rounded-xl bg-blue-50 p-3 text-center dark:bg-blue-950/40">
+          <div className="mb-3 rounded-lg bg-amber-100 p-3 text-center dark:bg-amber-950/40">
             {badge !== null ? (
               <>
                 <div className="text-4xl leading-none">{S.badges.emoji[badge]}</div>
-                <div className="mt-1 text-lg font-bold text-blue-700 dark:text-blue-300">{S.badges.labels[badge]}</div>
+                <div className="font-display mt-1 text-lg font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                  {S.badges.labels[badge]}
+                </div>
               </>
             ) : (
-              <div className="text-base font-semibold text-zinc-600 dark:text-zinc-300">{S.result.eliminated}</div>
+              <div className="text-base font-semibold text-stone-600 dark:text-stone-300">{S.result.eliminated}</div>
             )}
           </div>
         )}
@@ -83,11 +85,11 @@ export function ResultModal({
         {/* Streak */}
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div className={statCard}>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">🔥 {stats.streak}</div>
+            <div className="font-display text-2xl font-bold text-amber-800 dark:text-amber-300">🔥 {stats.streak}</div>
             <div className={statLabel}>{S.result.streak}</div>
           </div>
           <div className={statCard}>
-            <div className="text-2xl font-bold">{stats.bestStreak}</div>
+            <div className="font-display text-2xl font-bold">{stats.bestStreak}</div>
             <div className={statLabel}>{S.result.best}</div>
           </div>
         </div>
@@ -100,10 +102,10 @@ export function ResultModal({
               <div
                 key={i}
                 className={[
-                  'rounded-xl border p-2 text-center',
+                  'rounded-lg border p-2 text-center',
                   badge === i
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40'
-                    : 'border-zinc-200 dark:border-zinc-800',
+                    ? 'border-amber-600 bg-amber-100 dark:bg-amber-950/40'
+                    : 'border-stone-300 dark:border-stone-700',
                 ].join(' ')}
               >
                 <div className="text-2xl leading-none">{emoji}</div>
@@ -117,7 +119,7 @@ export function ResultModal({
         <div className="mb-3">
           <h3 className={sectionTitle}>{S.result.playersTitle}</h3>
           {hist.scorers.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-zinc-300 p-3 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            <p className="rounded-lg border border-dashed border-stone-400 p-3 text-center text-xs text-stone-500 dark:border-stone-600 dark:text-stone-400">
               {S.result.emptyHistory}
             </p>
           ) : (
@@ -125,7 +127,7 @@ export function ResultModal({
               {/* Resumo de uso */}
               <div className="mb-2 grid grid-cols-3 gap-2">
                 <div className={statCard}>
-                  <div className="text-lg font-bold tabular-nums">{hist.distinctPlayers}</div>
+                  <div className="font-display text-lg font-bold tabular-nums">{hist.distinctPlayers}</div>
                   <div className={statLabel}>{S.result.used}</div>
                 </div>
                 <div className={statCard}>
@@ -135,7 +137,7 @@ export function ResultModal({
                   <div className={statLabel}>{S.result.favorite}</div>
                 </div>
                 <div className={statCard}>
-                  <div className="font-mono text-lg font-bold tabular-nums">{hist.totalPoints}</div>
+                  <div className="font-display text-lg font-bold tabular-nums">{hist.totalPoints}</div>
                   <div className={statLabel}>{S.result.careerPoints}</div>
                 </div>
               </div>
@@ -146,22 +148,22 @@ export function ResultModal({
                 {hist.scorers.slice(0, 5).map((c, i) => (
                   <li
                     key={c.playerId}
-                    className="relative overflow-hidden rounded-lg border border-zinc-200 px-2 py-1 dark:border-zinc-800"
+                    className="relative overflow-hidden rounded-lg border border-stone-300 px-2 py-1 dark:border-stone-700"
                   >
                     <div
-                      className="absolute inset-y-0 left-0 bg-blue-50 dark:bg-blue-950/40"
+                      className="absolute inset-y-0 left-0 bg-amber-100 dark:bg-amber-950/40"
                       style={{ width: `${topPoints > 0 ? (c.points / topPoints) * 100 : 0}%` }}
                       aria-hidden="true"
                     />
                     <div className="relative flex items-center justify-between gap-2 text-xs">
                       <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="w-3 shrink-0 text-right font-mono text-zinc-400">{i + 1}</span>
+                        <span className="w-3 shrink-0 text-right font-mono text-stone-400">{i + 1}</span>
                         <span className="truncate font-semibold">{c.name}</span>
-                        <span className="shrink-0 text-[10px] text-zinc-400">{S.result.picks(c.picks)}</span>
+                        <span className="shrink-0 text-[10px] text-stone-400">{S.result.picks(c.picks)}</span>
                       </span>
                       <span className="shrink-0 font-mono tabular-nums">
-                        <span className="font-bold text-blue-600 dark:text-blue-400">{c.points}</span>
-                        <span className="ml-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                        <span className="font-bold text-amber-800 dark:text-amber-300">{c.points}</span>
+                        <span className="ml-1 text-[10px] text-stone-500 dark:text-stone-400">
                           {c.ppg.toFixed(1)} {S.result.ppg}
                         </span>
                       </span>
@@ -174,7 +176,7 @@ export function ResultModal({
               <h4 className={sectionTitle}>{S.result.records}</h4>
               <div className="grid grid-cols-2 gap-2">
                 <div className={statCard}>
-                  <div className="font-mono text-lg font-bold tabular-nums">
+                  <div className="font-display text-lg font-bold tabular-nums">
                     {hist.recordGame ? hist.recordGame.points : '—'}
                   </div>
                   <div className={`truncate ${statLabel}`}>
@@ -183,7 +185,7 @@ export function ResultModal({
                   </div>
                 </div>
                 <div className={statCard}>
-                  <div className="font-mono text-lg font-bold tabular-nums">
+                  <div className="font-display text-lg font-bold tabular-nums">
                     {hist.bestCampaign ? hist.bestCampaign.points : '—'}
                   </div>
                   <div className={statLabel}>{S.result.bestCampaign}</div>
@@ -205,7 +207,7 @@ export function ResultModal({
             <button
               type="button"
               onClick={onShare}
-              className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800"
+              className="flex-1 rounded-lg bg-amber-700 py-3 font-semibold text-white shadow-sm transition hover:bg-amber-800 active:bg-amber-900"
             >
               {S.result.share}
             </button>
@@ -213,7 +215,7 @@ export function ResultModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-lg border border-zinc-300 bg-white py-3 font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+            className="flex-1 rounded-lg border border-stone-400 bg-amber-50 py-3 font-semibold text-stone-700 transition hover:bg-amber-100 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200"
           >
             {day ? S.result.viewBracket : S.result.close}
           </button>

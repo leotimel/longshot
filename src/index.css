@@ -14,11 +14,18 @@ body {
   margin: 0;
 }
 
-/* Foco visível e de alto contraste para navegação por teclado. */
+/* Tipografia "transmissão clássica": condensada, sem depender de web font. */
+.font-display {
+  font-family: 'Arial Narrow', 'Helvetica Neue Condensed', 'Roboto Condensed', ui-sans-serif,
+    system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Foco visível e de alto contraste para navegação por teclado (âmbar queimado). */
 button:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid #b45309;
   outline-offset: 2px;
 }
 
@@ -52,19 +59,19 @@ a:focus-visible,
   animation: ls-rise 260ms ease-out;
 }
 
-/* Comemoração do título — entrada com leve escala + um pulso curto de brilho. */
+/* Comemoração do título — entrada com leve escala + um pulso curto de brilho âmbar. */
 @keyframes ls-celebrate {
   0% {
     transform: scale(0.96);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    box-shadow: 0 0 0 0 rgba(180, 83, 9, 0);
   }
   40% {
     transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 0 0 6px rgba(180, 83, 9, 0.35);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    box-shadow: 0 0 0 0 rgba(180, 83, 9, 0);
   }
 }
 .ls-celebrate {
