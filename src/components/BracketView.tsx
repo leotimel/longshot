@@ -6,7 +6,11 @@ import { GameFeed } from './GameFeed'
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
 const SHELL =
-  'mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50'
+  'mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-50 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50'
+const ICON_BTN =
+  'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-zinc-300 text-lg leading-none dark:border-zinc-700'
+const WON = 'text-emerald-600 dark:text-emerald-400'
+const LOST = 'text-rose-500 dark:text-rose-400'
 
 type View =
   | { kind: 'overview' }
@@ -34,7 +38,6 @@ export function BracketView({
   const [view, setView] = useState<View>({ kind: 'overview' })
   const endedRef = useRef(false)
 
-  // Quando todos os rounds jogados foram revelados, encerra (abre o resultado).
   useEffect(() => {
     if (gradual && !endedRef.current && revealed >= rounds.length) {
       endedRef.current = true
@@ -58,8 +61,8 @@ export function BracketView({
     return (
       <main className={SHELL}>
         <header className="flex items-baseline justify-between gap-2">
-          <h1 className="text-lg font-black uppercase italic">{S.rounds.names[view.round]}</h1>
-          <span className="truncate text-[11px] font-bold opacity-80">
+          <h1 className="text-lg font-bold">{S.rounds.names[view.round]}</h1>
+          <span className="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
             {S.bracket.vs(shortName(opponents[view.round].name))}
           </span>
         </header>
@@ -86,8 +89,8 @@ export function BracketView({
     return (
       <main className={SHELL}>
         <header className="flex items-baseline justify-between gap-2">
-          <h1 className="text-lg font-black uppercase italic">{S.rounds.names[view.round]}</h1>
-          <span className="truncate text-[11px] font-bold opacity-80">
+          <h1 className="text-lg font-bold">{S.rounds.names[view.round]}</h1>
+          <span className="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
             {S.bracket.vs(shortName(opponents[view.round].name))}
           </span>
         </header>
@@ -119,21 +122,20 @@ export function BracketView({
           <button
             type="button"
             onClick={() => setView({ kind: 'overview' })}
-            className="inline-flex min-h-11 items-center text-[11px] font-bold uppercase tracking-wide opacity-80"
+            className="inline-flex min-h-11 items-center text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
           >
             {S.bracket.back}
           </button>
-          <h1 className="mt-1 text-xl font-black uppercase italic">{S.rounds.names[view.round]}</h1>
-          <div className="text-sm font-bold">
-            {S.bracket.vs(opp.name)} <span className="opacity-60">{opp.season}</span>
+          <h1 className="mt-1 text-xl font-bold">{S.rounds.names[view.round]}</h1>
+          <div className="text-sm font-medium">
+            {S.bracket.vs(opp.name)}{' '}
+            <span className="text-zinc-500 dark:text-zinc-400">{opp.season}</span>
           </div>
-          <div className="mt-1 text-2xl font-black">
+          <div className="mt-1 text-2xl font-bold">
             {series.gamesWon}
-            <span className="opacity-40">-</span>
+            <span className="text-zinc-400">-</span>
             {series.gamesLost}{' '}
-            <span className={`text-sm ${won ? 'text-teal-600 dark:text-teal-400' : 'text-fuchsia-600 dark:text-fuchsia-400'}`}>
-              {won ? S.bracket.won : S.bracket.lost}
-            </span>
+            <span className={`text-sm ${won ? WON : LOST}`}>{won ? S.bracket.won : S.bracket.lost}</span>
           </div>
         </header>
         <ul className="flex flex-col gap-2">
@@ -144,14 +146,12 @@ export function BracketView({
                 <button
                   type="button"
                   onClick={() => setView({ kind: 'game', round: view.round, game: i })}
-                  className="flex min-h-11 w-full items-center justify-between border-2 border-zinc-900 bg-white px-3 py-2 font-bold shadow-[3px_3px_0_0_#18181b] dark:border-zinc-100 dark:bg-zinc-900 dark:shadow-[3px_3px_0_0_#fafafa]"
+                  className="flex min-h-11 w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 font-medium shadow-sm transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
                 >
-                  <span className="text-sm uppercase">{S.bracket.game(i + 1)}</span>
+                  <span className="text-sm">{S.bracket.game(i + 1)}</span>
                   <span className="font-mono">
                     {g.homeScore}-{g.awayScore}{' '}
-                    <span className={gWon ? 'text-teal-600 dark:text-teal-400' : 'text-fuchsia-600 dark:text-fuchsia-400'}>
-                      {gWon ? S.bracket.wonShort : S.bracket.lostShort}
-                    </span>
+                    <span className={gWon ? WON : LOST}>{gWon ? S.bracket.wonShort : S.bracket.lostShort}</span>
                   </span>
                 </button>
               </li>
@@ -166,43 +166,37 @@ export function BracketView({
   return (
     <main className={SHELL}>
       <header className="relative text-center">
-        <div className="absolute right-0 top-0 flex gap-1">
+        <div className="absolute right-0 top-0 flex gap-1.5">
           {onOpenHelp && (
-            <button
-              type="button"
-              onClick={onOpenHelp}
-              aria-label={S.a11y.help}
-              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
-            >
+            <button type="button" onClick={onOpenHelp} aria-label={S.a11y.help} className={ICON_BTN}>
               ?
             </button>
           )}
           {onOpenStats && (
-            <button
-              type="button"
-              onClick={onOpenStats}
-              aria-label={S.a11y.stats}
-              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg leading-none dark:border-zinc-100"
-            >
+            <button type="button" onClick={onOpenStats} aria-label={S.a11y.stats} className={ICON_BTN}>
               📊
             </button>
           )}
         </div>
-        <h1 className="text-2xl font-black uppercase italic">{S.bracket.title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{S.bracket.title}</h1>
         {fullyRevealed ? (
           champion ? (
-            <div className="mt-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-lg font-black uppercase text-zinc-900 dark:border-zinc-100">
+            <div className="mt-1 rounded-lg bg-blue-600 py-2 text-lg font-bold text-white">
               {S.bracket.champion}
             </div>
           ) : dayBadge ? (
-            <div className="mt-1 text-lg font-black">
+            <div className="mt-1 text-lg font-bold">
               {dayBadge} {S.rounds.names[roundsWon - 1]}
             </div>
           ) : (
-            <div className="mt-1 text-sm font-bold opacity-70">{S.bracket.eliminated}</div>
+            <div className="mt-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              {S.bracket.eliminated}
+            </div>
           )
         ) : (
-          <div className="mt-1 text-[11px] font-bold uppercase opacity-60">{S.rounds.names[revealed]}</div>
+          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            {S.rounds.names[revealed]}
+          </div>
         )}
       </header>
 
@@ -219,16 +213,18 @@ export function BracketView({
                 <button
                   type="button"
                   onClick={() => setView({ kind: 'series', round: i })}
-                  className="flex min-h-11 w-full items-center gap-2 border-2 border-zinc-900 bg-white px-3 py-2 text-left shadow-[3px_3px_0_0_#18181b] dark:border-zinc-100 dark:bg-zinc-900 dark:shadow-[3px_3px_0_0_#fafafa]"
+                  className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left shadow-sm transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
                 >
                   <span className="w-6 shrink-0 text-center text-lg">{won ? S.badges.emoji[i] : '⬜'}</span>
-                  <span className="w-7 shrink-0 text-[11px] font-black uppercase">{S.rounds.tags[i]}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{shortName(opp.name)}</span>
-                    <span className="block text-[10px] opacity-60">{opp.season}</span>
+                  <span className="w-7 shrink-0 text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400">
+                    {S.rounds.tags[i]}
                   </span>
-                  <span className="shrink-0 font-mono font-black">
-                    {series.gamesWon}-{series.gamesLost} {won ? '✓' : '✗'}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{shortName(opp.name)}</span>
+                    <span className="block text-[10px] text-zinc-500 dark:text-zinc-400">{opp.season}</span>
+                  </span>
+                  <span className="shrink-0 font-mono font-semibold">
+                    {series.gamesWon}-{series.gamesLost} <span className={won ? WON : LOST}>{won ? '✓' : '✗'}</span>
                   </span>
                 </button>
               </li>
@@ -239,14 +235,16 @@ export function BracketView({
           if (i === revealed && i < rounds.length) {
             return (
               <li key={i}>
-                <div className="border-2 border-fuchsia-500 bg-white p-2 dark:bg-zinc-900">
+                <div className="rounded-xl border-2 border-blue-600 bg-white p-2.5 dark:bg-zinc-900">
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="w-7 shrink-0 text-[11px] font-black uppercase">{S.rounds.tags[i]}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-black uppercase">{shortName(opp.name)}</span>
-                      <span className="block text-[10px] opacity-60">{opp.season}</span>
+                    <span className="w-7 shrink-0 text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400">
+                      {S.rounds.tags[i]}
                     </span>
-                    <span className="shrink-0 text-[10px] font-bold uppercase text-fuchsia-600 dark:text-fuchsia-400">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold">{shortName(opp.name)}</span>
+                      <span className="block text-[10px] text-zinc-500 dark:text-zinc-400">{opp.season}</span>
+                    </span>
+                    <span className="shrink-0 text-[10px] font-semibold uppercase text-blue-600 dark:text-blue-400">
                       {S.bracket.toPlay}
                     </span>
                   </div>
@@ -254,14 +252,14 @@ export function BracketView({
                     <button
                       type="button"
                       onClick={() => setView({ kind: 'playing', round: i, game: 0 })}
-                      className="min-h-11 flex-1 border-2 border-zinc-900 bg-yellow-400 py-2 text-[11px] font-black uppercase text-zinc-900 dark:border-zinc-100"
+                      className="min-h-11 flex-1 rounded-lg bg-blue-600 py-2 text-[11px] font-semibold text-white transition hover:bg-blue-700 active:bg-blue-800"
                     >
                       {S.bracket.playByGame}
                     </button>
                     <button
                       type="button"
                       onClick={revealRound}
-                      className="min-h-11 flex-1 border-2 border-zinc-900 bg-white py-2 text-[11px] font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
+                      className="min-h-11 flex-1 rounded-lg border border-zinc-300 bg-white py-2 text-[11px] font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
                     >
                       {S.bracket.simRound}
                     </button>
@@ -274,14 +272,16 @@ export function BracketView({
           // Round bloqueado / não alcançado.
           return (
             <li key={i}>
-              <div className="flex min-h-11 w-full items-center gap-2 border-2 border-zinc-900 px-3 py-2 text-left opacity-50 dark:border-zinc-100">
+              <div className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-dashed border-zinc-300 px-3 py-2 text-left opacity-60 dark:border-zinc-700">
                 <span className="w-6 shrink-0 text-center text-lg">{S.bracket.hidden}</span>
-                <span className="w-7 shrink-0 text-[11px] font-black uppercase">{S.rounds.tags[i]}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold">{shortName(opp.name)}</span>
-                  <span className="block text-[10px] opacity-60">{opp.season}</span>
+                <span className="w-7 shrink-0 text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400">
+                  {S.rounds.tags[i]}
                 </span>
-                <span className="shrink-0 opacity-50">—</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">{shortName(opp.name)}</span>
+                  <span className="block text-[10px] text-zinc-500 dark:text-zinc-400">{opp.season}</span>
+                </span>
+                <span className="shrink-0 text-zinc-400">—</span>
               </div>
             </li>
           )

@@ -26,11 +26,13 @@ const byPosition = (a: Player, b: Player) =>
 function RatingBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-2 text-[11px]">
-      <span className="w-16 shrink-0 font-bold uppercase tracking-wide">{label}</span>
-      <div className="h-2.5 flex-1 border border-zinc-900 bg-white/60 dark:border-zinc-100 dark:bg-black/40">
-        <div className="h-full bg-fuchsia-500" style={{ width: `${value}%` }} />
+      <span className="w-16 shrink-0 font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {label}
+      </span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="h-full rounded-full bg-blue-600" style={{ width: `${value}%` }} />
       </div>
-      <span className="w-6 shrink-0 text-right font-mono font-bold">{value}</span>
+      <span className="w-6 shrink-0 text-right font-mono font-semibold">{value}</span>
     </div>
   )
 }
@@ -50,32 +52,36 @@ function PlayerCard({
       disabled={disabled}
       onClick={onSelect}
       className={[
-        'w-full border-2 border-zinc-900 p-2 text-left dark:border-zinc-100',
+        'w-full rounded-xl border p-2.5 text-left transition',
         disabled
-          ? 'bg-zinc-200 opacity-50 dark:bg-zinc-800'
-          : 'bg-white text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-zinc-900 dark:text-zinc-50 dark:shadow-[3px_3px_0_0_#fafafa]',
+          ? 'border-zinc-200 bg-zinc-100 opacity-60 dark:border-zinc-800 dark:bg-zinc-800/50'
+          : 'border-zinc-200 bg-white shadow-sm hover:border-blue-400 hover:bg-blue-50/40 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-blue-950/30',
       ].join(' ')}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1">
-          <span className="shrink-0 border border-zinc-900 bg-teal-300 px-1 text-[10px] font-black text-zinc-900 dark:border-zinc-100">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="shrink-0 rounded bg-blue-100 px-1 text-[10px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
             {player.position}
           </span>
-          <span className="truncate text-sm font-extrabold uppercase leading-tight">{player.name}</span>
+          <span className="truncate text-sm font-semibold leading-tight">{player.name}</span>
         </span>
-        <span className="shrink-0 text-2xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
+        <span className="shrink-0 text-2xl font-bold leading-none text-blue-600 dark:text-blue-400">
           {overall(player)}
         </span>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-1">
-        <span className="text-[10px] uppercase opacity-70">{player.era}</span>
+        <span className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {player.era}
+        </span>
         {disabled ? (
-          <span className="text-[10px] font-bold uppercase opacity-80">· {S.draft.posTaken}</span>
+          <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+            · {S.draft.posTaken}
+          </span>
         ) : (
           topRatings(player, 3).map((t) => (
             <span
               key={t.label}
-              className="border border-zinc-900 bg-teal-300 px-1 text-[10px] font-bold text-zinc-900 dark:border-zinc-100"
+              className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
             >
               {t.label} {t.value}
             </span>
@@ -120,28 +126,21 @@ export function DraftScreen({
 
   const start = () => onStartPlayoff(POSITIONS.map((pos) => chosen[pos] as Player))
 
+  const iconBtn =
+    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-zinc-300 text-lg leading-none dark:border-zinc-700'
+
   return (
-    <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+    <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-50 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <header className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-black uppercase italic tracking-tight">{S.appName}</h1>
-        <div className="flex items-center gap-1">
+        <h1 className="text-2xl font-bold tracking-tight">{S.appName}</h1>
+        <div className="flex items-center gap-1.5">
           {onOpenHelp && (
-            <button
-              type="button"
-              onClick={onOpenHelp}
-              aria-label={S.a11y.help}
-              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg font-black leading-none dark:border-zinc-100"
-            >
+            <button type="button" onClick={onOpenHelp} aria-label={S.a11y.help} className={iconBtn}>
               ?
             </button>
           )}
           {onOpenStats && (
-            <button
-              type="button"
-              onClick={onOpenStats}
-              aria-label={S.a11y.stats}
-              className="border-2 border-zinc-900 min-h-11 min-w-11 inline-flex items-center justify-center px-2 py-1 text-lg leading-none dark:border-zinc-100"
-            >
+            <button type="button" onClick={onOpenStats} aria-label={S.a11y.stats} className={iconBtn}>
               📊
             </button>
           )}
@@ -149,34 +148,40 @@ export function DraftScreen({
       </header>
 
       {challengeTarget && (
-        <div className="border-2 border-zinc-900 bg-fuchsia-500 px-3 py-2 text-center text-sm font-black uppercase text-white dark:border-zinc-100">
+        <div className="rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white">
           {S.draft.beat(challengeTarget)}
         </div>
       )}
 
       {/* Bracket do dia */}
       <section>
-        <h2 className="mb-1 text-[11px] font-bold uppercase tracking-wide opacity-70">{S.draft.path}</h2>
-        <ol className="flex gap-1">
+        <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {S.draft.path}
+        </h2>
+        <ol className="flex gap-1.5">
           {draft.bracket.map((t, i) => (
             <li
               key={t.id}
               className={[
-                'flex-1 basis-0 border-2 border-zinc-900 p-1 text-center dark:border-zinc-100',
-                i === 0 ? 'bg-fuchsia-500 text-white' : 'bg-white/70 opacity-70 dark:bg-zinc-900/70',
+                'flex-1 basis-0 rounded-lg border p-1 text-center',
+                i === 0
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40'
+                  : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900',
               ].join(' ')}
             >
-              <div className="text-[9px] font-black uppercase">{S.rounds.tags[i]}</div>
-              <div className="truncate text-[11px] font-bold leading-tight">{shortName(t.name)}</div>
-              <div className="text-[9px] opacity-80">{t.season}</div>
+              <div className="text-[9px] font-bold uppercase text-zinc-500 dark:text-zinc-400">
+                {S.rounds.tags[i]}
+              </div>
+              <div className="truncate text-[11px] font-semibold leading-tight">{shortName(t.name)}</div>
+              <div className="text-[9px] text-zinc-500 dark:text-zinc-400">{t.season}</div>
             </li>
           ))}
         </ol>
-        <div className="mt-2 border-2 border-zinc-900 bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
-          <div className="mb-1 text-[11px] font-black uppercase">
+        <div className="mt-2 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-1 text-[11px] font-semibold">
             {S.rounds.names[0]} · {fr.name} {fr.season}
           </div>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {TEAM_RATING_KEYS.map((key) => (
               <RatingBar key={key} label={S.teamRatings[key]} value={fr.teamRatings[key]} />
             ))}
@@ -189,14 +194,14 @@ export function DraftScreen({
         {!allChosen && (
           <>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="min-w-0 truncate text-sm font-black uppercase italic">
-                {team.name} <span className="opacity-60">{team.season}</span>
+              <span className="min-w-0 truncate text-sm font-bold">
+                {team.name} <span className="font-normal text-zinc-500 dark:text-zinc-400">{team.season}</span>
               </span>
-              <span className="shrink-0 text-[11px] font-bold opacity-60">
+              <span className="shrink-0 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                 {S.draft.stepOf(filledCount + 1, POSITIONS.length)}
               </span>
             </div>
-            <div className="text-[11px] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
               {S.draft.pickPlayer}
             </div>
             <div key={teamIndex} className="ls-rise grid grid-cols-1 gap-2">
@@ -213,7 +218,7 @@ export function DraftScreen({
               <button
                 type="button"
                 onClick={reroll}
-                className="min-h-11 self-start border-2 border-zinc-900 bg-white px-3 text-[11px] font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
+                className="min-h-11 self-start rounded-lg border border-zinc-300 bg-white px-3 text-[11px] font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
               >
                 {S.draft.reroll}
               </button>
@@ -228,7 +233,7 @@ export function DraftScreen({
               chosen[pos] ? (
                 <span
                   key={pos}
-                  className="border border-zinc-900 bg-teal-300 px-1 text-[10px] font-bold text-zinc-900 dark:border-zinc-100"
+                  className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
                 >
                   {pos} {shortName((chosen[pos] as Player).name)}
                 </span>
@@ -240,22 +245,20 @@ export function DraftScreen({
 
       {/* Resumo + ação */}
       {allChosen && (
-        <footer className="border-t-2 border-dashed border-zinc-400 pt-2">
+        <footer className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
           <div className="flex flex-col gap-2">
             <p className="text-[11px] leading-snug">
-              <span className="font-black uppercase">{S.draft.summaryLabel}</span>{' '}
+              <span className="font-semibold">{S.draft.summaryLabel}</span>{' '}
               {POSITIONS.map((pos) => {
                 const pl = chosen[pos] as Player
                 return `${shortName(pl.name)} (${overall(pl)})`
               }).join(' · ')}
             </p>
-            <p className="text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-400">
-              {S.draft.irreversible}
-            </p>
+            <p className="text-[11px] font-medium text-blue-600 dark:text-blue-400">{S.draft.irreversible}</p>
             <button
               type="button"
               onClick={start}
-              className="min-h-11 border-2 border-zinc-900 bg-yellow-400 py-3 text-base font-black uppercase tracking-wide text-zinc-900 shadow-[4px_4px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[4px_4px_0_0_#fafafa]"
+              className="rounded-lg bg-blue-600 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800"
             >
               {S.draft.start}
             </button>

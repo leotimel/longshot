@@ -18,26 +18,28 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
       aria-modal="true"
       aria-label={S.a11y.help}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md border-2 border-zinc-900 bg-zinc-100 p-5 text-zinc-900 shadow-[6px_6px_0_0_#18181b] dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-50 dark:shadow-[6px_6px_0_0_#fafafa]"
+        className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 text-zinc-900 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
       >
-        <h2 className="text-2xl font-black uppercase italic">{S.onboarding.title}</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{S.onboarding.title}</h2>
 
-        <p className="mt-3 text-lg font-bold leading-snug">{S.onboarding.rule}</p>
-        <p className="mt-2 text-sm opacity-80">{S.onboarding.detail}</p>
+        <p className="mt-3 text-lg font-semibold leading-snug">{S.onboarding.rule}</p>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{S.onboarding.detail}</p>
 
         {/* Exemplo visual do bracket */}
         <div className="mt-4 flex items-center justify-between gap-1">
           {STEPS.map((i) => (
             <div key={i} className="flex items-center gap-1">
-              <div className="border-2 border-zinc-900 bg-white px-2 py-1 text-center dark:border-zinc-100 dark:bg-zinc-900">
-                <div className="text-[10px] font-black uppercase">{S.rounds.tags[i]}</div>
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-center dark:border-zinc-800 dark:bg-zinc-800">
+                <div className="text-[10px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">
+                  {S.rounds.tags[i]}
+                </div>
                 <div className="text-xl leading-none">{S.badges.emoji[i]}</div>
               </div>
-              {i < STEPS.length - 1 && <span className="font-black opacity-40">→</span>}
+              {i < STEPS.length - 1 && <span className="font-semibold text-zinc-400">→</span>}
             </div>
           ))}
         </div>
@@ -45,7 +47,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          className="mt-5 w-full border-2 border-zinc-900 bg-yellow-400 py-3 font-black uppercase text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[3px_3px_0_0_#fafafa]"
+          className="mt-5 w-full rounded-lg bg-blue-600 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800"
         >
           {S.onboarding.gotIt}
         </button>
