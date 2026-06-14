@@ -28,14 +28,19 @@ export function usePlayoff(date: string) {
   // true só na sessão que acabou de confirmar → habilita revelação gradual.
   const [justConfirmed, setJustConfirmed] = useState(false)
 
-  const bracket = useMemo<BracketResult | null>(() => {
-    if (!day) return null
-    const team = day.team
+  // Quinteto travado do dia, reconstruído a partir dos ids salvos.
+  const team = useMemo<Player[] | undefined>(() => {
+    if (!day) return undefined
+    const players = day.team
       .map((id) => playerById(id))
       .filter((p): p is Player => p !== undefined)
-    if (team.length !== day.team.length) return null
+    return players.length === day.team.length ? players : undefined
+  }, [day])
+
+  const bracket = useMemo<BracketResult | null>(() => {
+    if (!team) return null
     return simulateBracket(team, date)
-  }, [day, date])
+  }, [team, date])
 
   const confirm = useCallback(
     (team: Player[]) => {
@@ -60,6 +65,7 @@ export function usePlayoff(date: string) {
     draft,
     locked: day !== undefined,
     day,
+    team,
     bracket,
     stats,
     confirm,

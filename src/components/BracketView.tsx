@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import type { BracketResult, HistoricalTeam } from '../engine/types'
+import type { BracketResult, HistoricalTeam, Player } from '../engine/types'
 import { strings as S } from '../lib/strings'
+import { overall } from '../lib/playerStats'
 import { GameFeed } from './GameFeed'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
@@ -21,6 +22,7 @@ type View =
 export function BracketView({
   bracket,
   opponents,
+  team,
   gradual = false,
   onPlayoffEnd,
   onOpenStats,
@@ -28,6 +30,7 @@ export function BracketView({
 }: {
   bracket: BracketResult
   opponents: HistoricalTeam[]
+  team?: Player[]
   gradual?: boolean
   onPlayoffEnd?: () => void
   onOpenStats?: () => void
@@ -179,26 +182,57 @@ export function BracketView({
           )}
         </div>
         <h1 className="text-2xl font-bold tracking-tight">{S.bracket.title}</h1>
-        {fullyRevealed ? (
-          champion ? (
-            <div className="mt-1 rounded-lg bg-blue-600 py-2 text-lg font-bold text-white">
-              {S.bracket.champion}
-            </div>
-          ) : dayBadge ? (
-            <div className="mt-1 text-lg font-bold">
-              {dayBadge} {S.rounds.names[roundsWon - 1]}
-            </div>
-          ) : (
-            <div className="mt-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-              {S.bracket.eliminated}
-            </div>
-          )
-        ) : (
-          <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {S.rounds.names[revealed]}
-          </div>
-        )}
       </header>
+
+      {/* Status do dia: hero comemorativo (campeão) ou selo/eliminado/round atual. */}
+      {fullyRevealed ? (
+        champion ? (
+          <div className="ls-celebrate rounded-2xl bg-gradient-to-b from-blue-600 to-blue-700 px-4 py-5 text-center text-white shadow-md">
+            <div className="text-5xl leading-none">🏆</div>
+            <div className="mt-2 text-2xl font-bold tracking-tight">{S.bracket.championTitle}</div>
+            <div className="mt-0.5 text-xs font-medium text-blue-100">{S.bracket.championSub}</div>
+          </div>
+        ) : dayBadge ? (
+          <div className="rounded-xl border border-zinc-200 bg-white py-3 text-center text-lg font-bold shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            {dayBadge} {S.rounds.names[roundsWon - 1]}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-zinc-200 bg-white py-3 text-center text-sm font-medium text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            {S.bracket.eliminated}
+          </div>
+        )
+      ) : (
+        <div className="text-center text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {S.rounds.names[revealed]}
+        </div>
+      )}
+
+      {/* Seu quinteto — preenche o topo e mostra o time escalado. */}
+      {team && (
+        <section>
+          <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            {S.bracket.lineup}
+          </h2>
+          <ol className="grid grid-cols-5 gap-1.5">
+            {team.map((p) => (
+              <li
+                key={p.id}
+                className="rounded-lg border border-zinc-200 bg-white p-1 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <div className="rounded bg-blue-100 text-[9px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  {p.position}
+                </div>
+                <div className="mt-0.5 truncate text-[10px] font-medium leading-tight" title={p.name}>
+                  {shortName(p.name)}
+                </div>
+                <div className="text-base font-bold leading-none text-blue-600 dark:text-blue-400">
+                  {overall(p)}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       <ol key={revealed} className="ls-rise flex flex-1 flex-col justify-center gap-2">
         {[0, 1, 2, 3].map((i) => {
@@ -208,6 +242,7 @@ export function BracketView({
           if (i < revealed) {
             const series = rounds[i]
             const won = series.winner === 'player'
+            const sweep = won && series.gamesLost === 0
             return (
               <li key={i}>
                 <button
@@ -223,8 +258,26 @@ export function BracketView({
                     <span className="block truncate text-sm font-semibold">{shortName(opp.name)}</span>
                     <span className="block text-[10px] text-zinc-500 dark:text-zinc-400">{opp.season}</span>
                   </span>
-                  <span className="shrink-0 font-mono font-semibold">
-                    {series.gamesWon}-{series.gamesLost} <span className={won ? WON : LOST}>{won ? '✓' : '✗'}</span>
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="flex items-center gap-1.5">
+                      {sweep && (
+                        <span className="rounded bg-emerald-100 px-1 text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          {S.bracket.sweep}
+                        </span>
+                      )}
+                      <span className="font-mono font-semibold tabular-nums">
+                        {series.gamesWon}-{series.gamesLost}{' '}
+                        <span className={won ? WON : LOST}>{won ? '✓' : '✗'}</span>
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-0.5" aria-hidden="true">
+                      {Array.from({ length: series.gamesWon }).map((_, d) => (
+                        <span key={`w${d}`} className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      ))}
+                      {Array.from({ length: series.gamesLost }).map((_, d) => (
+                        <span key={`l${d}`} className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+                      ))}
+                    </span>
                   </span>
                 </button>
               </li>

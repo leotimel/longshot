@@ -71,6 +71,10 @@ export const strings = {
   bracket: {
     title: 'Seu Playoff',
     champion: '🏆 Campeão!',
+    championTitle: 'Campeão!',
+    championSub: 'Você venceu as 4 rodadas',
+    lineup: 'Seu quinteto',
+    sweep: 'Varrida',
     eliminated: 'Eliminado no First Round',
     won: 'venceu ✓',
     lost: 'perdeu ✗',

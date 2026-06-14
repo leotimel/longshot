@@ -2,15 +2,9 @@ import { useState } from 'react'
 import { POSITIONS, type Player, type PlayerRatings, type Position } from '../engine/types'
 import type { DailyDraft } from '../engine/draft'
 import { strings as S } from '../lib/strings'
+import { overall } from '../lib/playerStats'
 
 const TEAM_RATING_KEYS = ['offense', 'defense', 'pace', 'threePointRate', 'clutch'] as const
-
-function overall(p: Player): number {
-  const r = p.ratings
-  return Math.round(
-    (r.speed + r.shooting + r.threePoint + r.defense + r.passing + r.rebounding + r.clutch) / 7,
-  )
-}
 
 function topRatings(p: Player, n: number): { label: string; value: number }[] {
   return (Object.keys(p.ratings) as (keyof PlayerRatings)[])

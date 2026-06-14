@@ -19,7 +19,7 @@ function todayISO(): string {
 
 function App() {
   const date = todayISO()
-  const { draft, locked, day, bracket, stats, confirm, justConfirmed } = usePlayoff(date)
+  const { draft, locked, day, team, bracket, stats, confirm, justConfirmed } = usePlayoff(date)
   const [statsOpen, setStatsOpen] = useState(false)
   const [showHelp, setShowHelp] = useState(() => !hasOnboarded())
 
@@ -50,6 +50,7 @@ function App() {
         <BracketView
           bracket={bracket}
           opponents={draft.bracket}
+          team={team}
           gradual={justConfirmed}
           onPlayoffEnd={() => setStatsOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
