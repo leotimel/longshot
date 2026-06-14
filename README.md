@@ -1,17 +1,17 @@
 # 🏀 Longshot
 
-**Jogo diário de basquete.** Todo dia você drafta um quinteto de jogadores reais
-da NBA a partir de 10 sorteados (2 por posição), conhece os adversários **antes**
-de escolher, e assiste seu time tentar vencer um **playoff melhor de 7** — 4
-rodadas (First Round → Second Round → Conference Finals → Finals) contra times
-históricos. Simulação automática estilo 2K, com box score, play-by-play resumido
-e momentum. Igual ao Wordle: **o mesmo bracket para todo mundo no dia**, fácil de
-comparar e compartilhar.
+**Jogo diário de basquete.** Todo dia aparece o **starting 5 de times históricos
+sorteados** e você monta seu quinteto escolhendo **1 jogador de cada time** (uma
+posição por vez), conhece os adversários **antes** de escolher, e assiste seu time
+tentar vencer um **playoff melhor de 7** — 4 rodadas (First Round → Second Round →
+Conference Finals → Finals) contra times históricos. Simulação automática estilo
+2K, com box score, play-by-play resumido e momentum. Igual ao Wordle: **os mesmos
+adversários para todo mundo no dia**, fácil de comparar e compartilhar.
 
 > **▶️ Jogar:** **[playlongshot.vercel.app](https://playlongshot.vercel.app)**
 >
-> Sem backend, sem login, sem banco. Estado 100% em `localStorage`. Determinístico
-> pela data — mesmos picks, mesmo resultado.
+> Sem backend, sem login, sem banco. Estado 100% em `localStorage`. Adversários
+> determinísticos pela data; o draft é sorteado por jogador — mesmo time, mesmo resultado.
 
 ---
 
@@ -19,9 +19,13 @@ comparar e compartilhar.
 
 1. **Conheça o caminho.** Os 4 adversários do dia (em escalada de dificuldade)
    aparecem no topo, com os ratings do First Round à mostra.
-2. **Drafte 5 escolhas binárias** (~30s): uma dupla por posição, você escolhe um.
+2. **Drafte por elenco** (~30s): aparece o starting 5 de um time histórico; escolha
+   **1 jogador**. A posição trava e o próximo time não a oferece mais — até montar
+   os 5 (um por posição). Não gostou? **Re-sorteie** o time (1× por dia).
 3. **Inicie o Playoff** — decisão irreversível por hoje.
-4. **Navegue jogo a jogo:** placar, play-by-play e box score de cada partida.
+4. **Assista no seu ritmo:** avance **round a round**; em cada um jogue **partida por
+   partida** (placar, play-by-play e box score, com "acelerar pro fim") ou **simule o
+   round inteiro**. Os rounds que você ainda não alcançou ficam ocultos.
 5. **Colecione selos** por rodada máxima vencida — 🥉 First Round · 🥈 Conference
    Semis · 🥇 Conference Finals · 🏆 Champion — mantenha o **streak** e
    **compartilhe** o resultado estilo Wordle (sem revelar os adversários).
@@ -37,13 +41,15 @@ sem nenhuma dependência de DOM/React**. É a parte que mais importa.
 Nada de `Math.random`. O acaso vem de um RNG **semeado**:
 
 - [`seed.ts`](src/engine/seed.ts) — `hashString` (xmur3) transforma uma string em
-  um inteiro de 32 bits. A seed do dia = `hash(data + picks)`; a de cada série =
-  `hash(data + picks + índice da rodada)`.
+  um inteiro de 32 bits. A seed de cada série = `hash(data + ids do time + índice
+  da rodada)`.
 - [`rng.ts`](src/engine/rng.ts) — `mulberry32` gera um fluxo reproduzível de
   números a partir da seed; `shuffle` é um Fisher-Yates determinístico.
 
-Resultado: **mesmos picks → mesmo bracket, sempre**. É isso que permite o "todo
-mundo enfrentou o Bulls 96 nas Finals" do compartilhamento.
+Os **adversários** são definidos só pela data (iguais para todos — sustentam o
+"todo mundo enfrentou o Bulls 96 nas Finals" do share), enquanto a **sequência de
+times do draft** (com elencos em [`data/rosters.ts`](src/engine/data/rosters.ts)) é
+sorteada por jogador. Resultado: **mesmo time → mesmo bracket, sempre**.
 
 ### Simulação de um jogo — [`sim.ts`](src/engine/sim.ts)
 `simulateGame(playerTeam, opponent, seed)` joga **~100 posses por time** (o ritmo
@@ -63,8 +69,8 @@ pontuam em nível de equipe (`offense` vs. defesa agregada do quinteto).
 
 - **Clutch factor:** nos ~2 minutos finais, a diferença de `clutch` entre ataque e
   defesa entra nas probabilidades de acerto — jogos apertados se decidem no fim.
-- **Vantagem do quinteto:** 5 estrelas jogam acima da média individual (um bônus
-  calibrado), então você bate os times fracos e tem chance real contra os
+- **Vantagem do quinteto:** o time montado joga um pouco acima da média individual
+  (um bônus calibrado), então você bate os times fracos e tem chance real contra os
   juggernauts — sem nunca ser favorito garantido.
 
 Calibrado num CHECKPOINT lendo dezenas de play-by-plays: placares **~95–110 por
@@ -94,7 +100,7 @@ convenção.
 
 | Camada | Papel |
 |--------|------|
-| [`src/engine/`](src/engine/) | motor puro: tipos, dados, seed, RNG, draft, simulação, bracket |
+| [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times históricos), seed, RNG, draft, simulação, bracket |
 | [`src/lib/`](src/lib/) | `storage` (localStorage), `share`/`challenge` (Wordle + link), `badges` |
 | [`src/hooks/`](src/hooks/) | `usePlayoff` orquestra draft → trava → simulação → persistência |
 | [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `ResultModal`, `Onboarding` |
@@ -117,7 +123,7 @@ npm run build      # gera dist/ (typecheck + build de produção)
 ```
 
 O motor é coberto por testes determinísticos; a UI por testes em jsdom
-(Testing Library). **53 testes** no total.
+(Testing Library). **56 testes** no total.
 
 ## ☁️ Deploy
 
