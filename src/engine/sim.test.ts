@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { POSITIONS, type Player } from './types'
-import { PLAYERS_BY_POSITION } from './data/players'
+import type { Player } from './types'
+import { ROSTERS } from './data/rosters'
 import { TEAMS } from './data/teams'
 import { simulateGame } from './sim'
 
-// Time determinístico: o 1º jogador de cada posição. Adversário: um time fixo.
-const team: Player[] = POSITIONS.map((pos) => PLAYERS_BY_POSITION[pos][0])
+// Time determinístico (um starting 5 real). Adversário: um time fixo.
+const team: Player[] = ROSTERS['bulls-1996']
 const opponent = TEAMS[0]
 const boxSum = (box: { points: number }[]) =>
   box.reduce((sum, entry) => sum + entry.points, 0)

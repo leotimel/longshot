@@ -6,17 +6,16 @@
  * não pode ser refeito. Resiliente a dados ausentes/corrompidos.
  */
 
-const KEY = 'longshot:v1'
+const KEY = 'longshot:v2'
 
 /** Registro de um dia jogado. `badge`: 0=🥉 1=🥈 2=🥇 3=🏆, null se caiu no First Round. */
 export interface DayRecord {
   date: string
-  picks: number[]
+  /** Ids dos 5 jogadores draftados — recompõe o time no reload. */
+  team: string[]
   finalRound: number
   champion: boolean
   badge: number | null
-  /** Sal do pool usado no confirm — recompõe o mesmo sorteio no reload. */
-  poolSalt?: string
 }
 
 export interface Stats {

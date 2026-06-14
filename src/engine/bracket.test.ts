@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { POSITIONS, type Player } from './types'
-import { PLAYERS_BY_POSITION } from './data/players'
 import { dailyDraft } from './draft'
 import { simulateBracket } from './bracket'
 
@@ -23,10 +22,9 @@ function uniformTeam(rating: number): Player[] {
   }))
 }
 
-const greats = POSITIONS.map((pos) => PLAYERS_BY_POSITION[pos][0])
+const greats = uniformTeam(82)
 const godTeam = uniformTeam(99)
 const scrubs = uniformTeam(12)
-const picks = [0, 1, 0, 1, 0]
 
 // Datas-amostra (strings opacas para o engine; não são parseadas como Date).
 const dates: string[] = []
@@ -35,15 +33,13 @@ for (const month of ['06', '07']) {
 }
 
 describe('simulateBracket', () => {
-  it('mesmos picks (e data) = mesmo bracket result', () => {
-    expect(simulateBracket(greats, '2026-06-12', picks)).toEqual(
-      simulateBracket(greats, '2026-06-12', picks),
-    )
+  it('mesmo time (e data) = mesmo bracket result', () => {
+    expect(simulateBracket(greats, '2026-06-12')).toEqual(simulateBracket(greats, '2026-06-12'))
   })
 
   it('invariantes: 1–4 rodadas, derrota só na última, champion sse venceu as 4', () => {
     for (const date of dates) {
-      const r = simulateBracket(greats, date, picks)
+      const r = simulateBracket(greats, date)
       expect(r.rounds.length).toBeGreaterThanOrEqual(1)
       expect(r.rounds.length).toBeLessThanOrEqual(4)
 
@@ -66,13 +62,13 @@ describe('simulateBracket', () => {
   })
 
   it('quem perde no First Round termina com 1 rodada (e nunca é campeão)', () => {
-    const lengths = dates.map((d) => simulateBracket(scrubs, d, picks).rounds.length)
+    const lengths = dates.map((d) => simulateBracket(scrubs, d).rounds.length)
     expect(lengths).toContain(1)
-    expect(dates.every((d) => !simulateBracket(scrubs, d, picks).champion)).toBe(true)
+    expect(dates.every((d) => !simulateBracket(scrubs, d).champion)).toBe(true)
   })
 
   it('quem ganha tudo termina com 4 rodadas e é campeão', () => {
-    const results = dates.map((d) => simulateBracket(godTeam, d, picks))
+    const results = dates.map((d) => simulateBracket(godTeam, d))
     expect(results.some((r) => r.rounds.length === 4 && r.champion)).toBe(true)
   })
 })

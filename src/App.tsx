@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { Player } from './engine/types'
 import { usePlayoff } from './hooks/usePlayoff'
 import { DraftScreen } from './components/DraftScreen'
 import { BracketView } from './components/BracketView'
@@ -32,8 +33,8 @@ function App() {
   const challengeBanner =
     challenge && challenge.date === date ? challengeTarget(challenge.badge) : undefined
 
-  const handleStart = (picks: number[]) => {
-    confirm(picks) // o resultado é revelado ao fim do playoff gradual
+  const handleStart = (team: Player[]) => {
+    confirm(team) // o resultado é revelado ao fim do playoff gradual
   }
 
   const handleShare = () => {

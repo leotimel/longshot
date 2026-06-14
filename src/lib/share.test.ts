@@ -4,7 +4,7 @@ import { buildShareText, LONGSHOT_EPOCH, puzzleNumber } from './share'
 
 const mk = (date: string, finalRound: number, champion: boolean, badge: number | null): DayRecord => ({
   date,
-  picks: [0, 0, 0, 0, 0],
+  team: ['a', 'b', 'c', 'd', 'e'],
   finalRound,
   champion,
   badge,

@@ -1,35 +1,31 @@
 import { describe, it, expect } from 'vitest'
-import { seedFromDayAndPicks } from './seed'
+import { hashString, seedForSeries } from './seed'
 
-describe('seedFromDayAndPicks', () => {
-  it('é determinística: mesmos args → mesma seed', () => {
-    const a = seedFromDayAndPicks('2026-06-11', [0, 1, 1, 0, 1])
-    const b = seedFromDayAndPicks('2026-06-11', [0, 1, 1, 0, 1])
-    expect(a).toBe(b)
+describe('hashString', () => {
+  it('é determinística e retorna uint32', () => {
+    const a = hashString('longshot')
+    expect(a).toBe(hashString('longshot'))
+    expect(Number.isInteger(a)).toBe(true)
+    expect(a).toBeGreaterThanOrEqual(0)
+    expect(a).toBeLessThanOrEqual(0xffffffff)
   })
 
-  it('picks diferentes → seeds diferentes', () => {
-    const a = seedFromDayAndPicks('2026-06-11', [0, 1, 1, 0, 1])
-    const b = seedFromDayAndPicks('2026-06-11', [1, 1, 1, 0, 1])
-    expect(a).not.toBe(b)
+  it('entradas diferentes → hashes diferentes', () => {
+    expect(hashString('a')).not.toBe(hashString('b'))
+  })
+})
+
+describe('seedForSeries', () => {
+  it('mesmos args → mesma seed', () => {
+    expect(seedForSeries('2026-06-13', 'curry,jordan', 0)).toBe(
+      seedForSeries('2026-06-13', 'curry,jordan', 0),
+    )
   })
 
-  it('datas diferentes → seeds diferentes', () => {
-    const a = seedFromDayAndPicks('2026-06-11', [0, 1, 1, 0, 1])
-    const b = seedFromDayAndPicks('2026-06-12', [0, 1, 1, 0, 1])
-    expect(a).not.toBe(b)
-  })
-
-  it('a ordem dos picks importa', () => {
-    const a = seedFromDayAndPicks('2026-06-11', [0, 1, 1, 0, 1])
-    const b = seedFromDayAndPicks('2026-06-11', [1, 0, 1, 1, 0])
-    expect(a).not.toBe(b)
-  })
-
-  it('retorna um inteiro de 32 bits sem sinal', () => {
-    const s = seedFromDayAndPicks('2026-06-11', [0, 0, 0, 0, 0])
-    expect(Number.isInteger(s)).toBe(true)
-    expect(s).toBeGreaterThanOrEqual(0)
-    expect(s).toBeLessThanOrEqual(0xffffffff)
+  it('time, data ou rodada diferentes → seeds diferentes', () => {
+    const base = seedForSeries('2026-06-13', 'curry,jordan', 0)
+    expect(seedForSeries('2026-06-13', 'curry,kobe', 0)).not.toBe(base)
+    expect(seedForSeries('2026-06-14', 'curry,jordan', 0)).not.toBe(base)
+    expect(seedForSeries('2026-06-13', 'curry,jordan', 1)).not.toBe(base)
   })
 })

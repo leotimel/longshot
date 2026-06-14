@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { POSITIONS, type Player, type PlayerRatings } from '../engine/types'
+import { useState } from 'react'
+import { POSITIONS, type Player, type PlayerRatings, type Position } from '../engine/types'
 import type { DailyDraft } from '../engine/draft'
 import { strings as S } from '../lib/strings'
 
@@ -20,6 +20,8 @@ function topRatings(p: Player, n: number): { label: string; value: number }[] {
 }
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
+const byPosition = (a: Player, b: Player) =>
+  POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position)
 
 function RatingBar({ label, value }: { label: string; value: number }) {
   return (
@@ -33,29 +35,52 @@ function RatingBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-function PlayerCard({ player, onSelect }: { player: Player; onSelect: () => void }) {
+function PlayerCard({
+  player,
+  disabled,
+  onSelect,
+}: {
+  player: Player
+  disabled: boolean
+  onSelect: () => void
+}) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onSelect}
-      className="min-w-0 border-2 border-zinc-900 bg-white p-2 text-left text-zinc-900 shadow-[3px_3px_0_0_#18181b] transition active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-50 dark:shadow-[3px_3px_0_0_#fafafa]"
+      className={[
+        'w-full border-2 border-zinc-900 p-2 text-left dark:border-zinc-100',
+        disabled
+          ? 'bg-zinc-200 opacity-50 dark:bg-zinc-800'
+          : 'bg-white text-zinc-900 shadow-[3px_3px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:bg-zinc-900 dark:text-zinc-50 dark:shadow-[3px_3px_0_0_#fafafa]',
+      ].join(' ')}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-sm font-extrabold uppercase leading-tight">{player.name}</span>
+        <span className="flex min-w-0 items-center gap-1">
+          <span className="shrink-0 border border-zinc-900 bg-teal-300 px-1 text-[10px] font-black text-zinc-900 dark:border-zinc-100">
+            {player.position}
+          </span>
+          <span className="truncate text-sm font-extrabold uppercase leading-tight">{player.name}</span>
+        </span>
         <span className="shrink-0 text-2xl font-black leading-none text-fuchsia-600 dark:text-fuchsia-400">
           {overall(player)}
         </span>
       </div>
-      <div className="text-[10px] uppercase opacity-70">{player.era}</div>
-      <div className="mt-1 flex flex-wrap gap-1">
-        {topRatings(player, 3).map((t) => (
-          <span
-            key={t.label}
-            className="border border-zinc-900 bg-teal-300 px-1 text-[10px] font-bold text-zinc-900 dark:border-zinc-100"
-          >
-            {t.label} {t.value}
-          </span>
-        ))}
+      <div className="mt-1 flex flex-wrap items-center gap-1">
+        <span className="text-[10px] uppercase opacity-70">{player.era}</span>
+        {disabled ? (
+          <span className="text-[10px] font-bold uppercase opacity-80">· {S.draft.posTaken}</span>
+        ) : (
+          topRatings(player, 3).map((t) => (
+            <span
+              key={t.label}
+              className="border border-zinc-900 bg-teal-300 px-1 text-[10px] font-bold text-zinc-900 dark:border-zinc-100"
+            >
+              {t.label} {t.value}
+            </span>
+          ))
+        )}
       </div>
     </button>
   )
@@ -69,28 +94,31 @@ export function DraftScreen({
   challengeTarget,
 }: {
   draft: DailyDraft
-  onStartPlayoff: (picks: number[]) => void
+  onStartPlayoff: (team: Player[]) => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
   challengeTarget?: string
 }) {
-  const [picks, setPicks] = useState<(number | null)[]>(() => POSITIONS.map(() => null))
-  const current = picks.findIndex((p) => p === null) // -1 quando todas escolhidas
-  const allChosen = current === -1
+  const [teamIndex, setTeamIndex] = useState(0)
+  const [chosen, setChosen] = useState<Partial<Record<Position, Player>>>({})
+  const [rerollUsed, setRerollUsed] = useState(false)
+
   const fr = draft.bracket[0]
+  const filledCount = POSITIONS.filter((pos) => chosen[pos]).length
+  const allChosen = filledCount === POSITIONS.length
+  const team = draft.draftTeams[teamIndex % draft.draftTeams.length]
 
-  const team = useMemo(
-    () => (allChosen ? draft.playerPool.map((opts, i) => opts[picks[i] as number]) : []),
-    [allChosen, draft.playerPool, picks],
-  )
-
-  const pick = (c: number) =>
-    setPicks((prev) => prev.map((p, i) => (i === current ? c : p)))
-
-  const back = () => {
-    const last = current === -1 ? POSITIONS.length - 1 : current - 1
-    if (last >= 0) setPicks((prev) => prev.map((p, i) => (i === last ? null : p)))
+  const pick = (player: Player) => {
+    setChosen((prev) => ({ ...prev, [player.position]: player }))
+    setTeamIndex((i) => i + 1)
   }
+
+  const reroll = () => {
+    setRerollUsed(true)
+    setTeamIndex((i) => i + 1)
+  }
+
+  const start = () => onStartPlayoff(POSITIONS.map((pos) => chosen[pos] as Player))
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -135,9 +163,7 @@ export function DraftScreen({
               key={t.id}
               className={[
                 'flex-1 basis-0 border-2 border-zinc-900 p-1 text-center dark:border-zinc-100',
-                i === 0
-                  ? 'bg-fuchsia-500 text-white'
-                  : 'bg-white/70 opacity-70 dark:bg-zinc-900/70',
+                i === 0 ? 'bg-fuchsia-500 text-white' : 'bg-white/70 opacity-70 dark:bg-zinc-900/70',
               ].join(' ')}
             >
               <div className="text-[9px] font-black uppercase">{S.rounds.tags[i]}</div>
@@ -158,50 +184,57 @@ export function DraftScreen({
         </div>
       </section>
 
-      {/* Draft: uma posição por vez, 3 opções */}
+      {/* Draft: um time por vez */}
       <section className="flex flex-1 flex-col gap-2">
         {!allChosen && (
           <>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-sm font-black uppercase tracking-wide text-teal-700 dark:text-teal-300">
-                {S.draft.choose(S.positions[POSITIONS[current]])}
+              <span className="min-w-0 truncate text-sm font-black uppercase italic">
+                {team.name} <span className="opacity-60">{team.season}</span>
               </span>
-              <span className="text-[11px] font-bold opacity-60">
-                {S.draft.stepOf(current + 1, POSITIONS.length)}
+              <span className="shrink-0 text-[11px] font-bold opacity-60">
+                {S.draft.stepOf(filledCount + 1, POSITIONS.length)}
               </span>
             </div>
-            <div key={current} className="ls-rise grid grid-cols-1 gap-2">
-              {draft.playerPool[current].map((player, c) => (
-                <PlayerCard key={player.id} player={player} onSelect={() => pick(c)} />
+            <div className="text-[11px] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+              {S.draft.pickPlayer}
+            </div>
+            <div key={teamIndex} className="ls-rise grid grid-cols-1 gap-2">
+              {[...team.roster].sort(byPosition).map((player) => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  disabled={Boolean(chosen[player.position])}
+                  onSelect={() => pick(player)}
+                />
               ))}
             </div>
+            {!rerollUsed && (
+              <button
+                type="button"
+                onClick={reroll}
+                className="min-h-11 self-start border-2 border-zinc-900 bg-white px-3 text-[11px] font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
+              >
+                {S.draft.reroll}
+              </button>
+            )}
           </>
         )}
 
         {/* Quinteto montado até aqui */}
-        {picks.some((p) => p !== null) && (
+        {filledCount > 0 && (
           <div className="flex flex-wrap gap-1">
-            {POSITIONS.map((pos, i) =>
-              picks[i] !== null ? (
+            {POSITIONS.map((pos) =>
+              chosen[pos] ? (
                 <span
                   key={pos}
                   className="border border-zinc-900 bg-teal-300 px-1 text-[10px] font-bold text-zinc-900 dark:border-zinc-100"
                 >
-                  {pos} {shortName(draft.playerPool[i][picks[i] as number].name)}
+                  {pos} {shortName((chosen[pos] as Player).name)}
                 </span>
               ) : null,
             )}
           </div>
-        )}
-
-        {!allChosen && current > 0 && (
-          <button
-            type="button"
-            onClick={back}
-            className="inline-flex min-h-11 items-center self-start text-[11px] font-bold uppercase tracking-wide opacity-70"
-          >
-            ← {S.positions[POSITIONS[current - 1]]}
-          </button>
         )}
       </section>
 
@@ -211,27 +244,21 @@ export function DraftScreen({
           <div className="flex flex-col gap-2">
             <p className="text-[11px] leading-snug">
               <span className="font-black uppercase">{S.draft.summaryLabel}</span>{' '}
-              {team.map((p) => `${shortName(p.name)} (${overall(p)})`).join(' · ')}
+              {POSITIONS.map((pos) => {
+                const pl = chosen[pos] as Player
+                return `${shortName(pl.name)} (${overall(pl)})`
+              }).join(' · ')}
             </p>
             <p className="text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-400">
               {S.draft.irreversible}
             </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={back}
-                className="min-h-11 border-2 border-zinc-900 bg-white px-3 text-sm font-black uppercase dark:border-zinc-100 dark:bg-zinc-900"
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                onClick={() => onStartPlayoff(picks as number[])}
-                className="min-h-11 flex-1 border-2 border-zinc-900 bg-yellow-400 py-3 text-base font-black uppercase tracking-wide text-zinc-900 shadow-[4px_4px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[4px_4px_0_0_#fafafa]"
-              >
-                {S.draft.start}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={start}
+              className="min-h-11 border-2 border-zinc-900 bg-yellow-400 py-3 text-base font-black uppercase tracking-wide text-zinc-900 shadow-[4px_4px_0_0_#18181b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none dark:border-zinc-100 dark:shadow-[4px_4px_0_0_#fafafa]"
+            >
+              {S.draft.start}
+            </button>
           </div>
         </footer>
       )}

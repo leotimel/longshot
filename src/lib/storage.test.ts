@@ -13,7 +13,7 @@ import {
 
 const rec = (date: string, badge: number | null, champion = false): DayRecord => ({
   date,
-  picks: [0, 1, 0, 1, 0],
+  team: ['a', 'b', 'c', 'd', 'e'],
   finalRound: badge === null ? 1 : badge + 1,
   champion,
   badge,

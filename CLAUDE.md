@@ -1,9 +1,9 @@
 # CLAUDE.md — Longshot
 
 ## O jogo
-Jogo **diário** de basquete. O jogador drafta um **quinteto da NBA** (5 escolhas
-— uma posição por vez, **3 opções cada**, de 15 sorteados),
-**conhece o adversário antes de escolher**, e então assiste a um **playoff
+Jogo **diário** de basquete. O jogador monta um **quinteto da NBA** escolhendo
+**1 jogador do starting-5 de times históricos sorteados** (1 por time; posições
+únicas), **conhece o adversário antes de escolher**, e então assiste a um **playoff
 melhor de 7** — 4 rodadas (First Round → Second Round → Conference Finals →
 Finals) contra **times históricos**. **Simulação automática** estilo 2K: box
 score de pontos por jogador, play-by-play resumido e momentum. Sem backend nem
@@ -21,13 +21,12 @@ login; estado em `localStorage`; deploy estático.
 ## Invariantes do motor — não quebrar
 - **Adversários determinísticos pela data:** os **4 adversários** (todas as
   rodadas) são definidos **só pela data**, iguais para todos no dia — é o que
-  sustenta o "mesmo gauntlet" do share/desafio. O **pool de jogadores é sorteado
+  sustenta o "mesmo gauntlet" do share/desafio. Os **times do draft são sorteados
   POR JOGADOR** (`dailyDraft(date, poolSalt)`; salt local em `longshot:player:v1`),
-  então as opções de draft variam entre jogadores.
-- **Seed de cada série = `hash(data + picks + índice da rodada)`**. Sem
+  então cada jogador drafta de times diferentes. Elencos em `data/rosters.ts`.
+- **Seed de cada série = `hash(data + ids do time + índice da rodada)`**. Sem
   `Math.random` no engine.
-- **Determinístico:** mesmo time (pool+picks) + data = mesmo resultado. Picks são
-  índices 0–2 (3 opções por posição).
+- **Determinístico:** mesmo time (5 ids dos jogadores) + data = mesmo resultado.
 - Cada série termina entre **4 e 7 jogos**; o vencedor tem **exatamente 4**
   vitórias; o box score **soma o placar final**.
 

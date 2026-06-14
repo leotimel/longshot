@@ -13,7 +13,7 @@ export const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'] as const
 export type Position = (typeof POSITIONS)[number]
 
 /** Décadas de auge (lista canônica; a união é derivada dela). */
-export const ERAS = ['1980s', '1990s', '2000s', '2010s', '2020s'] as const
+export const ERAS = ['1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'] as const
 export type Era = (typeof ERAS)[number]
 
 /** Atributos de um jogador (cada um 0–100), refletindo o auge da carreira. */

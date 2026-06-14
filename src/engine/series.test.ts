@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { POSITIONS, type Player } from './types'
-import { PLAYERS_BY_POSITION } from './data/players'
+import type { Player } from './types'
+import { ROSTERS } from './data/rosters'
 import { TEAMS } from './data/teams'
 import { simulateSeries } from './series'
 
-const team: Player[] = POSITIONS.map((pos) => PLAYERS_BY_POSITION[pos][0])
+const team: Player[] = ROSTERS['bulls-1996']
 const opponent = TEAMS[0]
 
 describe('simulateSeries', () => {

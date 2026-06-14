@@ -1,10 +1,10 @@
 /**
  * Bracket completo — as 4 rodadas de playoff em sequência.
  *
- * Engine puro. Carrega os 4 adversários do dia (já definidos por dailyDraft,
- * em escalada de força) e simula as séries em ordem; se o jogador perde uma
- * série, o bracket para ali. A seed de cada série = hash(data + picks + índice
- * da rodada), então mesmo time draftado = mesmo resultado em cada rodada.
+ * Engine puro. Carrega os 4 adversários do dia (definidos pela data, em escalada
+ * de força) e simula as séries em ordem; se o jogador perde uma série, o bracket
+ * para ali. A seed de cada série = hash(data + chave do time + índice da rodada),
+ * onde a chave são os ids dos 5 jogadores draftados — mesmo time = mesmo resultado.
  */
 import type { BracketResult, Player, SeriesResult } from './types'
 import { dailyDraft } from './draft'
@@ -14,20 +14,16 @@ import { simulateSeries } from './series'
 /**
  * Simula o bracket inteiro de um dia para um time draftado.
  *
- * @param playerTeam o quinteto montado
+ * @param playerTeam o quinteto montado (5 jogadores)
  * @param date       data do dia (YYYY-MM-DD) — define os adversários
- * @param picks      as 5 escolhas binárias do draft — entram na seed das séries
  */
-export function simulateBracket(
-  playerTeam: Player[],
-  date: string,
-  picks: number[],
-): BracketResult {
+export function simulateBracket(playerTeam: Player[], date: string): BracketResult {
   const { bracket } = dailyDraft(date)
+  const key = playerTeam.map((p) => p.id).join(',')
   const rounds: SeriesResult[] = []
 
   for (let i = 0; i < bracket.length; i++) {
-    const series = simulateSeries(playerTeam, bracket[i], seedForSeries(date, picks, i))
+    const series = simulateSeries(playerTeam, bracket[i], seedForSeries(date, key, i))
     rounds.push(series)
     if (series.winner === 'opponent') break // eliminado: para aqui
   }

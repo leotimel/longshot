@@ -17,7 +17,7 @@ export function GameFeed({
   game: GameResult
   opponentName: string
   gameNumber: number
-  totalGames: number
+  totalGames?: number
   onNext?: () => void
   onBackToSeries: () => void
   nextLabel?: string
@@ -44,7 +44,7 @@ export function GameFeed({
   return (
     <div className="flex flex-col gap-3">
       <div className="text-[11px] font-bold uppercase tracking-wide opacity-80">
-        {S.game.of(gameNumber, totalGames)}
+        {totalGames !== undefined ? S.game.of(gameNumber, totalGames) : S.game.only(gameNumber)}
       </div>
 
       {/* Placar final (revelado com suspense) */}

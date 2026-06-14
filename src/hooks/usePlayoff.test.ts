@@ -1,32 +1,36 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { dailyDraft } from '../engine/draft'
 import { usePlayoff } from './usePlayoff'
 
 beforeEach(() => localStorage.clear())
 
+// Um time válido = o starting 5 de um time draftável (todos em ROSTERS).
+const teamFor = (date: string) => dailyDraft(date, '').draftTeams[0].roster
+
 describe('usePlayoff', () => {
-  it('trava o draft ao confirmar e expõe o bracket', () => {
+  it('trava o time ao confirmar e expõe o bracket', () => {
     const { result } = renderHook(() => usePlayoff('2026-06-13'))
     expect(result.current.locked).toBe(false)
     expect(result.current.bracket).toBeNull()
 
-    act(() => result.current.confirm([0, 2, 1, 0, 2]))
+    act(() => result.current.confirm(teamFor('2026-06-13')))
 
     expect(result.current.locked).toBe(true)
     expect(result.current.bracket).not.toBeNull()
-    expect(result.current.day?.picks).toEqual([0, 2, 1, 0, 2])
+    expect(result.current.day?.team).toHaveLength(5)
     expect(result.current.justConfirmed).toBe(true)
-    expect(typeof result.current.day?.poolSalt).toBe('string')
   })
 
-  it('ao montar de novo, lê o dia já travado (sem justConfirmed → sem revelação gradual)', () => {
+  it('ao montar de novo, lê o dia travado e recompõe o bracket pelos ids', () => {
+    const team = teamFor('2026-06-13')
     const first = renderHook(() => usePlayoff('2026-06-13'))
-    act(() => first.result.current.confirm([1, 0, 1, 0, 1]))
+    act(() => first.result.current.confirm(team))
 
     const second = renderHook(() => usePlayoff('2026-06-13'))
     expect(second.result.current.locked).toBe(true)
-    expect(second.result.current.day?.picks).toEqual([1, 0, 1, 0, 1])
+    expect(second.result.current.day?.team).toEqual(team.map((p) => p.id))
     expect(second.result.current.bracket).not.toBeNull()
     expect(second.result.current.justConfirmed).toBe(false)
   })

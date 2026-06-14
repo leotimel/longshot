@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { dailyDraft } from '../engine/draft'
 import { simulateBracket } from '../engine/bracket'
-import type { BracketResult } from '../engine/types'
+import { playerById } from '../engine/data/rosters'
+import type { BracketResult, Player } from '../engine/types'
 import {
   confirmDay,
   getDay,
@@ -12,12 +13,12 @@ import {
 } from '../lib/storage'
 
 /**
- * Orquestra o dia: carrega o draft (pool por jogador, adversários pela data),
- * sabe se já foi confirmado (→ direto ao bracket), trava os picks ao confirmar,
+ * Orquestra o dia: carrega o draft (times por jogador, adversários pela data),
+ * sabe se já foi confirmado (→ direto ao bracket), trava o time ao confirmar,
  * roda o motor e salva resultado + selo.
  *
- * O bracket é recomputado de forma determinística a partir do `poolSalt` e dos
- * picks salvos — nada de simulação é persistido.
+ * O bracket é recomputado a partir dos ids salvos (via `playerById`) — nada de
+ * simulação é persistido.
  */
 export function usePlayoff(date: string) {
   const playerSeed = useMemo(() => getPlayerSeed(), [])
@@ -29,30 +30,30 @@ export function usePlayoff(date: string) {
 
   const bracket = useMemo<BracketResult | null>(() => {
     if (!day) return null
-    const pool = dailyDraft(date, day.poolSalt ?? '').playerPool
-    const team = pool.map((opts, i) => opts[day.picks[i]])
-    return simulateBracket(team, date, day.picks)
+    const team = day.team
+      .map((id) => playerById(id))
+      .filter((p): p is Player => p !== undefined)
+    if (team.length !== day.team.length) return null
+    return simulateBracket(team, date)
   }, [day, date])
 
   const confirm = useCallback(
-    (picks: number[]) => {
+    (team: Player[]) => {
       if (getDay(date)) return // já travado: não permite refazer
-      const team = draft.playerPool.map((opts, i) => opts[picks[i]])
-      const result = simulateBracket(team, date, picks)
+      const result = simulateBracket(team, date)
       const roundsWon = result.rounds.filter((r) => r.winner === 'player').length
       const record: DayRecord = {
         date,
-        picks,
+        team: team.map((p) => p.id),
         finalRound: result.rounds.length,
         champion: result.champion,
         badge: roundsWon > 0 ? roundsWon - 1 : null,
-        poolSalt: playerSeed,
       }
       setStats(confirmDay(record))
       setDay(record)
       setJustConfirmed(true)
     },
-    [date, draft, playerSeed],
+    [date],
   )
 
   return {

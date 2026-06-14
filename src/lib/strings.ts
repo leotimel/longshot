@@ -63,6 +63,9 @@ export const strings = {
     beat: (target: string) => `🎯 Supere: ${target}`,
     choose: (pos: string) => `Escolha seu ${pos}`,
     stepOf: (n: number, total: number) => `${n} de ${total}`,
+    pickPlayer: 'Escolha um jogador',
+    reroll: '🔀 Re-sortear time',
+    posTaken: 'já escolhido',
   },
 
   bracket: {
@@ -88,6 +91,7 @@ export const strings = {
 
   game: {
     of: (n: number, total: number) => `Jogo ${n} de ${total}`,
+    only: (n: number) => `Jogo ${n}`,
     yourTeam: 'Seu time',
     plays: 'Lances',
     boxScore: 'Box score',

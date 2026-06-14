@@ -68,7 +68,6 @@ export function BracketView({
           game={series.games[view.game]}
           opponentName={opponents[view.round].name}
           gameNumber={view.game + 1}
-          totalGames={series.games.length}
           onNext={
             isLast
               ? undefined

@@ -1,16 +1,14 @@
 /**
- * Seed determinística do dia.
+ * Seeds determinísticas do motor.
  *
- * Engine puro (sem DOM). A partir da data (YYYY-MM-DD) e das 5 escolhas
- * binárias do draft, produz uma seed numérica estável: mesma data + mesmos
- * picks = mesma seed, sempre. Sem Math.random — a comparabilidade social
- * depende disso (mesmos picks → mesmo bracket).
+ * Engine puro (sem DOM, sem Math.random). A partir de strings (data, chave do
+ * time, índice da rodada) produz seeds numéricas estáveis.
  */
 
 /**
  * Hash de string determinístico (xmur3). Retorna um inteiro de 32 bits sem
- * sinal, com boa dispersão para entradas pequenas como datas e picks.
- * Primitiva reutilizada para derivar seeds (data, picks, rodada).
+ * sinal, com boa dispersão para entradas pequenas. Primitiva reutilizada para
+ * derivar seeds (data, time, rodada) e os streams de sorteio do draft.
  */
 export function hashString(input: string): number {
   let h = 1779033703 ^ input.length
@@ -25,23 +23,13 @@ export function hashString(input: string): number {
 }
 
 /**
- * Seed numérica a partir da data e dos picks binários do draft.
- *
- * @param date  data no formato YYYY-MM-DD
- * @param picks as 5 escolhas binárias (0s e 1s), na ordem
- * @returns inteiro de 32 bits sem sinal, estável para os mesmos argumentos
- */
-export function seedFromDayAndPicks(date: string, picks: number[]): number {
-  return hashString(`${date}|${picks.join(',')}`)
-}
-
-/**
- * Seed da série de uma rodada do bracket = hash(data + picks + índice da
- * rodada). Mesmos picks → mesmo resultado em cada rodada; rodadas diferentes
- * têm seeds diferentes.
+ * Seed da série de uma rodada = hash(data + chave do time + índice da rodada).
+ * A `key` identifica o time draftado (ex.: ids dos jogadores), garantindo que
+ * o mesmo time = mesmo resultado em cada rodada; rodadas diferentes têm seeds
+ * diferentes.
  *
  * @param roundIndex 0=First Round … 3=Finals
  */
-export function seedForSeries(date: string, picks: number[], roundIndex: number): number {
-  return hashString(`${date}|${picks.join(',')}|${roundIndex}`)
+export function seedForSeries(date: string, key: string, roundIndex: number): number {
+  return hashString(`${date}|${key}|${roundIndex}`)
 }

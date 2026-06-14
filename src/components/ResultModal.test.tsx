@@ -8,7 +8,7 @@ import type { DayRecord, Stats } from '../lib/storage'
 const stats: Stats = { streak: 3, bestStreak: 5, badges: [2, 1, 0, 1], history: {} }
 const day: DayRecord = {
   date: '2026-06-13',
-  picks: [0, 0, 0, 0, 0],
+  team: ['a', 'b', 'c', 'd', 'e'],
   finalRound: 2,
   champion: false,
   badge: 1,
