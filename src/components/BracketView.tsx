@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BracketResult, HistoricalTeam, Player } from '../engine/types'
 import { strings as S } from '../lib/strings'
-import { overall } from '../lib/playerStats'
+import { overall, campaignStats } from '../lib/playerStats'
 import { GameFeed } from './GameFeed'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
@@ -51,6 +51,9 @@ export function BracketView({
   const fullyRevealed = revealed >= rounds.length
   const roundsWon = rounds.slice(0, revealed).filter((s) => s.winner === 'player').length
   const dayBadge = roundsWon > 0 ? S.badges.emoji[roundsWon - 1] : null
+
+  // Estatísticas da campanha só ao fim — durante a revelação gradual seriam spoiler.
+  const camp = useMemo(() => (fullyRevealed ? campaignStats(bracket) : null), [fullyRevealed, bracket])
 
   const revealRound = () => {
     setRevealed((r) => Math.min(rounds.length, r + 1))
@@ -207,30 +210,78 @@ export function BracketView({
         </div>
       )}
 
-      {/* Seu quinteto — preenche o topo e mostra o time escalado. */}
+      {/* Seu quinteto — preenche o topo, mostra o time escalado e (no fim) os stats da campanha. */}
       {team && (
         <section>
           <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             {S.bracket.lineup}
           </h2>
           <ol className="grid grid-cols-5 gap-1.5">
-            {team.map((p) => (
-              <li
-                key={p.id}
-                className="rounded-lg border border-zinc-200 bg-white p-1 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="rounded bg-blue-100 text-[9px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                  {p.position}
-                </div>
-                <div className="mt-0.5 truncate text-[10px] font-medium leading-tight" title={p.name}>
-                  {shortName(p.name)}
-                </div>
-                <div className="text-base font-bold leading-none text-blue-600 dark:text-blue-400">
-                  {overall(p)}
-                </div>
-              </li>
-            ))}
+            {team.map((p) => {
+              const cs = camp?.byPlayer.get(p.id)
+              const isMvp = camp?.mvpId === p.id
+              return (
+                <li
+                  key={p.id}
+                  className={[
+                    'rounded-lg border bg-white p-1 text-center shadow-sm dark:bg-zinc-900',
+                    isMvp
+                      ? 'border-emerald-400 ring-1 ring-emerald-400 dark:border-emerald-500'
+                      : 'border-zinc-200 dark:border-zinc-800',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-center gap-0.5">
+                    <span className="rounded bg-blue-100 px-1 text-[9px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                      {p.position}
+                    </span>
+                    {isMvp && (
+                      <span className="text-[9px] leading-none" title={S.bracket.mvp}>
+                        ⭐
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 truncate text-[10px] font-medium leading-tight" title={p.name}>
+                    {shortName(p.name)}
+                  </div>
+                  <div className="text-base font-bold leading-none text-blue-600 dark:text-blue-400">
+                    {overall(p)}
+                  </div>
+                  {cs && (
+                    <div className="mt-0.5 font-mono text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                      {cs.ppg.toFixed(1)} {S.bracket.ppg}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ol>
+
+          {/* Totais da campanha (só ao fim). */}
+          {camp && (
+            <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+              <div className="rounded-lg border border-zinc-200 bg-white p-1.5 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="font-mono text-sm font-bold tabular-nums">{camp.totalPoints}</div>
+                <div className="text-[9px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  {S.bracket.points}
+                </div>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white p-1.5 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="font-mono text-sm font-bold tabular-nums">{camp.totalGames}</div>
+                <div className="text-[9px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  {S.bracket.games}
+                </div>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white p-1.5 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="font-mono text-sm font-bold tabular-nums">
+                  {camp.recordGame ? camp.recordGame.points : '—'}
+                </div>
+                <div className="truncate text-[9px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  {S.bracket.recordGame}
+                  {camp.recordGame ? ` · ${shortName(camp.recordGame.name)}` : ''}
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       )}
 

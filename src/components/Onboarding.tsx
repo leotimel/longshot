@@ -29,17 +29,17 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
         <p className="mt-3 text-lg font-semibold leading-snug">{S.onboarding.rule}</p>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{S.onboarding.detail}</p>
 
-        {/* Exemplo visual do bracket */}
-        <div className="mt-4 flex items-center justify-between gap-1">
+        {/* Caminho das 4 rodadas, cada uma com seu selo. */}
+        <div className="mt-4 grid grid-cols-4 gap-1.5">
           {STEPS.map((i) => (
-            <div key={i} className="flex items-center gap-1">
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-center dark:border-zinc-800 dark:bg-zinc-800">
-                <div className="text-[10px] font-semibold uppercase text-zinc-500 dark:text-zinc-400">
-                  {S.rounds.tags[i]}
-                </div>
-                <div className="text-xl leading-none">{S.badges.emoji[i]}</div>
+            <div
+              key={i}
+              className="rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-center dark:border-zinc-800 dark:bg-zinc-800/60"
+            >
+              <div className="text-2xl leading-none">{S.badges.emoji[i]}</div>
+              <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                {S.rounds.tags[i]}
               </div>
-              {i < STEPS.length - 1 && <span className="font-semibold text-zinc-400">→</span>}
             </div>
           ))}
         </div>

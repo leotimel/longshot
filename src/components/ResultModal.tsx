@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { DayRecord, Stats } from '../lib/storage'
+import { summarizeHistory } from '../lib/playerHistory'
 import { strings as S } from '../lib/strings'
+
+const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
 /** Milissegundos até a próxima meia-noite local (próximo draft). */
 function msToMidnight(): number {
@@ -30,6 +33,7 @@ export function ResultModal({
   onClose: () => void
 }) {
   const [countdown, setCountdown] = useState(msToMidnight)
+  const hist = useMemo(() => summarizeHistory(stats.history), [stats.history])
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msToMidnight()), 1000)
@@ -46,6 +50,9 @@ export function ResultModal({
 
   const badge = day?.badge ?? null
   const statCard = 'rounded-xl border border-zinc-200 p-2 text-center dark:border-zinc-800'
+  const statLabel = 'text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400'
+  const sectionTitle = 'mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400'
+  const topPoints = hist.scorers[0]?.points ?? 0
 
   return (
     <div
@@ -57,7 +64,7 @@ export function ResultModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+        className="flex max-h-[90svh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
       >
         {/* Resultado do dia */}
         {day && (
@@ -77,23 +84,17 @@ export function ResultModal({
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div className={statCard}>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">🔥 {stats.streak}</div>
-            <div className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              {S.result.streak}
-            </div>
+            <div className={statLabel}>{S.result.streak}</div>
           </div>
           <div className={statCard}>
             <div className="text-2xl font-bold">{stats.bestStreak}</div>
-            <div className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              {S.result.best}
-            </div>
+            <div className={statLabel}>{S.result.best}</div>
           </div>
         </div>
 
         {/* Coleção de selos */}
         <div className="mb-3">
-          <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {S.result.badgesTitle}
-          </h3>
+          <h3 className={sectionTitle}>{S.result.badgesTitle}</h3>
           <div className="grid grid-cols-4 gap-2">
             {S.badges.emoji.map((emoji, i) => (
               <div
@@ -112,11 +113,89 @@ export function ResultModal({
           </div>
         </div>
 
+        {/* Histórico de jogadores (acumulado entre dias) */}
+        <div className="mb-3">
+          <h3 className={sectionTitle}>{S.result.playersTitle}</h3>
+          {hist.scorers.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-zinc-300 p-3 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+              {S.result.emptyHistory}
+            </p>
+          ) : (
+            <>
+              {/* Resumo de uso */}
+              <div className="mb-2 grid grid-cols-3 gap-2">
+                <div className={statCard}>
+                  <div className="text-lg font-bold tabular-nums">{hist.distinctPlayers}</div>
+                  <div className={statLabel}>{S.result.used}</div>
+                </div>
+                <div className={statCard}>
+                  <div className="truncate text-sm font-bold">
+                    {hist.favorite ? shortName(hist.favorite.name) : '—'}
+                  </div>
+                  <div className={statLabel}>{S.result.favorite}</div>
+                </div>
+                <div className={statCard}>
+                  <div className="font-mono text-lg font-bold tabular-nums">{hist.totalPoints}</div>
+                  <div className={statLabel}>{S.result.careerPoints}</div>
+                </div>
+              </div>
+
+              {/* Cestinhas (todos os tempos) */}
+              <h4 className={sectionTitle}>{S.result.scorers}</h4>
+              <ol className="mb-2 flex flex-col gap-1">
+                {hist.scorers.slice(0, 5).map((c, i) => (
+                  <li
+                    key={c.playerId}
+                    className="relative overflow-hidden rounded-lg border border-zinc-200 px-2 py-1 dark:border-zinc-800"
+                  >
+                    <div
+                      className="absolute inset-y-0 left-0 bg-blue-50 dark:bg-blue-950/40"
+                      style={{ width: `${topPoints > 0 ? (c.points / topPoints) * 100 : 0}%` }}
+                      aria-hidden="true"
+                    />
+                    <div className="relative flex items-center justify-between gap-2 text-xs">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="w-3 shrink-0 text-right font-mono text-zinc-400">{i + 1}</span>
+                        <span className="truncate font-semibold">{c.name}</span>
+                        <span className="shrink-0 text-[10px] text-zinc-400">{S.result.picks(c.picks)}</span>
+                      </span>
+                      <span className="shrink-0 font-mono tabular-nums">
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{c.points}</span>
+                        <span className="ml-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                          {c.ppg.toFixed(1)} {S.result.ppg}
+                        </span>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              {/* Recordes */}
+              <h4 className={sectionTitle}>{S.result.records}</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className={statCard}>
+                  <div className="font-mono text-lg font-bold tabular-nums">
+                    {hist.recordGame ? hist.recordGame.points : '—'}
+                  </div>
+                  <div className={`truncate ${statLabel}`}>
+                    {S.result.recordGame}
+                    {hist.recordGame ? ` · ${shortName(hist.recordGame.name)}` : ''}
+                  </div>
+                </div>
+                <div className={statCard}>
+                  <div className="font-mono text-lg font-bold tabular-nums">
+                    {hist.bestCampaign ? hist.bestCampaign.points : '—'}
+                  </div>
+                  <div className={statLabel}>{S.result.bestCampaign}</div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Contador */}
         <div className="mb-4 text-center">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {S.result.nextDraft}
-          </div>
+          <div className={statLabel}>{S.result.nextDraft}</div>
           <div className="font-mono text-xl font-bold">{fmtCountdown(countdown)}</div>
         </div>
 

@@ -1,12 +1,76 @@
-import type { Player } from '../engine/types'
+import type { BracketResult, Player } from '../engine/types'
+
+const clamp = (x: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, x))
 
 /**
- * "Overall" de exibição de um jogador: média dos 7 ratings, arredondada.
- * É cálculo puro de UI (não vive no engine). Usado no draft e no bracket.
+ * "Índice de craque" — overall de exibição de um jogador.
+ *
+ * Média dos 5 maiores ratings (descarta os 2 piores, ex. 3pt de pivô, que afundam
+ * lendas defensivas/antigas), reescalada para dar impacto: craques passam de 90 e
+ * reservas ficam nos 60. É cálculo puro de UI; o motor segue lendo os ratings crus.
  */
 export function overall(p: Player): number {
-  const r = p.ratings
-  return Math.round(
-    (r.speed + r.shooting + r.threePoint + r.defense + r.passing + r.rebounding + r.clutch) / 7,
-  )
+  const sorted = Object.values(p.ratings).sort((a, b) => b - a)
+  const best5 = (sorted[0] + sorted[1] + sorted[2] + sorted[3] + sorted[4]) / 5
+  return clamp(Math.round(1.35 * best5 - 25.5), 40, 99)
+}
+
+/** Estatísticas de um jogador ao longo de UMA campanha (o playoff do dia). */
+export interface PlayerCampaign {
+  playerId: string
+  name: string
+  points: number
+  games: number
+  ppg: number
+  best: number
+}
+
+export interface CampaignStats {
+  byPlayer: Map<string, PlayerCampaign>
+  mvpId: string | null
+  totalPoints: number
+  totalGames: number
+  recordGame: { playerId: string; name: string; points: number } | null
+}
+
+/**
+ * Agrega os box scores de todos os jogos da campanha (todas as rodadas) por jogador:
+ * pontos totais, jogos, PPG, maior jogo; além de MVP (cestinha), totais e recorde.
+ */
+export function campaignStats(bracket: BracketResult): CampaignStats {
+  const byPlayer = new Map<string, PlayerCampaign>()
+  let totalGames = 0
+  let recordGame: CampaignStats['recordGame'] = null
+
+  for (const round of bracket.rounds) {
+    for (const game of round.games) {
+      totalGames += 1
+      for (const e of game.boxScore) {
+        const cur =
+          byPlayer.get(e.playerId) ??
+          { playerId: e.playerId, name: e.name, points: 0, games: 0, ppg: 0, best: 0 }
+        cur.points += e.points
+        cur.games += 1
+        cur.best = Math.max(cur.best, e.points)
+        byPlayer.set(e.playerId, cur)
+        if (!recordGame || e.points > recordGame.points) {
+          recordGame = { playerId: e.playerId, name: e.name, points: e.points }
+        }
+      }
+    }
+  }
+
+  let mvpId: string | null = null
+  let totalPoints = 0
+  let bestTotal = -1
+  for (const c of byPlayer.values()) {
+    c.ppg = c.games > 0 ? c.points / c.games : 0
+    totalPoints += c.points
+    if (c.points > bestTotal) {
+      bestTotal = c.points
+      mvpId = c.playerId
+    }
+  }
+
+  return { byPlayer, mvpId, totalPoints, totalGames, recordGame }
 }
