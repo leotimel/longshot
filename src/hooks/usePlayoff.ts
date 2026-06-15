@@ -28,6 +28,11 @@ export function usePlayoff(date: string) {
   const [stats, setStats] = useState<Stats>(() => loadStats())
   // true só na sessão que acabou de confirmar → habilita revelação gradual.
   const [justConfirmed, setJustConfirmed] = useState(false)
+  // Enquanto revela o playoff jogo a jogo, NÃO mostrar o resultado/XP de hoje
+  // (selo, modal). `prevStats` = foto da carreira ANTES de hoje.
+  const [revealing, setRevealing] = useState(false)
+  const [prevStats, setPrevStats] = useState<Stats | null>(null)
+  const completeReveal = useCallback(() => setRevealing(false), [])
 
   // Quinteto travado do dia, reconstruído a partir dos ids salvos.
   const team = useMemo<Player[] | undefined>(() => {
@@ -55,9 +60,11 @@ export function usePlayoff(date: string) {
         champion: result.champion,
         badge: roundsWon > 0 ? roundsWon - 1 : null,
       }
+      setPrevStats(loadStats()) // foto da carreira ANTES de gravar hoje
       setStats(confirmDay(record))
       setDay(record)
       setJustConfirmed(true)
+      setRevealing(true)
     },
     [date],
   )
@@ -70,6 +77,17 @@ export function usePlayoff(date: string) {
     return level.level > levelForXp(level.totalXp - todayXp).level
   }, [day, level, todayXp])
 
+  // Valores de EXIBIÇÃO: durante a revelação gradual mostram a carreira pré-hoje
+  // (sem o resultado/XP do dia); ao terminar (completeReveal) passam a incluir hoje.
+  const displayStats = revealing && prevStats ? prevStats : stats
+  const displayDay = revealing ? undefined : day
+  const displayLevel = useMemo<LevelInfo>(
+    () => levelForXp(totalXpFromHistory(Object.values(displayStats.history))),
+    [displayStats],
+  )
+  const displayLeveledUp = revealing ? false : leveledUp
+  const displayTodayXp = revealing ? 0 : todayXp
+
   return {
     draft,
     locked: day !== undefined,
@@ -80,6 +98,12 @@ export function usePlayoff(date: string) {
     level,
     todayXp,
     leveledUp,
+    displayStats,
+    displayDay,
+    displayLevel,
+    displayLeveledUp,
+    displayTodayXp,
+    completeReveal,
     confirm,
     justConfirmed,
   }

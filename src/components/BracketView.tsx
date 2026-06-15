@@ -5,6 +5,7 @@ import { strings as S } from '../lib/strings'
 import { overall, campaignStats } from '../lib/playerStats'
 import { GameFeed } from './GameFeed'
 import { LevelBadge } from './LevelBadge'
+import { TeamStats } from './TeamStats'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
@@ -77,6 +78,10 @@ export function BracketView({
             {S.bracket.vs(shortName(opponents[view.round].name))}
           </span>
         </header>
+        <TeamStats
+          team={opponents[view.round]}
+          title={`${opponents[view.round].name} ${opponents[view.round].season}`}
+        />
         <GameFeed
           key={`p-${view.round}-${view.game}`}
           game={series.games[view.game]}
@@ -351,6 +356,9 @@ export function BracketView({
                     <span className="shrink-0 text-[10px] font-semibold uppercase text-accent">
                       {S.bracket.toPlay}
                     </span>
+                  </div>
+                  <div className="mb-2">
+                    <TeamStats team={opp} title={`${opp.name} ${opp.season}`} />
                   </div>
                   <div className="flex gap-2">
                     <button

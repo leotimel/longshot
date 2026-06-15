@@ -5,8 +5,7 @@ import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall } from '../lib/playerStats'
 import { LevelBadge } from './LevelBadge'
-
-const TEAM_RATING_KEYS = ['offense', 'defense', 'pace', 'threePointRate', 'clutch'] as const
+import { TeamStats } from './TeamStats'
 
 function topRatings(p: Player, n: number): { label: string; value: number }[] {
   return (Object.keys(p.ratings) as (keyof PlayerRatings)[])
@@ -18,18 +17,6 @@ function topRatings(p: Player, n: number): { label: string; value: number }[] {
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 const byPosition = (a: Player, b: Player) =>
   POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position)
-
-function RatingBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center gap-2 text-[11px]">
-      <span className="w-16 shrink-0 font-medium uppercase tracking-wide text-muted">{label}</span>
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface2">
-        <div className="h-full rounded-full bg-accent" style={{ width: `${value}%` }} />
-      </div>
-      <span className="w-6 shrink-0 text-right font-mono font-semibold">{value}</span>
-    </div>
-  )
-}
 
 function PlayerCard({
   player,
@@ -166,15 +153,8 @@ export function DraftScreen({
             </li>
           ))}
         </ol>
-        <div className="mt-2 rounded-lg border border-line bg-surface p-2.5 shadow-sm">
-          <div className="mb-1 text-[11px] font-semibold">
-            {S.rounds.names[0]} · {fr.name} {fr.season}
-          </div>
-          <div className="flex flex-col gap-1">
-            {TEAM_RATING_KEYS.map((key) => (
-              <RatingBar key={key} label={S.teamRatings[key]} value={fr.teamRatings[key]} />
-            ))}
-          </div>
+        <div className="mt-2">
+          <TeamStats team={fr} title={`${S.rounds.names[0]} · ${fr.name} ${fr.season}`} />
         </div>
       </section>
 

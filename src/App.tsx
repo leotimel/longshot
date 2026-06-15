@@ -21,8 +21,22 @@ function todayISO(): string {
 
 function App() {
   const date = todayISO()
-  const { draft, locked, day, team, bracket, stats, level, todayXp, leveledUp, confirm, justConfirmed } =
-    usePlayoff(date)
+  const {
+    draft,
+    locked,
+    day,
+    team,
+    bracket,
+    stats,
+    displayStats,
+    displayDay,
+    displayLevel,
+    displayLeveledUp,
+    displayTodayXp,
+    completeReveal,
+    confirm,
+    justConfirmed,
+  } = usePlayoff(date)
   const [statsOpen, setStatsOpen] = useState(false)
   const [showHelp, setShowHelp] = useState(() => !hasOnboarded())
 
@@ -67,10 +81,13 @@ function App() {
           bracket={bracket}
           opponents={draft.bracket}
           team={team}
-          level={level}
+          level={displayLevel}
           frameRing={frameById(frame).ring}
           gradual={justConfirmed}
-          onPlayoffEnd={() => setStatsOpen(true)}
+          onPlayoffEnd={() => {
+            completeReveal()
+            setStatsOpen(true)
+          }}
           onOpenStats={() => setStatsOpen(true)}
           onOpenHelp={() => setShowHelp(true)}
         />
@@ -80,18 +97,18 @@ function App() {
           onStartPlayoff={handleStart}
           onOpenStats={() => setStatsOpen(true)}
           onOpenHelp={() => setShowHelp(true)}
-          level={level}
+          level={displayLevel}
           challengeTarget={challengeBanner}
         />
       )}
 
       {statsOpen && (
         <ResultModal
-          stats={stats}
-          day={day}
-          level={level}
-          leveledUp={leveledUp}
-          todayXp={todayXp}
+          stats={displayStats}
+          day={displayDay}
+          level={displayLevel}
+          leveledUp={displayLeveledUp}
+          todayXp={displayTodayXp}
           skin={skin}
           frame={frame}
           onChooseSkin={chooseSkin}
