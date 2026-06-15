@@ -157,6 +157,7 @@ export const strings = {
   tactics: {
     fichas: (n: number) => `📋 ${n}`,
     fichasLabel: 'Fichas do técnico',
+    prepare: 'Prancheta · prepare a série',
     scheme: 'Esquema',
     schemes: {
       acelerar: 'Acelerar',
@@ -171,19 +172,56 @@ export const strings = {
       garrafao: '+Garrafão · −Bola de 3',
     } as Record<'acelerar' | 'travar' | 'isolar' | 'garrafao', string>,
     timeout: '⏱️ Timeout',
-    timeoutHint: 'Vira o resto da série (+clutch +cesta +defesa)',
+    timeoutHint: 'Turbina os próximos jogos da série (+clutch, +cesta, +defesa)',
     takeover: '👑 Takeover',
-    takeoverHint: 'Seu astro assume o próximo jogo',
+    takeoverHint: 'Seu craque assume o próximo jogo (muito mais pontos e clutch)',
     sub: '🔄 Sexto homem',
     subActive: (name: string) => `🔄 ${name} em quadra`,
-    cost: '1 📋',
-    down: 'Atrás na série — vire o jogo:',
+    subHint: 'Entra no lugar do titular da posição pelo resto da série',
+    cost: '1 ficha',
+    costToken: '1 📋',
+    down: (pw: number, ow: number) => `Atrás ${pw}-${ow}! Hora de reagir:`,
+    reactWhen: '⏱️ Timeout e 👑 Takeover ficam disponíveis quando você está atrás na série.',
     noTokens: 'Sem fichas',
+    noSixth: 'Escale um reserva no draft',
+    help: 'Como funciona',
     // Passo do draft
     sixthManStep: 'Sexto homem (opcional)',
     sixthManExplain: 'Escolha um reserva para poder substituí-lo numa série — ou pule.',
     skip: 'Pular',
     chosen: (name: string) => `Reserva: ${name}`,
+    // Guia da prancheta
+    guide: {
+      title: '📋 Prancheta do técnico',
+      budget: 'Você tem 3 fichas no playoff inteiro. Cada ação custa 1 — escolha bem.',
+      items: [
+        {
+          icon: '🧩',
+          name: 'Esquema da série',
+          effect: 'Um foco com trade-off: acelerar, travar, isolar o craque ou dominar o garrafão.',
+          when: 'No card do round, antes de jogar.',
+        },
+        {
+          icon: '⏱️',
+          name: 'Timeout',
+          effect: 'Turbina os próximos jogos da série (+clutch, +cesta, +defesa).',
+          when: 'Quando você está atrás na série.',
+        },
+        {
+          icon: '👑',
+          name: 'Takeover do craque',
+          effect: 'Seu astro assume o próximo jogo (muito mais pontos e clutch).',
+          when: 'Quando está atrás · 1× no playoff.',
+        },
+        {
+          icon: '🔄',
+          name: 'Sexto homem',
+          effect: 'O reserva entra no lugar do titular da posição pelo resto da série.',
+          when: 'Se você escalou um reserva no draft.',
+        },
+      ],
+      gotIt: 'Entendi',
+    },
   },
 
   onboarding: {
@@ -191,6 +229,9 @@ export const strings = {
     rule: 'Escolha seu quinteto. Enfrente os maiores times da história.',
     detail:
       'Todo dia você drafta 5 jogadores e sobe 4 rodadas de playoff (melhor de 7) contra times lendários. Cada rodada vencida vale um selo.',
+    coachTitle: '📋 Prancheta do técnico',
+    coach:
+      'Você tem 3 fichas no playoff para virar uma série: Esquema, Timeout, Takeover e Sexto homem. Use quando estiver perdendo.',
     gotIt: 'Entendi',
   },
 }

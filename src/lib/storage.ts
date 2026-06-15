@@ -146,6 +146,25 @@ export function setOnboarded(): void {
   }
 }
 
+const COACHTIP_KEY = 'longshot:coachtip:v1'
+
+/** O jogador já viu o guia da prancheta (abre sozinho na 1ª vez)? */
+export function hasSeenCoachTip(): boolean {
+  try {
+    return localStorage.getItem(COACHTIP_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function setSeenCoachTip(): void {
+  try {
+    localStorage.setItem(COACHTIP_KEY, '1')
+  } catch {
+    // ignora (quota cheia / modo privado)
+  }
+}
+
 const PLAYER_KEY = 'longshot:player:v1'
 
 /**

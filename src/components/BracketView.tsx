@@ -9,10 +9,12 @@ import type {
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall, campaignStats } from '../lib/playerStats'
+import { hasSeenCoachTip, setSeenCoachTip } from '../lib/storage'
 import { GameFeed } from './GameFeed'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats } from './TeamStats'
 import { ComebackTactics, RoundTactics } from './CoachActions'
+import { CoachGuide } from './CoachGuide'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
@@ -62,7 +64,17 @@ export function BracketView({
   const { rounds, champion } = bracket
   const [revealed, setRevealed] = useState(() => (gradual ? 0 : rounds.length))
   const [view, setView] = useState<View>({ kind: 'overview' })
+  // Guia abre sozinho na 1ª vez que o jogador entra num playoff (decisão no init).
+  const [guideOpen, setGuideOpen] = useState(() => gradual && !!onTactic && !hasSeenCoachTip())
   const endedRef = useRef(false)
+
+  // Marca como visto ao abrir → não auto-abre nos próximos playoffs.
+  useEffect(() => {
+    if (guideOpen) setSeenCoachTip()
+  }, [guideOpen])
+
+  const openGuide = () => setGuideOpen(true)
+  const guide = guideOpen ? <CoachGuide onClose={() => setGuideOpen(false)} /> : null
 
   useEffect(() => {
     if (gradual && !endedRef.current && revealed >= rounds.length) {
@@ -121,8 +133,10 @@ export function BracketView({
             fichas={fichas}
             takeoverDone={takeoverDone}
             onTactic={onTactic}
+            onHelp={openGuide}
           />
         )}
+        {guide}
       </main>
     )
   }
@@ -212,12 +226,15 @@ export function BracketView({
         <div className="flex items-center gap-1.5">
           {level && onOpenStats ? <LevelBadge level={level} onClick={onOpenStats} /> : <span className="min-w-11" />}
           {gradual && (
-            <span
+            <button
+              type="button"
+              onClick={openGuide}
+              aria-label={S.tactics.help}
               title={S.tactics.fichasLabel}
-              className="inline-flex min-h-11 items-center rounded-lg border border-line px-2 font-display text-xs font-bold text-accent"
+              className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-line px-2 font-display text-xs font-bold text-accent"
             >
-              {S.tactics.fichas(fichas)}
-            </span>
+              {S.tactics.fichas(fichas)} <span className="not-italic">ⓘ</span>
+            </button>
           )}
         </div>
         <h1 className="font-display flex-1 text-center text-2xl font-bold uppercase tracking-wide">{S.bracket.title}</h1>
@@ -405,6 +422,7 @@ export function BracketView({
                       fichas={fichas}
                       sixthMan={sixthMan}
                       onTactic={onTactic}
+                      onHelp={openGuide}
                     />
                   )}
                   <div className="flex gap-2">
@@ -446,6 +464,7 @@ export function BracketView({
           )
         })}
       </ol>
+      {guide}
     </main>
   )
 }
