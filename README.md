@@ -5,13 +5,14 @@ sorteados** e você monta seu quinteto escolhendo **1 jogador de cada time** (um
 posição por vez), conhece os adversários **antes** de escolher, e assiste seu time
 tentar vencer um **playoff melhor de 7** — 4 rodadas (First Round → Second Round →
 Conference Finals → Finals) contra times históricos. Simulação automática estilo
-2K, com box score, play-by-play resumido e momentum. Igual ao Wordle: **os mesmos
-adversários para todo mundo no dia**, fácil de comparar e compartilhar.
+2K, com box score, play-by-play resumido e momentum — e uma **prancheta de técnico**
+para virar a série quando a coisa aperta. Igual ao Wordle: **os mesmos adversários
+para todo mundo no dia**, fácil de comparar e compartilhar.
 
 > **▶️ Jogar:** **[playlongshot.vercel.app](https://playlongshot.vercel.app)**
 >
 > Sem backend, sem login, sem banco. Estado 100% em `localStorage`. Adversários
-> determinísticos pela data; o draft é sorteado por jogador — mesmo time, mesmo resultado.
+> determinísticos pela data; o resultado é reproduzível por **time + data + táticas**.
 
 ---
 
@@ -21,14 +22,18 @@ adversários para todo mundo no dia**, fácil de comparar e compartilhar.
    aparecem no topo, com os ratings do First Round à mostra.
 2. **Drafte por elenco** (~30s): aparece o starting 5 de um time histórico; escolha
    **1 jogador**. A posição trava e o próximo time não a oferece mais — até montar
-   os 5 (um por posição). Não gostou? **Re-sorteie** o time (1× por dia).
+   os 5 (um por posição). Não gostou? **Re-sorteie** o time (1× por dia). Opcional:
+   escale um **sexto homem** (reserva) para poder substituir durante uma série.
 3. **Inicie o Playoff** — decisão irreversível por hoje.
-4. **Assista no seu ritmo:** avance **round a round**; em cada um jogue **partida por
-   partida** (placar, play-by-play e box score, com "acelerar pro fim") ou **simule o
-   round inteiro**. Os rounds que você ainda não alcançou ficam ocultos.
-5. **Colecione selos** por rodada máxima vencida — 🥉 First Round · 🥈 Conference
-   Semis · 🥇 Conference Finals · 🏆 Champion — mantenha o **streak** e
-   **compartilhe** o resultado estilo Wordle (sem revelar os adversários).
+4. **Assista no seu ritmo:** avance **round a round**; em cada um veja o **scouting
+   do adversário** e jogue **partida por partida** (placar, play-by-play e box score,
+   com "acelerar pro fim") ou **simule o round inteiro**. Rounds não alcançados ficam ocultos.
+5. **Use a prancheta** (3 fichas no playoff inteiro): **Esquema da série**, **Timeout**
+   (comeback quando está perdendo), **Takeover do craque** e **Sexto homem** — cada ação
+   tem um custo e um trade-off.
+6. **Evolua e colecione:** ganhe **XP/níveis** (patentes de carreira), **selos** por
+   rodada máxima vencida (🥉🥈🥇🏆), desbloqueie **cosméticos** (cores, temas, molduras),
+   mantenha o **streak** e **compartilhe** o resultado estilo Wordle.
 
 ---
 
@@ -49,11 +54,11 @@ Nada de `Math.random`. O acaso vem de um RNG **semeado**:
 Os **adversários** são definidos só pela data (iguais para todos — sustentam o
 "todo mundo enfrentou o Bulls 96 nas Finals" do share), enquanto a **sequência de
 times do draft** (com elencos em [`data/rosters.ts`](src/engine/data/rosters.ts)) é
-sorteada por jogador. Resultado: **mesmo time → mesmo bracket, sempre**.
+sorteada por jogador. Resultado: **mesmo time + data + táticas → mesmo bracket, sempre**.
 
 ### Simulação de um jogo — [`sim.ts`](src/engine/sim.ts)
-`simulateGame(playerTeam, opponent, seed)` joga **~100 posses por time** (o ritmo
-escala com o `pace` do time histórico) e devolve placar, play-by-play e box score.
+`simulateGame(playerTeam, opponent, seed, adjust?)` joga **~100 posses por time** (o
+ritmo escala com o `pace` do time histórico) e devolve placar, play-by-play e box score.
 
 Cada posse é um sorteio em cascata, com probabilidades **derivadas dos ratings**:
 
@@ -73,15 +78,38 @@ pontuam em nível de equipe (`offense` vs. defesa agregada do quinteto).
   (um bônus calibrado), então você bate os times fracos e tem chance real contra os
   juggernauts — sem nunca ser favorito garantido.
 
-Calibrado num CHECKPOINT lendo dezenas de play-by-plays: placares **~95–110 por
-time**, arremessos de 3 por era, e um gradiente de força crível (o melhor time
-de todos os tempos ganha mais, mas não sempre). Cada jogo simula em **< 5 ms**.
+### Táticas determinísticas — [`tactics.ts`](src/engine/tactics.ts)
+O parâmetro **opcional** `adjust?: GameAdjust` aplica deltas ao time naquele jogo
+(defesa/ritmo/clutch/acerto/3pt, foco no craque, troca pelo sexto homem). As
+"táticas" do jogador (`SeriesTactics`/`BracketTactics`) viram esses ajustes por jogo
+de forma determinística — **sem táticas, o resultado é byte-a-byte igual ao baseline**,
+então a prancheta nunca compromete a reprodutibilidade.
 
 ### Série e bracket — [`series.ts`](src/engine/series.ts) · [`bracket.ts`](src/engine/bracket.ts)
 - `simulateSeries` joga **melhor de 7** (cada jogo com sua própria seed derivada);
   empates de placar são resolvidos por prorrogação até haver um vencedor.
-- `simulateBracket` carrega os 4 adversários do dia e simula as séries em
-  sequência, parando na derrota. `champion` = venceu as quatro.
+- `simulateBracket(team, date, tactics?, sixthMan?)` carrega os 4 adversários do dia e
+  simula as séries em sequência, parando na derrota. `champion` = venceu as quatro.
+
+---
+
+## ✨ Progressão & meta
+
+Tudo **derivado do histórico** (nada de simulação é persistido), em `localStorage`:
+
+- **Overall "índice de craque"** — média dos melhores ratings, esticada: lendas passam
+  de 90, reservas ficam nos 60, dando impacto ao draft ([`lib/playerStats.ts`](src/lib/playerStats.ts)).
+- **Estatísticas da campanha** (na tela final): PPG por jogador, MVP/cestinha do dia,
+  totais e recorde de jogo.
+- **Histórico de jogadores** (no 📊): cestinhas de todos os tempos, mais escalados,
+  recordes e resumo de uso, **re-simulando** cada dia ([`lib/playerHistory.ts`](src/lib/playerHistory.ts)).
+- **Níveis & XP** ([`lib/level.ts`](src/lib/level.ts)): XP por quão longe você foi no
+  playoff; patentes de carreira (Rookie → … → G.O.A.T.).
+- **Cosméticos desbloqueáveis por nível**: cores de acento e **temas completos**
+  ([`lib/skins.ts`](src/lib/skins.ts), via variáveis CSS `data-theme`) e **molduras**
+  de card ([`lib/frames.ts`](src/lib/frames.ts)).
+- **Share Wordle-style** ([`lib/share.ts`](src/lib/share.ts)): 🟩/🟥 por rodada + selo +
+  prévia do seu quinteto, **sem revelar os adversários**; marca 📋 quando você usou a prancheta.
 
 ---
 
@@ -90,7 +118,7 @@ de todos os tempos ganha mais, mas não sempre). Cada jogo simula em **< 5 ms**.
 ```
 UI (components/ · hooks/)  ──importa──▶  engine/ (TS puro)
         │                                    ▲
-        └────────── lib/ (storage, share) ───┘
+        └────────── lib/ (storage, share…) ──┘
 ```
 
 **Regra inviolável:** `engine/` nunca importa de React, do DOM ou da UI — a
@@ -100,17 +128,19 @@ convenção.
 
 | Camada | Papel |
 |--------|------|
-| [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times históricos), seed, RNG, draft, simulação, bracket |
-| [`src/lib/`](src/lib/) | `storage` (localStorage), `share`/`challenge` (Wordle + link), `badges` |
-| [`src/hooks/`](src/hooks/) | `usePlayoff` orquestra draft → trava → simulação → persistência |
-| [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `ResultModal`, `Onboarding` |
+| [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times), seed, RNG, draft, simulação, **táticas**, série, bracket |
+| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `level`, `skins`, `frames`, `tactics` |
+| [`src/hooks/`](src/hooks/) | `usePlayoff` orquestra draft → trava → simulação reativa (táticas) → persistência |
+| [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `TeamStats`, `CoachActions`, `LevelBadge`, `ResultModal`, `Onboarding` |
 
 ---
 
 ## 🧱 Stack
 
-Vite · React · TypeScript (modo `strict`) · TailwindCSS v4 · Vitest. Visual
-retrô anos 90, mobile-first, tema claro/escuro do sistema.
+Vite · React · TypeScript (modo `strict`) · TailwindCSS v4 · Vitest. Mobile-first,
+tema claro/escuro do sistema. As cores são **tokens semânticos** (variáveis CSS via
+`@theme` + `light-dark()`); o visual padrão é o **Hardwood clássico** e há **skins
+desbloqueáveis** (`data-theme`).
 
 ## 🚀 Rodando localmente
 
@@ -123,7 +153,7 @@ npm run build      # gera dist/ (typecheck + build de produção)
 ```
 
 O motor é coberto por testes determinísticos; a UI por testes em jsdom
-(Testing Library). **56 testes** no total.
+(Testing Library). **82 testes** no total.
 
 ## ☁️ Deploy
 
