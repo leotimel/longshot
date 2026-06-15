@@ -2,10 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 import { dailyDraft } from '../engine/draft'
 import { simulateBracket } from '../engine/bracket'
 import { playerById } from '../engine/data/rosters'
-import type { BracketResult, Player } from '../engine/types'
+import type { BracketResult, BracketTactics, Player, SeriesTactics } from '../engine/types'
 import { levelForXp, totalXpFromHistory, xpForDay, type LevelInfo } from '../lib/level'
+import { COACH_TOKENS, takeoverUsed, tokensLeft, tokensSpent } from '../lib/tactics'
 import {
   confirmDay,
+  finalizeDay,
   getDay,
   getPlayerSeed,
   loadStats,
@@ -13,61 +15,79 @@ import {
   type Stats,
 } from '../lib/storage'
 
+function badgeFor(result: BracketResult): { finalRound: number; champion: boolean; badge: number | null } {
+  const roundsWon = result.rounds.filter((r) => r.winner === 'player').length
+  return { finalRound: result.rounds.length, champion: result.champion, badge: roundsWon > 0 ? roundsWon - 1 : null }
+}
+
 /**
- * Orquestra o dia: carrega o draft (times por jogador, adversários pela data),
- * sabe se já foi confirmado (→ direto ao bracket), trava o time ao confirmar,
- * roda o motor e salva resultado + selo.
- *
- * O bracket é recomputado a partir dos ids salvos (via `playerById`) — nada de
- * simulação é persistido.
+ * Orquestra o dia: draft, trava o time ao confirmar, roda o motor e salva o
+ * resultado. A "prancheta" (táticas) é aplicada DURANTE a revelação e recompõe o
+ * bracket; o resultado final (com táticas) é gravado ao terminar.
  */
 export function usePlayoff(date: string) {
   const playerSeed = useMemo(() => getPlayerSeed(), [])
   const draft = useMemo(() => dailyDraft(date, playerSeed), [date, playerSeed])
   const [day, setDay] = useState<DayRecord | undefined>(() => getDay(date))
   const [stats, setStats] = useState<Stats>(() => loadStats())
-  // true só na sessão que acabou de confirmar → habilita revelação gradual.
   const [justConfirmed, setJustConfirmed] = useState(false)
-  // Enquanto revela o playoff jogo a jogo, NÃO mostrar o resultado/XP de hoje
-  // (selo, modal). `prevStats` = foto da carreira ANTES de hoje.
   const [revealing, setRevealing] = useState(false)
   const [prevStats, setPrevStats] = useState<Stats | null>(null)
-  const completeReveal = useCallback(() => setRevealing(false), [])
+  // Táticas do dia (vivas durante a revelação; em revisita vêm do registro salvo).
+  const [tactics, setTactics] = useState<BracketTactics>(() => getDay(date)?.tactics ?? {})
 
-  // Quinteto travado do dia, reconstruído a partir dos ids salvos.
+  // Quinteto travado + sexto homem, reconstruídos dos ids salvos.
   const team = useMemo<Player[] | undefined>(() => {
     if (!day) return undefined
-    const players = day.team
-      .map((id) => playerById(id))
-      .filter((p): p is Player => p !== undefined)
+    const players = day.team.map((id) => playerById(id)).filter((p): p is Player => p !== undefined)
     return players.length === day.team.length ? players : undefined
   }, [day])
+  const sixthMan = useMemo(() => (day?.sixthManId ? playerById(day.sixthManId) : undefined), [day])
 
   const bracket = useMemo<BracketResult | null>(() => {
     if (!team) return null
-    return simulateBracket(team, date)
-  }, [team, date])
+    return simulateBracket(team, date, tactics, sixthMan)
+  }, [team, date, tactics, sixthMan])
 
   const confirm = useCallback(
-    (team: Player[]) => {
+    (picked: Player[], sixthManId?: string) => {
       if (getDay(date)) return // já travado: não permite refazer
-      const result = simulateBracket(team, date)
-      const roundsWon = result.rounds.filter((r) => r.winner === 'player').length
+      const result = simulateBracket(picked, date) // baseline (sem táticas ainda)
       const record: DayRecord = {
         date,
-        team: team.map((p) => p.id),
-        finalRound: result.rounds.length,
-        champion: result.champion,
-        badge: roundsWon > 0 ? roundsWon - 1 : null,
+        team: picked.map((p) => p.id),
+        sixthManId,
+        ...badgeFor(result),
       }
       setPrevStats(loadStats()) // foto da carreira ANTES de gravar hoje
       setStats(confirmDay(record))
       setDay(record)
+      setTactics({})
       setJustConfirmed(true)
       setRevealing(true)
     },
     [date],
   )
+
+  /** Aplica/atualiza uma tática de uma rodada (respeitando o orçamento de fichas). */
+  const updateTactics = useCallback((round: number, patch: Partial<SeriesTactics>) => {
+    setTactics((prev) => {
+      const next = { ...prev, [round]: { ...prev[round], ...patch } }
+      if (tokensSpent(next) > COACH_TOKENS) return prev // sem ficha
+      return next
+    })
+  }, [])
+
+  /** Encerra a revelação: grava o resultado FINAL (com táticas) e revela o dia. */
+  const completeReveal = useCallback(() => {
+    if (day && team) {
+      const result = simulateBracket(team, date, tactics, sixthMan)
+      const finalRec: DayRecord = { ...day, ...badgeFor(result), tactics }
+      setStats(finalizeDay(finalRec))
+      setDay(finalRec)
+    }
+    setRevealing(false)
+  }, [day, team, date, tactics, sixthMan])
 
   // Nível derivado do histórico inteiro; XP de hoje e se o dia subiu o nível.
   const level = useMemo<LevelInfo>(() => levelForXp(totalXpFromHistory(Object.values(stats.history))), [stats])
@@ -77,8 +97,7 @@ export function usePlayoff(date: string) {
     return level.level > levelForXp(level.totalXp - todayXp).level
   }, [day, level, todayXp])
 
-  // Valores de EXIBIÇÃO: durante a revelação gradual mostram a carreira pré-hoje
-  // (sem o resultado/XP do dia); ao terminar (completeReveal) passam a incluir hoje.
+  // Valores de EXIBIÇÃO: durante a revelação mostram a carreira pré-hoje.
   const displayStats = revealing && prevStats ? prevStats : stats
   const displayDay = revealing ? undefined : day
   const displayLevel = useMemo<LevelInfo>(
@@ -93,6 +112,7 @@ export function usePlayoff(date: string) {
     locked: day !== undefined,
     day,
     team,
+    sixthMan,
     bracket,
     stats,
     level,
@@ -103,6 +123,11 @@ export function usePlayoff(date: string) {
     displayLevel,
     displayLeveledUp,
     displayTodayXp,
+    // Prancheta
+    tactics,
+    fichas: tokensLeft(tactics),
+    takeoverDone: takeoverUsed(tactics),
+    updateTactics,
     completeReveal,
     confirm,
     justConfirmed,

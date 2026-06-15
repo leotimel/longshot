@@ -6,6 +6,8 @@
  * não pode ser refeito. Resiliente a dados ausentes/corrompidos.
  */
 
+import type { BracketTactics } from '../engine/types'
+
 const KEY = 'longshot:v2'
 
 /** Registro de um dia jogado. `badge`: 0=🥉 1=🥈 2=🥇 3=🏆, null se caiu no First Round. */
@@ -16,6 +18,10 @@ export interface DayRecord {
   finalRound: number
   champion: boolean
   badge: number | null
+  /** Táticas usadas (prancheta) — recompõem o resultado de forma determinística. */
+  tactics?: BracketTactics
+  /** Id do sexto homem draftado (reserva), se houver. */
+  sixthManId?: string
 }
 
 export interface Stats {
@@ -92,6 +98,28 @@ export function confirmDay(record: DayRecord): Stats {
   const next: Stats = {
     streak,
     bestStreak: Math.max(stats.bestStreak, streak),
+    badges,
+    history: { ...stats.history, [record.date]: record },
+  }
+  save(next)
+  return next
+}
+
+/**
+ * Reescreve o registro do dia com o resultado FINAL (após as táticas), ajustando
+ * a contagem de selos pelo delta (baseline → final). Streak já foi contado no
+ * confirm. Usado ao terminar a revelação do playoff.
+ */
+export function finalizeDay(record: DayRecord): Stats {
+  const stats = loadStats()
+  const prevBadge = stats.history[record.date]?.badge ?? null
+  const badges = [...stats.badges] as [number, number, number, number]
+  if (prevBadge !== record.badge) {
+    if (prevBadge !== null) badges[prevBadge] = Math.max(0, badges[prevBadge] - 1)
+    if (record.badge !== null) badges[record.badge] += 1
+  }
+  const next: Stats = {
+    ...stats,
     badges,
     history: { ...stats.history, [record.date]: record },
   }
