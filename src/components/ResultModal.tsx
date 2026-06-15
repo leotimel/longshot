@@ -82,9 +82,10 @@ export function ResultModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[90svh] w-full max-w-md flex-col overflow-y-auto rounded-xl border border-line bg-surface p-4 text-ink shadow-xl"
+        className="flex max-h-[90svh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-line bg-surface text-ink shadow-xl"
       >
-        {/* Nível & XP */}
+        <div className="flex flex-1 flex-col overflow-y-auto p-4">
+          {/* Nível & XP */}
         {level && (
           <div className="mb-3">
             {leveledUp && (
@@ -314,14 +315,15 @@ export function ResultModal({
           </div>
         )}
 
-        {/* Contador */}
-        <div className="mb-4 text-center">
-          <div className={statLabel}>{S.result.nextDraft}</div>
-          <div className="font-mono text-xl font-bold">{fmtCountdown(countdown)}</div>
+          {/* Contador */}
+          <div className="text-center">
+            <div className={statLabel}>{S.result.nextDraft}</div>
+            <div className="font-mono text-xl font-bold">{fmtCountdown(countdown)}</div>
+          </div>
         </div>
 
-        {/* Botões */}
-        <div className="flex gap-2">
+        {/* Botões — rodapé fixo (sempre visível, sem precisar rolar) */}
+        <div className="flex shrink-0 gap-2 border-t border-line bg-surface p-3">
           {day && onShare && (
             <button
               type="button"
