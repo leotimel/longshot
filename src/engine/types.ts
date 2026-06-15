@@ -91,3 +91,43 @@ export interface BracketResult {
   rounds: SeriesResult[]
   champion: boolean
 }
+
+/**
+ * Ajuste tático de UM jogo — deltas determinísticos aplicados ao time do jogador
+ * na simulação (a "prancheta do técnico"). Tudo opcional; ausência = jogo normal.
+ */
+export interface GameAdjust {
+  /** Δ na defesa agregada do time. */
+  defense?: number
+  /** Δ no nº de possessões (ritmo). */
+  pace?: number
+  /** Δ no clutch agregado do time. */
+  clutch?: number
+  /** Δ nas probabilidades de cesta do jogador (comeback). */
+  make?: number
+  /** Δ na taxa de tentativa de 3 (garrafão = −, ritmo = +). */
+  threeBias?: number
+  /** Jogador com uso ampliado (isolar/takeover). */
+  focusId?: string
+  /** Multiplicador de uso do `focusId`. */
+  focusBoost?: number
+  /** Quinteto substituto deste jogo (sexto homem). */
+  lineup?: Player[]
+}
+
+/** Esquemas de série (presets de trade-off). */
+export type SchemeId = 'acelerar' | 'travar' | 'isolar' | 'garrafao'
+
+/** Táticas de uma série (gatilhos por número de jogo, 1-based). */
+export interface SeriesTactics {
+  scheme?: SchemeId
+  /** Timeout vale do jogo `g` em diante. */
+  timeoutFromGame?: number
+  /** Takeover do craque vale só neste jogo. */
+  takeoverGame?: number
+  /** Sexto homem entra do jogo `g` em diante. */
+  sixthManFromGame?: number
+}
+
+/** Táticas do bracket inteiro, por índice de rodada (0–3). */
+export type BracketTactics = Record<number, SeriesTactics>

@@ -15,6 +15,7 @@
  */
 import type {
   BoxScoreEntry,
+  GameAdjust,
   GameResult,
   HistoricalTeam,
   Player,
@@ -102,31 +103,39 @@ export function simulateGame(
   playerTeam: Player[],
   opponent: HistoricalTeam,
   seed: number,
+  adjust?: GameAdjust,
 ): GameResult {
   const rng = mulberry32(seed)
 
-  // Agregados do time do jogador.
-  const teamDef = avg(playerTeam, 'defense')
-  const teamPassing = avg(playerTeam, 'passing')
-  const teamClutch = avg(playerTeam, 'clutch')
+  // Quinteto em quadra (sexto homem pode trocar uma posição) + deltas táticos.
+  const roster = adjust?.lineup ?? playerTeam
+  const makeAdj = adjust?.make ?? 0
+  const threeBias = adjust?.threeBias ?? 0
 
-  // Pesos de uso: estrelas pontuam mais (box score mais interessante).
-  const usage = playerTeam.map(
-    (p) => p.ratings.shooting + 0.4 * p.ratings.threePoint + 0.3 * p.ratings.speed,
-  )
+  // Agregados do time do jogador (com ajustes táticos).
+  const teamDef = avg(roster, 'defense') + (adjust?.defense ?? 0)
+  const teamPassing = avg(roster, 'passing')
+  const teamClutch = avg(roster, 'clutch') + (adjust?.clutch ?? 0)
+
+  // Pesos de uso: estrelas pontuam mais (box score mais interessante). O foco
+  // (isolar/takeover) amplia o uso de um jogador.
+  const usage = roster.map((p) => {
+    const base = p.ratings.shooting + 0.4 * p.ratings.threePoint + 0.3 * p.ratings.speed
+    return adjust?.focusId === p.id ? base * (adjust.focusBoost ?? 1) : base
+  })
 
   const opp = opponent.teamRatings
   const oppShort = shortName(opponent.name)
 
   const points = new Map<string, number>()
-  for (const p of playerTeam) points.set(p.id, 0)
+  for (const p of roster) points.set(p.id, 0)
 
   let playerScore = 0
   let oppScore = 0
   const plays: Play[] = []
 
   // ~100 posses/time (ritmo NBA). Clutch = ~2 min finais (escala com as posses).
-  const poss = Math.round(92 + (opp.pace / 100) * 14)
+  const poss = Math.max(40, Math.round(92 + (opp.pace / 100) * 14) + (adjust?.pace ?? 0))
   const clutchWindow = Math.max(2, Math.round(poss / 24))
 
   for (let m = 0; m < poss; m++) {
@@ -136,7 +145,7 @@ export function simulateGame(
     // ── Possessão do time do jogador (ataque vs defesa do histórico) ──
     const clutchP = isClutch ? (teamClutch - opp.clutch) / 400 : 0
     if (rng() >= clamp(0.12 + (opp.defense - teamPassing) / 500, 0.05, 0.24)) {
-      const shooter = weightedPick(playerTeam, usage, rng)
+      const shooter = weightedPick(roster, usage, rng)
       const sr = shooter.ratings
       let made = 0
       let three = false
@@ -145,12 +154,12 @@ export function simulateGame(
         const pFt = clamp(0.55 + sr.shooting / 250, 0.5, 0.92)
         if (rng() < pFt) made += 1
         if (rng() < pFt) made += 1
-      } else if (rng() < clamp(0.22 + (sr.threePoint - 55) / 180, 0.1, 0.58)) {
-        if (rng() < clamp(0.35 + (sr.threePoint - opp.defense) / 340 + clutchP + PLAYER_MAKE_BONUS, 0.24, 0.54)) {
+      } else if (rng() < clamp(0.22 + (sr.threePoint - 55) / 180 + threeBias, 0.1, 0.58)) {
+        if (rng() < clamp(0.35 + (sr.threePoint - opp.defense) / 340 + clutchP + PLAYER_MAKE_BONUS + makeAdj, 0.24, 0.54)) {
           made = 3
           three = true
         }
-      } else if (rng() < clamp(0.47 + (sr.shooting - opp.defense) / 300 + clutchP + PLAYER_MAKE_BONUS, 0.32, 0.7)) {
+      } else if (rng() < clamp(0.47 + (sr.shooting - opp.defense) / 300 + clutchP + PLAYER_MAKE_BONUS + makeAdj, 0.32, 0.7)) {
         made = 2
       }
       if (made > 0) {
@@ -191,7 +200,7 @@ export function simulateGame(
     }
   }
 
-  const boxScore: BoxScoreEntry[] = playerTeam.map((p) => ({
+  const boxScore: BoxScoreEntry[] = roster.map((p) => ({
     playerId: p.id,
     name: p.name,
     points: points.get(p.id) ?? 0,
