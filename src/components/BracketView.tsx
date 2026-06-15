@@ -421,6 +421,7 @@ export function BracketView({
                       tactics={tactics}
                       fichas={fichas}
                       sixthMan={sixthMan}
+                      team={team}
                       onTactic={onTactic}
                       onHelp={openGuide}
                     />

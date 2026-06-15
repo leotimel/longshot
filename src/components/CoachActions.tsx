@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import type { BracketTactics, Player, SeriesResult, SeriesTactics } from '../engine/types'
 import { SCHEME_IDS } from '../lib/tactics'
+import { teamTraits } from '../lib/scouting'
 import { strings as S } from '../lib/strings'
+import { TraitChips } from './TeamStats'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
@@ -35,13 +37,15 @@ export function RoundTactics({
   tactics,
   fichas,
   sixthMan,
+  team,
   onTactic,
   onHelp,
-}: Common & { sixthMan?: Player }) {
+}: Common & { sixthMan?: Player; team?: Player[] }) {
   const rt = tactics[round]
   const hasScheme = !!rt?.scheme
   const canScheme = hasScheme || fichas > 0
   const subbed = rt?.sixthManFromGame !== undefined
+  const yours = team ? teamTraits(team) : []
 
   return (
     <div className="mb-2 rounded-lg border border-line bg-surface2 p-2">
@@ -50,6 +54,13 @@ export function RoundTactics({
         fichas={fichas}
         onHelp={onHelp}
       />
+
+      {yours.length > 0 && (
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <span className="shrink-0 text-[10px] font-semibold uppercase text-muted">{S.tactics.yourTraits}</span>
+          <TraitChips traits={yours} />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-1">
         {SCHEME_IDS.map((id) => {

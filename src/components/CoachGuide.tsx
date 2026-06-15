@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { SCHEME_IDS } from '../lib/tactics'
 import { strings as S } from '../lib/strings'
 
 /** Guia (somente leitura) da prancheta: o que cada ação faz, custo e quando usar. */
@@ -43,6 +44,19 @@ export function CoachGuide({ onClose }: { onClose: () => void }) {
               </li>
             ))}
           </ul>
+
+          <div className="mt-1 rounded-lg border border-line bg-surface2 p-2.5">
+            <div className="font-semibold">{S.tactics.guide.chooseTitle}</div>
+            <p className="mt-0.5 text-[12px] text-muted">{S.tactics.guide.chooseHint}</p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {SCHEME_IDS.map((id) => (
+                <li key={id} className="text-[12px] leading-snug">
+                  <span className="font-semibold">{S.tactics.schemes[id]}</span> — {S.tactics.schemeDesc[id]}.{' '}
+                  <span className="text-accent">{S.tactics.schemeGood[id]}.</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <div className="shrink-0 border-t border-line bg-surface p-3">
           <button

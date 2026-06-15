@@ -166,11 +166,19 @@ export const strings = {
       garrafao: 'Garrafão',
     } as Record<'acelerar' | 'travar' | 'isolar' | 'garrafao', string>,
     schemeDesc: {
-      acelerar: '+Ritmo · −Defesa',
-      travar: '+Defesa · −Ritmo',
-      isolar: '+Astro · −Coletivo',
-      garrafao: '+Garrafão · −Bola de 3',
+      acelerar: 'Mais posses: mais cestas e zebra; defende pior',
+      travar: 'Jogo lento e travado; placar baixo',
+      isolar: 'Bola pro craque; o time pontua menos',
+      garrafao: 'Joga por dentro; quase sem bola de 3',
     } as Record<'acelerar' | 'travar' | 'isolar' | 'garrafao', string>,
+    schemeGood: {
+      acelerar: 'Bom contra times lentos',
+      travar: 'Bom contra ritmo ou ataque altos',
+      isolar: 'Bom contra defesas duras (se você tem 1 craque)',
+      garrafao: 'Bom contra quem chove de 3 / se você é fraco de 3',
+    } as Record<'acelerar' | 'travar' | 'isolar' | 'garrafao', string>,
+    oppTraits: 'Adversário',
+    yourTraits: 'Seu time',
     timeout: '⏱️ Timeout',
     timeoutHint: 'Turbina os próximos jogos da série (+clutch, +cesta, +defesa)',
     takeover: '👑 Takeover',
@@ -194,6 +202,8 @@ export const strings = {
     guide: {
       title: '📋 Prancheta do técnico',
       budget: 'Você tem 3 fichas no playoff inteiro. Cada ação custa 1 — escolha bem.',
+      chooseTitle: 'Qual esquema usar?',
+      chooseHint: 'Leia os traços do adversário (no scouting) e do seu time, e cruze com o efeito:',
       items: [
         {
           icon: '🧩',
