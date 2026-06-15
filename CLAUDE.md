@@ -26,7 +26,11 @@ login; estado em `localStorage`; deploy estático.
   então cada jogador drafta de times diferentes. Elencos em `data/rosters.ts`.
 - **Seed de cada série = `hash(data + ids do time + índice da rodada)`**. Sem
   `Math.random` no engine.
-- **Determinístico:** mesmo time (5 ids dos jogadores) + data = mesmo resultado.
+- **Determinístico:** mesmo time (5 ids dos jogadores) + data **+ táticas** = mesmo
+  resultado. A "prancheta" (esquema/timeout/takeover/sexto homem) é entrada opcional de
+  `simulateGame/Series/Bracket` (`GameAdjust`/`BracketTactics`); **sem táticas = baseline
+  idêntico**. Os adversários seguem definidos só pela data (mesmo gauntlet pra todos); o
+  resultado vira fruto das táticas do jogador.
 - Cada série termina entre **4 e 7 jogos**; o vencedor tem **exatamente 4**
   vitórias; o box score **soma o placar final**.
 
@@ -39,7 +43,11 @@ login; estado em `localStorage`; deploy estático.
   🥈 Conference Semis · 🥇 Conference Finals · 🏆 Champion. Acumulam no histórico;
   o share exibe o selo do dia.
 - **Share Wordle-style** (🟩 vitória / 🟥 derrota por rodada + selo) **sem
-  revelar** os adversários do dia.
+  revelar** os adversários do dia; prévia do próprio quinteto + 📋 quando usou táticas.
+- **Prancheta do técnico (reativa):** 3 fichas no playoff inteiro (escassez + trade-offs).
+  Esquema da série, Timeout (comeback quando perdendo), Takeover do craque (máx 1) e Sexto
+  homem (pick extra no draft). Aplicadas DURANTE a revelação; recomputam o bracket; o
+  resultado final + táticas são gravados ao terminar (`finalizeDay`).
 
 ## Convenções
 - **TypeScript strict.** Testes em **Vitest** (`npm run test:run`,
@@ -51,5 +59,4 @@ login; estado em `localStorage`; deploy estático.
   sem `tailwind.config.js`). Um prompt do playbook por vez; commit por fase.
 
 ## Não construir agora
-Multiplayer ao vivo, conta de usuário, banco de dados, substituições táticas,
-licença NBA, animações 3D.
+Multiplayer ao vivo, conta de usuário, banco de dados, licença NBA, animações 3D.

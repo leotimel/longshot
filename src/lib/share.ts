@@ -6,6 +6,7 @@ import type { Player } from '../engine/types'
 import { playerById } from '../engine/data/rosters'
 import { overall } from './playerStats'
 import type { DayRecord } from './storage'
+import { tokensSpent } from './tactics'
 import { BADGE_EMOJI } from './badges'
 
 /** Epoch do jogo: 2026-06-01 é o Longshot #1. */
@@ -58,7 +59,8 @@ function lineupLines(team: string[]): string[] {
 export function buildShareText(day: DayRecord, streak: number): string {
   const num = puzzleNumber(day.date)
   const selo = day.badge !== null ? BADGE_EMOJI[day.badge] : '💀'
-  const head = `Longshot #${num} · ${selo} · 🔥${streak} | ${bracketRow(day.finalRound, day.champion)}`
+  const coached = tokensSpent(day.tactics ?? {}) > 0 ? ' 📋' : '' // usou a prancheta
+  const head = `Longshot #${num} · ${selo} · 🔥${streak}${coached} | ${bracketRow(day.finalRound, day.champion)}`
   const preview = lineupLines(day.team)
   return preview.length > 0 ? `${head}\n${preview.join('\n')}` : head
 }
