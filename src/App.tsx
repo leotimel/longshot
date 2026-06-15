@@ -7,7 +7,9 @@ import { ResultModal } from './components/ResultModal'
 import { Onboarding } from './components/Onboarding'
 import { buildShareText, shareText } from './lib/share'
 import { challengeTarget, challengeUrl, readChallenge } from './lib/challenge'
-import { hasOnboarded, setOnboarded } from './lib/storage'
+import { applySkin } from './lib/skins'
+import { frameById } from './lib/frames'
+import { getFrame, getSkin, hasOnboarded, setFrame, setOnboarded, setSkin } from './lib/storage'
 
 /** Data local de hoje no formato YYYY-MM-DD. */
 function todayISO(): string {
@@ -19,9 +21,23 @@ function todayISO(): string {
 
 function App() {
   const date = todayISO()
-  const { draft, locked, day, team, bracket, stats, confirm, justConfirmed } = usePlayoff(date)
+  const { draft, locked, day, team, bracket, stats, level, todayXp, leveledUp, confirm, justConfirmed } =
+    usePlayoff(date)
   const [statsOpen, setStatsOpen] = useState(false)
   const [showHelp, setShowHelp] = useState(() => !hasOnboarded())
+
+  // Cosméticos selecionados (skin aplicado no boot em main.tsx; aqui reaplica ao trocar).
+  const [skin, setSkinState] = useState(getSkin)
+  const [frame, setFrameState] = useState(getFrame)
+  const chooseSkin = (id: string) => {
+    setSkin(id)
+    applySkin(id)
+    setSkinState(id)
+  }
+  const chooseFrame = (id: string) => {
+    setFrame(id)
+    setFrameState(id)
+  }
 
   const dismissHelp = () => {
     setOnboarded()
@@ -51,6 +67,8 @@ function App() {
           bracket={bracket}
           opponents={draft.bracket}
           team={team}
+          level={level}
+          frameRing={frameById(frame).ring}
           gradual={justConfirmed}
           onPlayoffEnd={() => setStatsOpen(true)}
           onOpenStats={() => setStatsOpen(true)}
@@ -62,6 +80,7 @@ function App() {
           onStartPlayoff={handleStart}
           onOpenStats={() => setStatsOpen(true)}
           onOpenHelp={() => setShowHelp(true)}
+          level={level}
           challengeTarget={challengeBanner}
         />
       )}
@@ -70,6 +89,13 @@ function App() {
         <ResultModal
           stats={stats}
           day={day}
+          level={level}
+          leveledUp={leveledUp}
+          todayXp={todayXp}
+          skin={skin}
+          frame={frame}
+          onChooseSkin={chooseSkin}
+          onChooseFrame={chooseFrame}
           onShare={handleShare}
           onClose={() => setStatsOpen(false)}
         />

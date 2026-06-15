@@ -135,3 +135,28 @@ export function getPlayerSeed(): string {
     return ''
   }
 }
+
+const SKIN_KEY = 'longshot:skin:v1'
+const FRAME_KEY = 'longshot:frame:v1'
+
+/** Cosmético selecionado (skin/moldura). Só a escolha persiste; o unlock é derivado do nível. */
+function getCosmetic(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+function setCosmetic(key: string, id: string): void {
+  try {
+    localStorage.setItem(key, id)
+  } catch {
+    // ignora (quota cheia / modo privado)
+  }
+}
+
+export const getSkin = (): string => getCosmetic(SKIN_KEY, 'hardwood')
+export const setSkin = (id: string): void => setCosmetic(SKIN_KEY, id)
+export const getFrame = (): string => getCosmetic(FRAME_KEY, 'none')
+export const setFrame = (id: string): void => setCosmetic(FRAME_KEY, id)

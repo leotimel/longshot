@@ -22,22 +22,19 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-xl border border-stone-300 bg-amber-50 p-5 text-stone-900 shadow-xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+        className="w-full max-w-md rounded-xl border border-line bg-surface p-5 text-ink shadow-xl"
       >
         <h2 className="font-display text-2xl font-bold uppercase tracking-wide">{S.onboarding.title}</h2>
 
         <p className="mt-3 text-lg font-semibold leading-snug">{S.onboarding.rule}</p>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">{S.onboarding.detail}</p>
+        <p className="mt-2 text-sm text-muted">{S.onboarding.detail}</p>
 
         {/* Caminho das 4 rodadas, cada uma com seu selo. */}
         <div className="mt-4 grid grid-cols-4 gap-1.5">
           {STEPS.map((i) => (
-            <div
-              key={i}
-              className="rounded-lg border border-stone-300 bg-stone-100 p-2 text-center dark:border-stone-700 dark:bg-stone-800/60"
-            >
+            <div key={i} className="rounded-lg border border-line bg-surface2 p-2 text-center">
               <div className="text-2xl leading-none">{S.badges.emoji[i]}</div>
-              <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+              <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-accent">
                 {S.rounds.tags[i]}
               </div>
             </div>
@@ -47,7 +44,7 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={onClose}
-          className="font-display mt-5 w-full rounded-lg bg-amber-700 py-3 text-lg font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-amber-800 active:bg-amber-900"
+          className="font-display mt-5 w-full rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
         >
           {S.onboarding.gotIt}
         </button>

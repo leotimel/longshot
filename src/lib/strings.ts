@@ -134,6 +134,26 @@ export const strings = {
     emptyHistory: 'Jogue alguns dias para acumular estatísticas dos jogadores.',
   },
 
+  level: {
+    tag: (n: number) => `Nv ${n}`,
+    word: 'Nível',
+    rank: 'Patente',
+    xp: 'XP',
+    toNext: (a: number, b: number) => `${a} / ${b} XP`,
+    leveledUp: 'Subiu de nível!',
+    todayXp: (n: number) => `+${n} XP hoje`,
+    badgeAria: (n: number) => `Nível ${n} — abrir progresso e estatísticas`,
+  },
+
+  cosmetics: {
+    skins: 'Visual',
+    frames: 'Moldura do quinteto',
+    locked: (lvl: number) => `🔒 Nv ${lvl}`,
+    accent: 'acento',
+    theme: 'tema',
+    apply: 'Aplicar',
+  },
+
   onboarding: {
     title: '🏀 Como jogar',
     rule: 'Escolha seu quinteto. Enfrente os maiores times da história.',

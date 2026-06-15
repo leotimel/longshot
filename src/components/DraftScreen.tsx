@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { POSITIONS, type Player, type PlayerRatings, type Position } from '../engine/types'
 import type { DailyDraft } from '../engine/draft'
+import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall } from '../lib/playerStats'
+import { LevelBadge } from './LevelBadge'
 
 const TEAM_RATING_KEYS = ['offense', 'defense', 'pace', 'threePointRate', 'clutch'] as const
 
@@ -20,11 +22,9 @@ const byPosition = (a: Player, b: Player) =>
 function RatingBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-2 text-[11px]">
-      <span className="w-16 shrink-0 font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
-        {label}
-      </span>
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
-        <div className="h-full rounded-full bg-amber-700" style={{ width: `${value}%` }} />
+      <span className="w-16 shrink-0 font-medium uppercase tracking-wide text-muted">{label}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface2">
+        <div className="h-full rounded-full bg-accent" style={{ width: `${value}%` }} />
       </div>
       <span className="w-6 shrink-0 text-right font-mono font-semibold">{value}</span>
     </div>
@@ -48,34 +48,30 @@ function PlayerCard({
       className={[
         'w-full rounded-lg border p-2.5 text-left transition',
         disabled
-          ? 'border-stone-300 bg-stone-200/60 opacity-60 dark:border-stone-700 dark:bg-stone-800/50'
-          : 'border-stone-300 bg-amber-50 shadow-sm hover:border-amber-600 hover:bg-amber-100 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-amber-950/30',
+          ? 'border-line bg-surface2 opacity-60'
+          : 'border-line bg-surface shadow-sm hover:border-accent hover:bg-accent-soft',
       ].join(' ')}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 rounded bg-amber-200 px-1 text-[10px] font-bold text-amber-900 dark:bg-amber-900/50 dark:text-amber-200">
+          <span className="shrink-0 rounded bg-accent-soft px-1 text-[10px] font-bold text-accent">
             {player.position}
           </span>
           <span className="truncate text-sm font-semibold leading-tight">{player.name}</span>
         </span>
-        <span className="font-display shrink-0 text-2xl font-bold leading-none text-amber-800 dark:text-amber-300">
+        <span className="font-display shrink-0 text-2xl font-bold leading-none text-accent">
           {overall(player)}
         </span>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-1">
-        <span className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">
-          {player.era}
-        </span>
+        <span className="text-[10px] uppercase tracking-wide text-muted">{player.era}</span>
         {disabled ? (
-          <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400">
-            · {S.draft.posTaken}
-          </span>
+          <span className="text-[10px] font-medium text-muted">· {S.draft.posTaken}</span>
         ) : (
           topRatings(player, 3).map((t) => (
             <span
               key={t.label}
-              className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+              className="rounded bg-pos-soft px-1.5 py-0.5 text-[10px] font-semibold text-pos"
             >
               {t.label} {t.value}
             </span>
@@ -91,12 +87,14 @@ export function DraftScreen({
   onStartPlayoff,
   onOpenStats,
   onOpenHelp,
+  level,
   challengeTarget,
 }: {
   draft: DailyDraft
   onStartPlayoff: (team: Player[]) => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
+  level?: LevelInfo
   challengeTarget?: string
 }) {
   const [teamIndex, setTeamIndex] = useState(0)
@@ -121,13 +119,14 @@ export function DraftScreen({
   const start = () => onStartPlayoff(POSITIONS.map((pos) => chosen[pos] as Player))
 
   const iconBtn =
-    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-400 text-lg leading-none dark:border-stone-600'
+    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-line text-lg leading-none'
 
   return (
-    <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-stone-100 p-3 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+    <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-canvas p-3 text-ink">
       <header className="flex items-center justify-between gap-2">
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.appName}</h1>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          {level && onOpenStats && <LevelBadge level={level} onClick={onOpenStats} />}
           {onOpenHelp && (
             <button type="button" onClick={onOpenHelp} aria-label={S.a11y.help} className={iconBtn}>
               ?
@@ -142,14 +141,14 @@ export function DraftScreen({
       </header>
 
       {challengeTarget && (
-        <div className="rounded-lg bg-amber-700 px-3 py-2 text-center text-sm font-semibold text-white">
+        <div className="rounded-lg bg-accent px-3 py-2 text-center text-sm font-semibold text-on-accent">
           {S.draft.beat(challengeTarget)}
         </div>
       )}
 
       {/* Bracket do dia */}
       <section>
-        <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
           {S.draft.path}
         </h2>
         <ol className="flex gap-1.5">
@@ -158,20 +157,16 @@ export function DraftScreen({
               key={t.id}
               className={[
                 'flex-1 basis-0 rounded-lg border p-1 text-center',
-                i === 0
-                  ? 'border-amber-700 bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40'
-                  : 'border-stone-300 bg-amber-50 dark:border-stone-700 dark:bg-stone-900',
+                i === 0 ? 'border-accent bg-accent-soft' : 'border-line bg-surface',
               ].join(' ')}
             >
-              <div className="text-[9px] font-bold uppercase text-stone-500 dark:text-stone-400">
-                {S.rounds.tags[i]}
-              </div>
+              <div className="text-[9px] font-bold uppercase text-muted">{S.rounds.tags[i]}</div>
               <div className="truncate text-[11px] font-semibold leading-tight">{shortName(t.name)}</div>
-              <div className="text-[9px] text-stone-500 dark:text-stone-400">{t.season}</div>
+              <div className="text-[9px] text-muted">{t.season}</div>
             </li>
           ))}
         </ol>
-        <div className="mt-2 rounded-lg border border-stone-300 bg-amber-50 p-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900">
+        <div className="mt-2 rounded-lg border border-line bg-surface p-2.5 shadow-sm">
           <div className="mb-1 text-[11px] font-semibold">
             {S.rounds.names[0]} · {fr.name} {fr.season}
           </div>
@@ -189,13 +184,13 @@ export function DraftScreen({
           <>
             <div className="flex items-baseline justify-between gap-2">
               <span className="min-w-0 truncate text-sm font-bold">
-                {team.name} <span className="font-normal text-stone-500 dark:text-stone-400">{team.season}</span>
+                {team.name} <span className="font-normal text-muted">{team.season}</span>
               </span>
-              <span className="shrink-0 text-[11px] font-medium text-stone-500 dark:text-stone-400">
+              <span className="shrink-0 text-[11px] font-medium text-muted">
                 {S.draft.stepOf(filledCount + 1, POSITIONS.length)}
               </span>
             </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-pos">
               {S.draft.pickPlayer}
             </div>
             <div key={teamIndex} className="ls-rise grid grid-cols-1 gap-2">
@@ -212,7 +207,7 @@ export function DraftScreen({
               <button
                 type="button"
                 onClick={reroll}
-                className="min-h-11 self-start rounded-lg border border-stone-400 bg-amber-50 px-3 text-[11px] font-semibold text-stone-700 transition hover:bg-amber-100 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200"
+                className="min-h-11 self-start rounded-lg border border-line bg-surface px-3 text-[11px] font-semibold transition hover:bg-surface2"
               >
                 {S.draft.reroll}
               </button>
@@ -227,7 +222,7 @@ export function DraftScreen({
               chosen[pos] ? (
                 <span
                   key={pos}
-                  className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                  className="rounded bg-pos-soft px-1.5 py-0.5 text-[10px] font-semibold text-pos"
                 >
                   {pos} {shortName((chosen[pos] as Player).name)}
                 </span>
@@ -239,7 +234,7 @@ export function DraftScreen({
 
       {/* Resumo + ação */}
       {allChosen && (
-        <footer className="border-t-2 border-stone-300 pt-3 dark:border-stone-700">
+        <footer className="border-t-2 border-line pt-3">
           <div className="flex flex-col gap-2">
             <p className="text-[11px] leading-snug">
               <span className="font-semibold">{S.draft.summaryLabel}</span>{' '}
@@ -248,11 +243,11 @@ export function DraftScreen({
                 return `${shortName(pl.name)} (${overall(pl)})`
               }).join(' · ')}
             </p>
-            <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300">{S.draft.irreversible}</p>
+            <p className="text-[11px] font-medium text-accent">{S.draft.irreversible}</p>
             <button
               type="button"
               onClick={start}
-              className="font-display rounded-lg bg-amber-700 py-3 text-lg font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-amber-800 active:bg-amber-900"
+              className="font-display rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
             >
               {S.draft.start}
             </button>

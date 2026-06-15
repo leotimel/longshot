@@ -1,5 +1,91 @@
 @import "tailwindcss";
 
+/* ───────────────────────────────────────────────────────────────────────────
+   Tokens semânticos (skins). O default = "Hardwood clássico"; os valores usam
+   light-dark() pra responder ao tema claro/escuro do sistema sem variantes dark:.
+   Cada skin desbloqueável sobrescreve um subconjunto em :root[data-theme="ID"].
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-canvas: light-dark(#f5f5f4, #0c0a09);
+  --color-surface: light-dark(#fffbeb, #1c1917);
+  --color-surface2: light-dark(#f5f5f4, #292524);
+  --color-ink: light-dark(#1c1917, #f5f5f4);
+  --color-muted: light-dark(#78716c, #a8a29e);
+  --color-line: light-dark(#d6d3d1, #44403c);
+  --color-accent: light-dark(#b45309, #fbbf24);
+  --color-accent-2: light-dark(#9a3412, #f59e0b);
+  --color-accent-soft: light-dark(#fef3c7, #78350f66);
+  --color-on-accent: light-dark(#ffffff, #1c1917);
+  --color-pos: light-dark(#047857, #34d399);
+  --color-pos-soft: light-dark(#d1fae5, #064e3b66);
+  --color-neg: light-dark(#b91c1c, #f87171);
+}
+
+/* Packs de acento — mantêm os neutros do hardwood, trocam só o acento. */
+:root[data-theme='fire'] {
+  --color-accent: light-dark(#ea580c, #fb923c);
+  --color-accent-2: light-dark(#c2410b, #f97316);
+  --color-accent-soft: light-dark(#ffedd5, #7c2d1266);
+}
+:root[data-theme='gold'] {
+  --color-accent: light-dark(#a16207, #eab308);
+  --color-accent-2: light-dark(#854d0e, #ca8a04);
+  --color-accent-soft: light-dark(#fef9c3, #713f1266);
+}
+:root[data-theme='royal'] {
+  --color-accent: light-dark(#1d4ed8, #60a5fa);
+  --color-accent-2: light-dark(#1e3a8a, #3b82f6);
+  --color-accent-soft: light-dark(#dbeafe, #1e3a8a66);
+}
+
+/* Temas completos — sobrescrevem o conjunto inteiro. */
+:root[data-theme='clean'] {
+  --color-canvas: light-dark(#fafafa, #09090b);
+  --color-surface: light-dark(#ffffff, #18181b);
+  --color-surface2: light-dark(#f4f4f5, #27272a);
+  --color-ink: light-dark(#18181b, #fafafa);
+  --color-muted: light-dark(#71717a, #a1a1aa);
+  --color-line: light-dark(#e4e4e7, #3f3f46);
+  --color-accent: light-dark(#2563eb, #60a5fa);
+  --color-accent-2: light-dark(#1d4ed8, #3b82f6);
+  --color-accent-soft: light-dark(#eff6ff, #1e3a8a59);
+  --color-on-accent: light-dark(#ffffff, #0b1220);
+  --color-pos: light-dark(#059669, #34d399);
+  --color-pos-soft: light-dark(#d1fae5, #064e3b66);
+  --color-neg: light-dark(#e11d48, #fb7185);
+}
+:root[data-theme='almanaque'] {
+  --color-canvas: light-dark(#f4f1e8, #1b1a16);
+  --color-surface: light-dark(#fbf9f1, #232019);
+  --color-surface2: light-dark(#ebe7d8, #2c281f);
+  --color-ink: light-dark(#1c1917, #f1ede1);
+  --color-muted: light-dark(#6b6657, #a8a08c);
+  --color-line: light-dark(#ddd6c4, #3a352b);
+  --color-accent: light-dark(#b91c1c, #ef4444);
+  --color-accent-2: light-dark(#7f1d1d, #dc2626);
+  --color-accent-soft: light-dark(#fbe3e3, #7f1d1d59);
+  --color-on-accent: #ffffff;
+  --color-pos: light-dark(#3f6212, #a3e635);
+  --color-pos-soft: light-dark(#ecfccb, #3f621266);
+  --color-neg: light-dark(#b91c1c, #f87171);
+}
+:root[data-theme='arcade'] {
+  color-scheme: dark;
+  --color-canvas: #0b1020;
+  --color-surface: #141b3a;
+  --color-surface2: #1e2547;
+  --color-ink: #e2e8f0;
+  --color-muted: #94a3b8;
+  --color-line: #334155;
+  --color-accent: #22d3ee;
+  --color-accent-2: #0891b2;
+  --color-accent-soft: #22d3ee26;
+  --color-on-accent: #06121a;
+  --color-pos: #34d399;
+  --color-pos-soft: #34d39926;
+  --color-neg: #fb7185;
+}
+
 :root {
   color-scheme: light dark;
 }
@@ -21,11 +107,11 @@ body {
   letter-spacing: 0.01em;
 }
 
-/* Foco visível e de alto contraste para navegação por teclado (âmbar queimado). */
+/* Foco visível e de alto contraste para navegação por teclado (segue o acento). */
 button:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #b45309;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -59,29 +145,40 @@ a:focus-visible,
   animation: ls-rise 260ms ease-out;
 }
 
-/* Comemoração do título — entrada com leve escala + um pulso curto de brilho âmbar. */
+/* Comemoração (campeão / level-up) — escala + pulso de brilho no acento. */
 @keyframes ls-celebrate {
   0% {
     transform: scale(0.96);
-    box-shadow: 0 0 0 0 rgba(180, 83, 9, 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 40%, transparent);
   }
   40% {
     transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(180, 83, 9, 0.35);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 35%, transparent);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(180, 83, 9, 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent);
   }
 }
 .ls-celebrate {
   animation: ls-celebrate 900ms ease-out;
 }
 
+/* Preenchimento animado da barra de XP. */
+@keyframes ls-xpfill {
+  from {
+    width: 0;
+  }
+}
+.ls-xpfill {
+  animation: ls-xpfill 600ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ls-pop,
   .ls-rise,
-  .ls-celebrate {
+  .ls-celebrate,
+  .ls-xpfill {
     animation: none;
   }
 }

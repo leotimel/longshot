@@ -3,6 +3,7 @@ import { dailyDraft } from '../engine/draft'
 import { simulateBracket } from '../engine/bracket'
 import { playerById } from '../engine/data/rosters'
 import type { BracketResult, Player } from '../engine/types'
+import { levelForXp, totalXpFromHistory, xpForDay, type LevelInfo } from '../lib/level'
 import {
   confirmDay,
   getDay,
@@ -61,6 +62,14 @@ export function usePlayoff(date: string) {
     [date],
   )
 
+  // Nível derivado do histórico inteiro; XP de hoje e se o dia subiu o nível.
+  const level = useMemo<LevelInfo>(() => levelForXp(totalXpFromHistory(Object.values(stats.history))), [stats])
+  const todayXp = day ? xpForDay(day) : 0
+  const leveledUp = useMemo(() => {
+    if (!day) return false
+    return level.level > levelForXp(level.totalXp - todayXp).level
+  }, [day, level, todayXp])
+
   return {
     draft,
     locked: day !== undefined,
@@ -68,6 +77,9 @@ export function usePlayoff(date: string) {
     team,
     bracket,
     stats,
+    level,
+    todayXp,
+    leveledUp,
     confirm,
     justConfirmed,
   }
