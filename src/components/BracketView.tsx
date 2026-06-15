@@ -327,11 +327,11 @@ export function BracketView({
                       </span>
                     </span>
                     <span className="flex items-center gap-0.5" aria-hidden="true">
-                      {Array.from({ length: series.gamesWon }).map((_, d) => (
-                        <span key={`w${d}`} className="h-1.5 w-1.5 rounded-full bg-pos" />
-                      ))}
-                      {Array.from({ length: series.gamesLost }).map((_, d) => (
-                        <span key={`l${d}`} className="h-1.5 w-1.5 rounded-full bg-neg" />
+                      {series.games.map((g, d) => (
+                        <span
+                          key={d}
+                          className={`h-1.5 w-1.5 rounded-full ${g.homeScore > g.awayScore ? 'bg-pos' : 'bg-neg'}`}
+                        />
                       ))}
                     </span>
                   </span>
