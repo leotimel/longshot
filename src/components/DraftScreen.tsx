@@ -78,7 +78,7 @@ export function DraftScreen({
   challengeTarget,
 }: {
   draft: DailyDraft
-  onStartPlayoff: (team: Player[]) => void
+  onStartPlayoff: (team: Player[], sixthManId?: string) => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
   level?: LevelInfo
@@ -87,6 +87,8 @@ export function DraftScreen({
   const [teamIndex, setTeamIndex] = useState(0)
   const [chosen, setChosen] = useState<Partial<Record<Position, Player>>>({})
   const [rerollUsed, setRerollUsed] = useState(false)
+  // Sexto homem (opcional): undefined = ainda não decidido; null = pulou.
+  const [sixthMan, setSixthMan] = useState<Player | null | undefined>(undefined)
 
   const fr = draft.bracket[0]
   const filledCount = POSITIONS.filter((pos) => chosen[pos]).length
@@ -103,7 +105,8 @@ export function DraftScreen({
     setTeamIndex((i) => i + 1)
   }
 
-  const start = () => onStartPlayoff(POSITIONS.map((pos) => chosen[pos] as Player))
+  const start = () =>
+    onStartPlayoff(POSITIONS.map((pos) => chosen[pos] as Player), sixthMan?.id)
 
   const iconBtn =
     'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-line text-lg leading-none'
@@ -210,10 +213,35 @@ export function DraftScreen({
             )}
           </div>
         )}
+
+        {/* Sexto homem (opcional) — pick extra que pode substituir numa série */}
+        {allChosen && sixthMan === undefined && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-sm font-bold">{S.tactics.sixthManStep}</span>
+              <button
+                type="button"
+                onClick={() => setSixthMan(null)}
+                className="min-h-11 rounded-lg border border-line bg-surface px-3 text-[11px] font-semibold transition hover:bg-surface2"
+              >
+                {S.tactics.skip}
+              </button>
+            </div>
+            <p className="text-[11px] text-muted">{S.tactics.sixthManExplain}</p>
+            <span className="text-[11px] font-semibold">
+              {team.name} <span className="font-normal text-muted">{team.season}</span>
+            </span>
+            <div className="grid grid-cols-1 gap-2">
+              {[...team.roster].sort(byPosition).map((player) => (
+                <PlayerCard key={player.id} player={player} disabled={false} onSelect={() => setSixthMan(player)} />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Resumo + ação */}
-      {allChosen && (
+      {allChosen && sixthMan !== undefined && (
         <footer className="border-t-2 border-line pt-3">
           <div className="flex flex-col gap-2">
             <p className="text-[11px] leading-snug">
@@ -223,6 +251,9 @@ export function DraftScreen({
                 return `${shortName(pl.name)} (${overall(pl)})`
               }).join(' · ')}
             </p>
+            {sixthMan && (
+              <p className="text-[11px] font-medium text-pos">{S.tactics.chosen(shortName(sixthMan.name))}</p>
+            )}
             <p className="text-[11px] font-medium text-accent">{S.draft.irreversible}</p>
             <button
               type="button"

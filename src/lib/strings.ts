@@ -154,6 +154,38 @@ export const strings = {
     apply: 'Aplicar',
   },
 
+  tactics: {
+    fichas: (n: number) => `📋 ${n}`,
+    fichasLabel: 'Fichas do técnico',
+    scheme: 'Esquema',
+    schemes: {
+      acelerar: 'Acelerar',
+      travar: 'Travar',
+      isolar: 'Isolar craque',
+      garrafao: 'Garrafão',
+    } as Record<'acelerar' | 'travar' | 'isolar' | 'garrafao', string>,
+    schemeDesc: {
+      acelerar: '+Ritmo · −Defesa',
+      travar: '+Defesa · −Ritmo',
+      isolar: '+Astro · −Coletivo',
+      garrafao: '+Garrafão · −Bola de 3',
+    } as Record<'acelerar' | 'travar' | 'isolar' | 'garrafao', string>,
+    timeout: '⏱️ Timeout',
+    timeoutHint: 'Vira o resto da série (+clutch +cesta +defesa)',
+    takeover: '👑 Takeover',
+    takeoverHint: 'Seu astro assume o próximo jogo',
+    sub: '🔄 Sexto homem',
+    subActive: (name: string) => `🔄 ${name} em quadra`,
+    cost: '1 📋',
+    down: 'Atrás na série — vire o jogo:',
+    noTokens: 'Sem fichas',
+    // Passo do draft
+    sixthManStep: 'Sexto homem (opcional)',
+    sixthManExplain: 'Escolha um reserva para poder substituí-lo numa série — ou pule.',
+    skip: 'Pular',
+    chosen: (name: string) => `Reserva: ${name}`,
+  },
+
   onboarding: {
     title: '🏀 Como jogar',
     rule: 'Escolha seu quinteto. Enfrente os maiores times da história.',

@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { BracketResult, HistoricalTeam, Player } from '../engine/types'
+import type {
+  BracketResult,
+  BracketTactics,
+  HistoricalTeam,
+  Player,
+  SeriesTactics,
+} from '../engine/types'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall, campaignStats } from '../lib/playerStats'
 import { GameFeed } from './GameFeed'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats } from './TeamStats'
+import { ComebackTactics, RoundTactics } from './CoachActions'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
@@ -28,6 +35,11 @@ export function BracketView({
   level,
   frameRing = '',
   gradual = false,
+  tactics = {},
+  fichas = 0,
+  sixthMan,
+  takeoverDone = false,
+  onTactic,
   onPlayoffEnd,
   onOpenStats,
   onOpenHelp,
@@ -38,6 +50,11 @@ export function BracketView({
   level?: LevelInfo
   frameRing?: string
   gradual?: boolean
+  tactics?: BracketTactics
+  fichas?: number
+  sixthMan?: Player
+  takeoverDone?: boolean
+  onTactic?: (round: number, patch: Partial<SeriesTactics>) => void
   onPlayoffEnd?: () => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
@@ -95,6 +112,17 @@ export function BracketView({
           onBackToSeries={revealRound}
           backLabel={isLast ? S.bracket.seeResult : S.bracket.fastForward}
         />
+        {gradual && onTactic && (
+          <ComebackTactics
+            round={view.round}
+            game={view.game}
+            series={series}
+            tactics={tactics}
+            fichas={fichas}
+            takeoverDone={takeoverDone}
+            onTactic={onTactic}
+          />
+        )}
       </main>
     )
   }
@@ -181,7 +209,17 @@ export function BracketView({
   return (
     <main className={SHELL}>
       <header className="flex items-center justify-between gap-2">
-        {level && onOpenStats ? <LevelBadge level={level} onClick={onOpenStats} /> : <span className="min-w-11" />}
+        <div className="flex items-center gap-1.5">
+          {level && onOpenStats ? <LevelBadge level={level} onClick={onOpenStats} /> : <span className="min-w-11" />}
+          {gradual && (
+            <span
+              title={S.tactics.fichasLabel}
+              className="inline-flex min-h-11 items-center rounded-lg border border-line px-2 font-display text-xs font-bold text-accent"
+            >
+              {S.tactics.fichas(fichas)}
+            </span>
+          )}
+        </div>
         <h1 className="font-display flex-1 text-center text-2xl font-bold uppercase tracking-wide">{S.bracket.title}</h1>
         <div className="flex items-center gap-2">
           {onOpenHelp && (
@@ -360,6 +398,15 @@ export function BracketView({
                   <div className="mb-2">
                     <TeamStats team={opp} title={`${opp.name} ${opp.season}`} />
                   </div>
+                  {gradual && onTactic && (
+                    <RoundTactics
+                      round={i}
+                      tactics={tactics}
+                      fichas={fichas}
+                      sixthMan={sixthMan}
+                      onTactic={onTactic}
+                    />
+                  )}
                   <div className="flex gap-2">
                     <button
                       type="button"

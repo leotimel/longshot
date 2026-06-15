@@ -33,6 +33,11 @@ function App() {
     displayLevel,
     displayLeveledUp,
     displayTodayXp,
+    sixthMan,
+    tactics,
+    fichas,
+    takeoverDone,
+    updateTactics,
     completeReveal,
     confirm,
     justConfirmed,
@@ -63,8 +68,8 @@ function App() {
   const challengeBanner =
     challenge && challenge.date === date ? challengeTarget(challenge.badge) : undefined
 
-  const handleStart = (team: Player[]) => {
-    confirm(team) // o resultado é revelado ao fim do playoff gradual
+  const handleStart = (team: Player[], sixthManId?: string) => {
+    confirm(team, sixthManId) // o resultado é revelado ao fim do playoff gradual
   }
 
   const handleShare = () => {
@@ -84,6 +89,11 @@ function App() {
           level={displayLevel}
           frameRing={frameById(frame).ring}
           gradual={justConfirmed}
+          tactics={tactics}
+          fichas={fichas}
+          sixthMan={sixthMan}
+          takeoverDone={takeoverDone}
+          onTactic={updateTactics}
           onPlayoffEnd={() => {
             completeReveal()
             setStatsOpen(true)
