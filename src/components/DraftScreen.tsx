@@ -4,8 +4,9 @@ import type { DailyDraft } from '../engine/draft'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall } from '../lib/playerStats'
+import { teamTraits } from '../lib/scouting'
 import { LevelBadge } from './LevelBadge'
-import { TeamStats } from './TeamStats'
+import { TeamStats, TraitChips } from './TeamStats'
 
 function topRatings(p: Player, n: number): { label: string; value: number }[] {
   return (Object.keys(p.ratings) as (keyof PlayerRatings)[])
@@ -93,6 +94,11 @@ export function DraftScreen({
   const filledCount = POSITIONS.filter((pos) => chosen[pos]).length
   const allChosen = filledCount === POSITIONS.length
   const team = draft.draftTeams[teamIndex % draft.draftTeams.length]
+
+  // Apresentação do time montado (quando completo).
+  const lineup = allChosen ? POSITIONS.map((pos) => chosen[pos] as Player) : []
+  const avgOvr = lineup.length ? Math.round(lineup.reduce((s, p) => s + overall(p), 0) / lineup.length) : 0
+  const lineupTraits = lineup.length ? teamTraits(lineup) : []
 
   const pick = (player: Player) => {
     setChosen((prev) => ({ ...prev, [player.position]: player }))
@@ -197,8 +203,8 @@ export function DraftScreen({
           </>
         )}
 
-        {/* Quinteto montado até aqui */}
-        {filledCount > 0 && (
+        {/* Quinteto montado até aqui (durante a escolha) */}
+        {!allChosen && filledCount > 0 && (
           <div className="flex flex-wrap gap-1">
             {POSITIONS.map((pos) =>
               chosen[pos] ? (
@@ -237,22 +243,40 @@ export function DraftScreen({
             </div>
           </div>
         )}
+
+        {/* Time montado — apresentação antes de iniciar o playoff */}
+        {allChosen && sixthMan !== undefined && (
+          <div className="flex flex-1 flex-col justify-center gap-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="font-display text-sm font-bold uppercase tracking-wide">{S.draft.teamTitle}</h2>
+              <span className="font-display text-[11px] font-bold text-accent">{S.draft.avgOvr(avgOvr)}</span>
+            </div>
+            <ol className="grid grid-cols-5 gap-1.5">
+              {POSITIONS.map((pos) => {
+                const p = chosen[pos] as Player
+                return (
+                  <li key={pos} className="rounded-lg border border-line bg-surface p-1 text-center shadow-sm">
+                    <div className="rounded bg-accent-soft px-1 text-[9px] font-bold text-accent">{pos}</div>
+                    <div className="mt-0.5 truncate text-[10px] font-medium leading-tight" title={p.name}>
+                      {shortName(p.name)}
+                    </div>
+                    <div className="font-display text-lg font-bold leading-none text-accent">{overall(p)}</div>
+                  </li>
+                )
+              })}
+            </ol>
+            {sixthMan && (
+              <div className="text-[11px] font-medium text-pos">{S.tactics.chosen(shortName(sixthMan.name))}</div>
+            )}
+            {lineupTraits.length > 0 && <TraitChips traits={lineupTraits} />}
+          </div>
+        )}
       </section>
 
       {/* Resumo + ação */}
       {allChosen && sixthMan !== undefined && (
         <footer className="border-t-2 border-line pt-3">
           <div className="flex flex-col gap-2">
-            <p className="text-[11px] leading-snug">
-              <span className="font-semibold">{S.draft.summaryLabel}</span>{' '}
-              {POSITIONS.map((pos) => {
-                const pl = chosen[pos] as Player
-                return `${shortName(pl.name)} (${overall(pl)})`
-              }).join(' · ')}
-            </p>
-            {sixthMan && (
-              <p className="text-[11px] font-medium text-pos">{S.tactics.chosen(shortName(sixthMan.name))}</p>
-            )}
             <p className="text-[11px] font-medium text-accent">{S.draft.irreversible}</p>
             <button
               type="button"

@@ -57,6 +57,8 @@ export const strings = {
     path: 'Seu caminho até o título',
     ovr: 'ovr',
     summaryLabel: 'Seu quinteto:',
+    teamTitle: 'Seu quinteto',
+    avgOvr: (n: number) => `média ${n} OVR`,
     irreversible: 'Decisão irreversível — você não pode refazer hoje.',
     start: 'Iniciar Playoff →',
     progress: (chosen: number, total: number) => `Escolha seu quinteto — ${chosen}/${total}`,
