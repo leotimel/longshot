@@ -9,7 +9,6 @@ import type {
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall, campaignStats } from '../lib/playerStats'
-import { hasSeenCoachTip, setSeenCoachTip } from '../lib/storage'
 import { GameFeed } from './GameFeed'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats } from './TeamStats'
@@ -42,6 +41,7 @@ export function BracketView({
   sixthMan,
   takeoverDone = false,
   onTactic,
+  autoOpenGuide = false,
   onPlayoffEnd,
   onOpenStats,
   onOpenHelp,
@@ -57,6 +57,7 @@ export function BracketView({
   sixthMan?: Player
   takeoverDone?: boolean
   onTactic?: (round: number, patch: Partial<SeriesTactics>) => void
+  autoOpenGuide?: boolean
   onPlayoffEnd?: () => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
@@ -64,14 +65,9 @@ export function BracketView({
   const { rounds, champion } = bracket
   const [revealed, setRevealed] = useState(() => (gradual ? 0 : rounds.length))
   const [view, setView] = useState<View>({ kind: 'overview' })
-  // Guia abre sozinho na 1ª vez que o jogador entra num playoff (decisão no init).
-  const [guideOpen, setGuideOpen] = useState(() => gradual && !!onTactic && !hasSeenCoachTip())
+  // Guia abre sozinho só quando o App pede (1º playoff; decidido no clique de Iniciar).
+  const [guideOpen, setGuideOpen] = useState(autoOpenGuide)
   const endedRef = useRef(false)
-
-  // Marca como visto ao abrir → não auto-abre nos próximos playoffs.
-  useEffect(() => {
-    if (guideOpen) setSeenCoachTip()
-  }, [guideOpen])
 
   const openGuide = () => setGuideOpen(true)
   const guide = guideOpen ? <CoachGuide onClose={() => setGuideOpen(false)} /> : null

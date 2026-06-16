@@ -9,7 +9,16 @@ import { buildShareText, shareText } from './lib/share'
 import { challengeTarget, challengeUrl, readChallenge } from './lib/challenge'
 import { applySkin } from './lib/skins'
 import { frameById } from './lib/frames'
-import { getFrame, getSkin, hasOnboarded, setFrame, setOnboarded, setSkin } from './lib/storage'
+import {
+  getFrame,
+  getSkin,
+  hasOnboarded,
+  hasSeenCoachTip,
+  setFrame,
+  setOnboarded,
+  setSeenCoachTip,
+  setSkin,
+} from './lib/storage'
 
 /** Data local de hoje no formato YYYY-MM-DD. */
 function todayISO(): string {
@@ -58,6 +67,9 @@ function App() {
     setFrameState(id)
   }
 
+  // Guia da prancheta auto-abre só no 1º playoff (decidido no clique de Iniciar).
+  const [autoGuide, setAutoGuide] = useState(false)
+
   const dismissHelp = () => {
     setOnboarded()
     setShowHelp(false)
@@ -69,6 +81,10 @@ function App() {
     challenge && challenge.date === date ? challengeTarget(challenge.badge) : undefined
 
   const handleStart = (team: Player[], sixthManId?: string) => {
+    if (!hasSeenCoachTip()) {
+      setSeenCoachTip()
+      setAutoGuide(true) // abre o guia só nesta 1ª vez
+    }
     confirm(team, sixthManId) // o resultado é revelado ao fim do playoff gradual
   }
 
@@ -94,6 +110,7 @@ function App() {
           sixthMan={sixthMan}
           takeoverDone={takeoverDone}
           onTactic={updateTactics}
+          autoOpenGuide={autoGuide}
           onPlayoffEnd={() => {
             completeReveal()
             setStatsOpen(true)
