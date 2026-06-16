@@ -3,7 +3,7 @@ import { POSITIONS, type Player, type PlayerRatings, type Position } from '../en
 import type { DailyDraft } from '../engine/draft'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
-import { overall } from '../lib/playerStats'
+import { overall, bestRating } from '../lib/playerStats'
 import { teamTraits } from '../lib/scouting'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats, TraitChips } from './TeamStats'
@@ -246,7 +246,7 @@ export function DraftScreen({
 
         {/* Time montado — apresentação antes de iniciar o playoff */}
         {allChosen && sixthMan !== undefined && (
-          <div className="flex flex-1 flex-col justify-center gap-2">
+          <div className="flex flex-1 flex-col gap-2">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-display text-sm font-bold uppercase tracking-wide">{S.draft.teamTitle}</h2>
               <span className="font-display text-[11px] font-bold text-accent">{S.draft.avgOvr(avgOvr)}</span>
@@ -254,6 +254,7 @@ export function DraftScreen({
             <ol className="grid grid-cols-5 gap-1.5">
               {POSITIONS.map((pos) => {
                 const p = chosen[pos] as Player
+                const best = bestRating(p)
                 return (
                   <li key={pos} className="rounded-lg border border-line bg-surface p-1 text-center shadow-sm">
                     <div className="rounded bg-accent-soft px-1 text-[9px] font-bold text-accent">{pos}</div>
@@ -261,6 +262,9 @@ export function DraftScreen({
                       {shortName(p.name)}
                     </div>
                     <div className="font-display text-lg font-bold leading-none text-accent">{overall(p)}</div>
+                    <div className="mt-0.5 text-[9px] text-muted">
+                      {S.ratings[best.key]} <span className="font-mono tabular-nums">{best.value}</span>
+                    </div>
                   </li>
                 )
               })}
