@@ -8,7 +8,7 @@ import type {
 } from '../engine/types'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
-import { overall, campaignStats } from '../lib/playerStats'
+import { overall, bestRating, campaignStats } from '../lib/playerStats'
 import { GameFeed } from './GameFeed'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats } from './TeamStats'
@@ -85,6 +85,31 @@ export function BracketView({
 
   // Estatísticas da campanha só ao fim — durante a revelação gradual seriam spoiler.
   const camp = useMemo(() => (fullyRevealed ? campaignStats(bracket) : null), [fullyRevealed, bracket])
+
+  // Cartões de totais da campanha (Pontos · Pts/jogo · Saldo · Aproveit. · Maior vitória · Maior jogo).
+  const campCards: { value: string; label: string; tone?: string }[] = camp
+    ? [
+        { value: `${camp.totalPoints}`, label: S.bracket.points },
+        {
+          value: camp.totalGames > 0 ? (camp.totalPoints / camp.totalGames).toFixed(1) : '0',
+          label: S.bracket.ppgTeam,
+        },
+        {
+          value: `${camp.totalPoints - camp.pointsAgainst >= 0 ? '+' : ''}${camp.totalPoints - camp.pointsAgainst}`,
+          label: S.bracket.saldo,
+          tone: camp.totalPoints - camp.pointsAgainst >= 0 ? 'text-pos' : 'text-neg',
+        },
+        {
+          value: `${camp.totalGames > 0 ? Math.round((camp.gamesWon / camp.totalGames) * 100) : 0}%`,
+          label: `${camp.gamesWon}-${camp.totalGames - camp.gamesWon}`,
+        },
+        { value: camp.biggestWin > 0 ? `+${camp.biggestWin}` : '—', label: S.bracket.biggestWin },
+        {
+          value: camp.recordGame ? `${camp.recordGame.points}` : '—',
+          label: `${S.bracket.recordGame}${camp.recordGame ? ` · ${shortName(camp.recordGame.name)}` : ''}`,
+        },
+      ]
+    : []
 
   const revealRound = () => {
     setRevealed((r) => Math.min(rounds.length, r + 1))
@@ -281,6 +306,7 @@ export function BracketView({
             {team.map((p) => {
               const cs = camp?.byPlayer.get(p.id)
               const isMvp = camp?.mvpId === p.id
+              const best = bestRating(p)
               return (
                 <li
                   key={p.id}
@@ -306,11 +332,17 @@ export function BracketView({
                   <div className="font-display text-base font-bold leading-none text-accent">
                     {overall(p)}
                   </div>
-                  {cs && (
-                    <div className="mt-0.5 font-mono text-[9px] tabular-nums text-muted">
-                      {cs.ppg.toFixed(1)} {S.bracket.ppg}
-                    </div>
-                  )}
+                  <div className="mt-0.5 text-[9px] text-muted">
+                    {isMvp && cs ? (
+                      <span className="font-mono tabular-nums">
+                        {cs.ppg.toFixed(1)} {S.bracket.ppg}
+                      </span>
+                    ) : (
+                      <span>
+                        {S.ratings[best.key]} <span className="font-mono tabular-nums">{best.value}</span>
+                      </span>
+                    )}
+                  </div>
                 </li>
               )
             })}
@@ -319,23 +351,12 @@ export function BracketView({
           {/* Totais da campanha (só ao fim). */}
           {camp && (
             <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-              <div className="rounded-lg border border-line bg-surface p-1.5 text-center shadow-sm">
-                <div className="font-display text-base font-bold tabular-nums">{camp.totalPoints}</div>
-                <div className="text-[9px] uppercase tracking-wide text-muted">{S.bracket.points}</div>
-              </div>
-              <div className="rounded-lg border border-line bg-surface p-1.5 text-center shadow-sm">
-                <div className="font-display text-base font-bold tabular-nums">{camp.totalGames}</div>
-                <div className="text-[9px] uppercase tracking-wide text-muted">{S.bracket.games}</div>
-              </div>
-              <div className="rounded-lg border border-line bg-surface p-1.5 text-center shadow-sm">
-                <div className="font-display text-base font-bold tabular-nums">
-                  {camp.recordGame ? camp.recordGame.points : '—'}
+              {campCards.map((c, i) => (
+                <div key={i} className="rounded-lg border border-line bg-surface p-1.5 text-center shadow-sm">
+                  <div className={`font-display text-base font-bold tabular-nums ${c.tone ?? ''}`}>{c.value}</div>
+                  <div className="truncate text-[9px] uppercase tracking-wide text-muted">{c.label}</div>
                 </div>
-                <div className="truncate text-[9px] uppercase tracking-wide text-muted">
-                  {S.bracket.recordGame}
-                  {camp.recordGame ? ` · ${shortName(camp.recordGame.name)}` : ''}
-                </div>
-              </div>
+              ))}
             </div>
           )}
         </section>

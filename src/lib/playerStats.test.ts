@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { playerById } from '../engine/data/rosters'
 import { dailyDraft } from '../engine/draft'
 import { simulateBracket } from '../engine/bracket'
-import { overall, campaignStats } from './playerStats'
+import { bestRating, overall, campaignStats } from './playerStats'
 
 describe('overall (índice de craque)', () => {
   it('coloca craques acima de 90 e mantém tudo em 40–99', () => {
@@ -51,5 +51,23 @@ describe('campaignStats', () => {
     expect(camp.byPlayer.size).toBe(team.length)
     expect(team.some((p) => p.id === camp.mvpId)).toBe(true)
     expect(camp.recordGame).not.toBeNull()
+
+    // saldo / aproveitamento / maior vitória
+    const expectedAgainst = bracket.rounds.reduce(
+      (s, r) => s + r.games.reduce((g, gm) => g + gm.awayScore, 0),
+      0,
+    )
+    expect(camp.pointsAgainst).toBe(expectedAgainst)
+    expect(camp.gamesWon).toBeGreaterThanOrEqual(0)
+    expect(camp.gamesWon).toBeLessThanOrEqual(camp.totalGames)
+    expect(camp.biggestWin).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('bestRating', () => {
+  it('devolve o atributo de maior valor do jogador', () => {
+    const curry = playerById('warriors-2016-curry')! // 3pt é o forte
+    expect(bestRating(curry).key).toBe('threePoint')
+    expect(bestRating(curry).value).toBe(Math.max(...Object.values(curry.ratings)))
   })
 })
