@@ -26,11 +26,12 @@ para todo mundo no dia**, fácil de comparar e compartilhar.
    escale um **sexto homem** (reserva) para poder substituir durante uma série.
 3. **Inicie o Playoff** — decisão irreversível por hoje.
 4. **Assista no seu ritmo:** avance **round a round**; em cada um veja o **scouting
-   do adversário** e jogue **partida por partida** (placar, play-by-play e box score,
-   com "acelerar pro fim") ou **simule o round inteiro**. Rounds não alcançados ficam ocultos.
+   do adversário** (com traços tipo *Ritmo alto* · *Defesa elite*) e jogue **partida por
+   partida** (placar, play-by-play e box score, com "acelerar pro fim") ou **simule o
+   round inteiro**. Rounds não alcançados ficam ocultos.
 5. **Use a prancheta** (3 fichas no playoff inteiro): **Esquema da série**, **Timeout**
    (comeback quando está perdendo), **Takeover do craque** e **Sexto homem** — cada ação
-   tem um custo e um trade-off.
+   tem um custo e um trade-off. Leia os **traços do adversário e do seu time** para escolher.
 6. **Evolua e colecione:** ganhe **XP/níveis** (patentes de carreira), **selos** por
    rodada máxima vencida (🥉🥈🥇🏆), desbloqueie **cosméticos** (cores, temas, molduras),
    mantenha o **streak** e **compartilhe** o resultado estilo Wordle.
@@ -99,17 +100,25 @@ Tudo **derivado do histórico** (nada de simulação é persistido), em `localSt
 
 - **Overall "índice de craque"** — média dos melhores ratings, esticada: lendas passam
   de 90, reservas ficam nos 60, dando impacto ao draft ([`lib/playerStats.ts`](src/lib/playerStats.ts)).
-- **Estatísticas da campanha** (na tela final): PPG por jogador, MVP/cestinha do dia,
-  totais e recorde de jogo.
+- **Leitura de matchup** ([`lib/scouting.ts`](src/lib/scouting.ts)): traços do adversário
+  (*Ritmo alto*, *Defesa elite*, *Pouca bola de 3*…) e do seu quinteto (*Craque*, *Bom de
+  3*…), derivados dos ratings, para escolher o esquema sem o jogo entregar a resposta.
+- **Estatísticas da campanha** (na tela final): destaque de cada jogador (cestinha = PPG,
+  os demais = melhor atributo), MVP, e totais — pontos, **pts/jogo**, **saldo**,
+  **aproveitamento** e **maior vitória**.
+- **Conquista Invicto 🐐 (16-0)**: campeão sem perder nenhum jogo (as 4 séries varridas) —
+  destaque no hero do campeão, marca 🐐 no share e contagem nos recordes.
 - **Histórico de jogadores** (no 📊): cestinhas de todos os tempos, mais escalados,
-  recordes e resumo de uso, **re-simulando** cada dia ([`lib/playerHistory.ts`](src/lib/playerHistory.ts)).
+  recordes e resumo de uso, **re-simulando** cada dia com as táticas usadas
+  ([`lib/playerHistory.ts`](src/lib/playerHistory.ts)).
 - **Níveis & XP** ([`lib/level.ts`](src/lib/level.ts)): XP por quão longe você foi no
   playoff; patentes de carreira (Rookie → … → G.O.A.T.).
 - **Cosméticos desbloqueáveis por nível**: cores de acento e **temas completos**
   ([`lib/skins.ts`](src/lib/skins.ts), via variáveis CSS `data-theme`) e **molduras**
   de card ([`lib/frames.ts`](src/lib/frames.ts)).
 - **Share Wordle-style** ([`lib/share.ts`](src/lib/share.ts)): 🟩/🟥 por rodada + selo +
-  prévia do seu quinteto, **sem revelar os adversários**; marca 📋 quando você usou a prancheta.
+  prévia do seu quinteto e link limpo, **sem revelar os adversários**; marca 📋 quando usou
+  a prancheta e 🐐 quando foi 16-0.
 
 ---
 
@@ -129,9 +138,9 @@ convenção.
 | Camada | Papel |
 |--------|------|
 | [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times), seed, RNG, draft, simulação, **táticas**, série, bracket |
-| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `level`, `skins`, `frames`, `tactics` |
+| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `scouting`, `level`, `skins`, `frames`, `tactics` |
 | [`src/hooks/`](src/hooks/) | `usePlayoff` orquestra draft → trava → simulação reativa (táticas) → persistência |
-| [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `TeamStats`, `CoachActions`, `LevelBadge`, `ResultModal`, `Onboarding` |
+| [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `TeamStats`, `CoachActions`, `CoachGuide`, `LevelBadge`, `ResultModal`, `Onboarding` |
 
 ---
 
@@ -153,7 +162,7 @@ npm run build      # gera dist/ (typecheck + build de produção)
 ```
 
 O motor é coberto por testes determinísticos; a UI por testes em jsdom
-(Testing Library). **82 testes** no total.
+(Testing Library). **93 testes** no total.
 
 ## ☁️ Deploy
 
