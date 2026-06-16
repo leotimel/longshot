@@ -244,22 +244,9 @@ export function BracketView({
   return (
     <main className={SHELL}>
       <header className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          {level && onOpenStats ? <LevelBadge level={level} onClick={onOpenStats} /> : <span className="min-w-11" />}
-          {gradual && (
-            <button
-              type="button"
-              onClick={openGuide}
-              aria-label={S.tactics.help}
-              title={S.tactics.fichasLabel}
-              className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-line px-2 font-display text-xs font-bold text-accent"
-            >
-              {S.tactics.fichas(fichas)} <span className="not-italic">ⓘ</span>
-            </button>
-          )}
-        </div>
-        <h1 className="font-display flex-1 text-center text-2xl font-bold uppercase tracking-wide">{S.bracket.title}</h1>
+        <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.bracket.title}</h1>
         <div className="flex items-center gap-2">
+          {level && onOpenStats && <LevelBadge level={level} onClick={onOpenStats} />}
           {onOpenHelp && (
             <button type="button" onClick={onOpenHelp} aria-label={S.a11y.help} className={ICON_BTN}>
               ?
