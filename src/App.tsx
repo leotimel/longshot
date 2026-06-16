@@ -5,8 +5,8 @@ import { DraftScreen } from './components/DraftScreen'
 import { BracketView } from './components/BracketView'
 import { ResultModal } from './components/ResultModal'
 import { Onboarding } from './components/Onboarding'
-import { buildShareText, shareText } from './lib/share'
-import { challengeTarget, challengeUrl, readChallenge } from './lib/challenge'
+import { buildShareText, LONGSHOT_URL, shareText } from './lib/share'
+import { challengeTarget, readChallenge } from './lib/challenge'
 import { applySkin } from './lib/skins'
 import { frameById } from './lib/frames'
 import {
@@ -90,9 +90,7 @@ function App() {
 
   const handleShare = () => {
     if (!day) return
-    const text = buildShareText(day, stats.streak)
-    const url = challengeUrl({ date: day.date, badge: day.badge })
-    void shareText(`${text}\n${url}`)
+    void shareText(`${buildShareText(day, stats.streak)}\n${LONGSHOT_URL}`)
   }
 
   return (

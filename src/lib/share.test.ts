@@ -21,19 +21,24 @@ describe('puzzleNumber', () => {
 })
 
 describe('buildShareText', () => {
-  it('perdeu na final: 🥇 e 🟩🟩🟩🟥 (sem nomes de times)', () => {
+  it('cabeçalho e bolinhas em linhas separadas (sem nomes de times)', () => {
     const n = puzzleNumber('2026-06-10')
+    // ids falsos → sem prévia do quinteto: só cabeçalho + linha do bracket
     expect(buildShareText(mk('2026-06-10', 4, false, 2), 9)).toBe(
-      `Longshot #${n} · 🥇 · 🔥9 | 🟩🟩🟩🟥`,
+      `Longshot #${n} · 🥇 · 🔥9\n🟩🟩🟩🟥`,
     )
   })
 
   it('campeão: 🏆 e 🟩🟩🟩🟩', () => {
-    expect(buildShareText(mk('2026-06-10', 4, true, 3), 5)).toContain('🏆 · 🔥5 | 🟩🟩🟩🟩')
+    const txt = buildShareText(mk('2026-06-10', 4, true, 3), 5)
+    expect(txt).toContain('🏆 · 🔥5')
+    expect(txt.split('\n')).toContain('🟩🟩🟩🟩')
   })
 
   it('eliminado no First Round: 💀 e 🟥⬜⬜⬜', () => {
-    expect(buildShareText(mk('2026-06-10', 1, false, null), 1)).toContain('💀 · 🔥1 | 🟥⬜⬜⬜')
+    const txt = buildShareText(mk('2026-06-10', 1, false, null), 1)
+    expect(txt).toContain('💀 · 🔥1')
+    expect(txt.split('\n')).toContain('🟥⬜⬜⬜')
   })
 
   it('não revela nenhum nome de adversário', () => {
@@ -53,8 +58,9 @@ describe('buildShareText', () => {
     const txt = buildShareText(day, 5)
     const lines = txt.split('\n')
 
-    // cabeçalho intacto + 5 linhas de jogador + linha de média
-    expect(lines[0]).toContain('🏆 · 🔥5 | 🟩🟩🟩🟩')
+    // cabeçalho (linha 0), bolinhas (linha 1), 5 jogadores e a média
+    expect(lines[0]).toContain('🏆 · 🔥5')
+    expect(lines[1]).toBe('🟩🟩🟩🟩')
     for (const p of team) {
       const last = p.name.trim().split(/\s+/).at(-1)!
       expect(txt).toMatch(new RegExp(`${last}\\s+${overall(p)}`))

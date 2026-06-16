@@ -1,6 +1,10 @@
 /**
  * Compartilhamento estilo Wordle — SEM revelar os adversários do dia.
- * Ex.: "Longshot #142 · 🥇 · 🔥9 | 🟩🟩🟩🟥" + prévia do quinteto.
+ * O cabeçalho e a linha de bolinhas ficam em linhas separadas (não quebram no chat),
+ * seguidos da prévia do quinteto. Ex.:
+ *   Longshot #142 · 🥇 · 🔥9 📋
+ *   🟩🟩🟩🟥
+ *   Curry 96 ...
  */
 import type { Player } from '../engine/types'
 import { playerById } from '../engine/data/rosters'
@@ -11,6 +15,9 @@ import { BADGE_EMOJI } from './badges'
 
 /** Epoch do jogo: 2026-06-01 é o Longshot #1. */
 export const LONGSHOT_EPOCH = '2026-06-01'
+
+/** URL pública do jogo (link limpo no compartilhamento). */
+export const LONGSHOT_URL = 'https://playlongshot.vercel.app'
 
 const DAY_MS = 86_400_000
 
@@ -38,18 +45,15 @@ function bracketRow(finalRound: number, champion: boolean): string {
 const surname = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
 /**
- * Prévia do quinteto do dia (sobrenome + overall, alinhados, + média) para comparar
- * times. Só do PRÓPRIO time — não revela adversários. Se algum id não resolver,
- * devolve `[]` (sem prévia), preservando o cabeçalho.
+ * Prévia do quinteto do dia (sobrenome + overall, um por linha, + média) para comparar
+ * times. Sem alinhamento por espaços (entorta em fonte proporcional). Só do PRÓPRIO
+ * time — não revela adversários. Se algum id não resolver, devolve `[]` (sem prévia).
  */
 function lineupLines(team: string[]): string[] {
   const players = team.map((id) => playerById(id)).filter((p): p is Player => p !== undefined)
   if (players.length !== team.length) return []
 
-  const names = players.map((p) => surname(p.name))
-  const width = Math.max(...names.map((n) => n.length))
-  const lines = players.map((p, i) => `${names[i].padEnd(width)} ${overall(p)}`)
-
+  const lines = players.map((p) => `${surname(p.name)} ${overall(p)}`)
   const avg = Math.round(players.reduce((sum, p) => sum + overall(p), 0) / players.length)
   lines.push(`Quinteto ${avg} OVR`)
   return lines
@@ -60,9 +64,8 @@ export function buildShareText(day: DayRecord, streak: number): string {
   const num = puzzleNumber(day.date)
   const selo = day.badge !== null ? BADGE_EMOJI[day.badge] : '💀'
   const coached = tokensSpent(day.tactics ?? {}) > 0 ? ' 📋' : '' // usou a prancheta
-  const head = `Longshot #${num} · ${selo} · 🔥${streak}${coached} | ${bracketRow(day.finalRound, day.champion)}`
-  const preview = lineupLines(day.team)
-  return preview.length > 0 ? `${head}\n${preview.join('\n')}` : head
+  const head = `Longshot #${num} · ${selo} · 🔥${streak}${coached}`
+  return [head, bracketRow(day.finalRound, day.champion), ...lineupLines(day.team)].join('\n')
 }
 
 /** Tenta compartilhar via Web Share API, caindo para o clipboard. */
