@@ -51,9 +51,8 @@ function PlayerCard({
         </span>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-1">
-        <span className="text-[10px] uppercase tracking-wide text-muted">{player.era}</span>
         {disabled ? (
-          <span className="text-[10px] font-medium text-muted">· {S.draft.posTaken}</span>
+          <span className="text-[10px] font-medium text-muted">{S.draft.posTaken}</span>
         ) : (
           topRatings(player, 3).map((t) => (
             <span
