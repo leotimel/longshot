@@ -46,6 +46,11 @@ describe('buildShareText', () => {
     expect(txt).not.toMatch(/Bulls|Lakers|Spurs|Warriors|Celtics/i)
   })
 
+  it('temporada invicta (16-0) marca 🐐', () => {
+    const day: DayRecord = { ...mk('2026-06-10', 4, true, 3), perfect: true }
+    expect(buildShareText(day, 7)).toContain('🐐')
+  })
+
   it('com ids reais, anexa prévia do quinteto (sobrenome + overall) e a média', () => {
     const team = ROSTERS['bulls-1996']
     const day: DayRecord = {

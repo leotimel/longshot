@@ -23,6 +23,11 @@ export function bestRating(p: Player): { key: keyof PlayerRatings; value: number
   return { key: best[0], value: best[1] }
 }
 
+/** Campanha invicta (16-0): campeão sem perder NENHUM jogo (4 séries varridas 4-0). */
+export function isPerfectRun(bracket: BracketResult): boolean {
+  return bracket.champion && bracket.rounds.every((r) => r.gamesLost === 0)
+}
+
 /** Estatísticas de um jogador ao longo de UMA campanha (o playoff do dia). */
 export interface PlayerCampaign {
   playerId: string

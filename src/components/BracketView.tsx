@@ -82,6 +82,7 @@ export function BracketView({
   const fullyRevealed = revealed >= rounds.length
   const roundsWon = rounds.slice(0, revealed).filter((s) => s.winner === 'player').length
   const dayBadge = roundsWon > 0 ? S.badges.emoji[roundsWon - 1] : null
+  const perfect = champion && rounds.every((s) => s.gamesLost === 0) // 16-0 invicto
 
   // Estatísticas da campanha só ao fim — durante a revelação gradual seriam spoiler.
   const camp = useMemo(() => (fullyRevealed ? campaignStats(bracket) : null), [fullyRevealed, bracket])
@@ -266,7 +267,12 @@ export function BracketView({
           <div className="ls-celebrate rounded-xl bg-gradient-to-b from-accent to-accent-2 px-4 py-5 text-center text-on-accent shadow-md">
             <div className="text-5xl leading-none">🏆</div>
             <div className="font-display mt-2 text-3xl font-bold uppercase tracking-wide">{S.bracket.championTitle}</div>
-            <div className="mt-0.5 text-xs font-medium opacity-90">{S.bracket.championSub}</div>
+            {perfect && (
+              <div className="font-display mt-1 text-base font-bold uppercase tracking-wide">{S.bracket.invicto}</div>
+            )}
+            <div className="mt-0.5 text-xs font-medium opacity-90">
+              {perfect ? S.bracket.invictoSub : S.bracket.championSub}
+            </div>
           </div>
         ) : dayBadge ? (
           <div className="rounded-lg border border-line bg-surface py-3 text-center text-lg font-bold shadow-sm">

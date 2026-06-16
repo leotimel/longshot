@@ -224,7 +224,7 @@ export function ResultModal({
 
               {/* Recordes */}
               <h4 className={sectionTitle}>{S.result.records}</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className={`grid gap-2 ${hist.perfectRuns > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <div className={statCard}>
                   <div className="font-display text-lg font-bold tabular-nums">
                     {hist.recordGame ? hist.recordGame.points : '—'}
@@ -240,6 +240,12 @@ export function ResultModal({
                   </div>
                   <div className={statLabel}>{S.result.bestCampaign}</div>
                 </div>
+                {hist.perfectRuns > 0 && (
+                  <div className={`${statCard} border-accent`}>
+                    <div className="font-display text-lg font-bold tabular-nums text-accent">{hist.perfectRuns}</div>
+                    <div className={statLabel}>{S.result.invictas}</div>
+                  </div>
+                )}
               </div>
             </>
           )}

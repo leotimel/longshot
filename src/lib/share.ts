@@ -64,7 +64,8 @@ export function buildShareText(day: DayRecord, streak: number): string {
   const num = puzzleNumber(day.date)
   const selo = day.badge !== null ? BADGE_EMOJI[day.badge] : '💀'
   const coached = tokensSpent(day.tactics ?? {}) > 0 ? ' 📋' : '' // usou a prancheta
-  const head = `Longshot #${num} · ${selo} · 🔥${streak}${coached}`
+  const invicto = day.perfect ? ' 🐐' : '' // temporada invicta (16-0)
+  const head = `Longshot #${num} · ${selo} · 🔥${streak}${coached}${invicto}`
   return [head, bracketRow(day.finalRound, day.champion), ...lineupLines(day.team)].join('\n')
 }
 

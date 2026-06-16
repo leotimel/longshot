@@ -1,6 +1,7 @@
 import { simulateBracket } from '../engine/bracket'
 import { playerById } from '../engine/data/rosters'
 import type { Player } from '../engine/types'
+import { isPerfectRun } from './playerStats'
 import type { DayRecord } from './storage'
 
 /** Estatísticas acumuladas de um jogador ao longo de todos os dias jogados. */
@@ -22,6 +23,8 @@ export interface HistorySummary {
   daysPlayed: number
   recordGame: { name: string; points: number; date: string } | null
   bestCampaign: { points: number; date: string } | null
+  /** Temporadas invictas (16-0) acumuladas. */
+  perfectRuns: number
 }
 
 /**
@@ -33,6 +36,7 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
   const byId = new Map<string, PlayerCareer>()
   let totalPoints = 0
   let daysPlayed = 0
+  let perfectRuns = 0
   let recordGame: HistorySummary['recordGame'] = null
   let bestCampaign: HistorySummary['bestCampaign'] = null
 
@@ -53,7 +57,9 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
       byId.set(p.id, cur)
     }
 
-    const bracket = simulateBracket(team, day.date)
+    const sixthMan = day.sixthManId ? playerById(day.sixthManId) : undefined
+    const bracket = simulateBracket(team, day.date, day.tactics, sixthMan)
+    if (isPerfectRun(bracket)) perfectRuns += 1
     let campaignPoints = 0
     for (const round of bracket.rounds) {
       for (const game of round.games) {
@@ -93,5 +99,6 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
     daysPlayed,
     recordGame,
     bestCampaign,
+    perfectRuns,
   }
 }

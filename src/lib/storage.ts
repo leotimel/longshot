@@ -22,6 +22,8 @@ export interface DayRecord {
   tactics?: BracketTactics
   /** Id do sexto homem draftado (reserva), se houver. */
   sixthManId?: string
+  /** Temporada invicta (16-0): campeão sem perder nenhum jogo. */
+  perfect?: boolean
 }
 
 export interface Stats {

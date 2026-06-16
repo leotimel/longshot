@@ -2,7 +2,15 @@ import { describe, it, expect } from 'vitest'
 import { playerById } from '../engine/data/rosters'
 import { dailyDraft } from '../engine/draft'
 import { simulateBracket } from '../engine/bracket'
-import { bestRating, overall, campaignStats } from './playerStats'
+import type { SeriesResult } from '../engine/types'
+import { bestRating, isPerfectRun, overall, campaignStats } from './playerStats'
+
+const wonSeries = (gamesLost: number): SeriesResult => ({
+  winner: 'player',
+  games: [],
+  gamesWon: 4,
+  gamesLost,
+})
 
 describe('overall (índice de craque)', () => {
   it('coloca craques acima de 90 e mantém tudo em 40–99', () => {
@@ -61,6 +69,20 @@ describe('campaignStats', () => {
     expect(camp.gamesWon).toBeGreaterThanOrEqual(0)
     expect(camp.gamesWon).toBeLessThanOrEqual(camp.totalGames)
     expect(camp.biggestWin).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('isPerfectRun (16-0)', () => {
+  it('campeão sem derrotas = invicto', () => {
+    const rounds = [wonSeries(0), wonSeries(0), wonSeries(0), wonSeries(0)]
+    expect(isPerfectRun({ champion: true, rounds })).toBe(true)
+  })
+  it('campeão com alguma derrota não é invicto', () => {
+    const rounds = [wonSeries(0), wonSeries(2), wonSeries(0), wonSeries(0)]
+    expect(isPerfectRun({ champion: true, rounds })).toBe(false)
+  })
+  it('não-campeão nunca é invicto', () => {
+    expect(isPerfectRun({ champion: false, rounds: [wonSeries(0)] })).toBe(false)
   })
 })
 

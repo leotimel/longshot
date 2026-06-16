@@ -4,6 +4,7 @@ import { simulateBracket } from '../engine/bracket'
 import { playerById } from '../engine/data/rosters'
 import type { BracketResult, BracketTactics, Player, SeriesTactics } from '../engine/types'
 import { levelForXp, totalXpFromHistory, xpForDay, type LevelInfo } from '../lib/level'
+import { isPerfectRun } from '../lib/playerStats'
 import { COACH_TOKENS, takeoverUsed, tokensLeft, tokensSpent } from '../lib/tactics'
 import {
   confirmDay,
@@ -58,6 +59,7 @@ export function usePlayoff(date: string) {
         team: picked.map((p) => p.id),
         sixthManId,
         ...badgeFor(result),
+        perfect: isPerfectRun(result),
       }
       setPrevStats(loadStats()) // foto da carreira ANTES de gravar hoje
       setStats(confirmDay(record))
@@ -82,7 +84,7 @@ export function usePlayoff(date: string) {
   const completeReveal = useCallback(() => {
     if (day && team) {
       const result = simulateBracket(team, date, tactics, sixthMan)
-      const finalRec: DayRecord = { ...day, ...badgeFor(result), tactics }
+      const finalRec: DayRecord = { ...day, ...badgeFor(result), tactics, perfect: isPerfectRun(result) }
       setStats(finalizeDay(finalRec))
       setDay(finalRec)
     }
