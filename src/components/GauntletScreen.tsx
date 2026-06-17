@@ -85,7 +85,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     if (result.winner === 'player') {
       playUnlock()
       celebrate(false)
-      setOffer(offerBoons(seed, round))
+      setOffer(offerBoons(seed, round, build, pool))
       return
     }
     if (build.shields > 0) return // derrota, mas pode gastar escudo (botão de retry)
@@ -100,14 +100,18 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     }
   }
 
-  const pickBoon = (boon: Boon) => {
-    setBuild((b) => boon.apply(b, pool))
-    setActiveBoons((a) => [...a, boon])
+  const advance = () => {
     setCleared((c) => c + 1)
     setRound((r) => r + 1)
     setAttempt(0)
     setSeries(null)
     setOffer(null)
+  }
+
+  const pickBoon = (boon: Boon) => {
+    setBuild((b) => boon.apply(b, pool))
+    setActiveBoons((a) => [...a, boon])
+    advance()
   }
 
   const useShield = () => {
@@ -263,8 +267,8 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
             )}
           </div>
 
-          {/* Vitória → escolher um boon */}
-          {won && offer && (
+          {/* Vitória → escolher um boon (ou avançar, se o build está no teto) */}
+          {won && offer && offer.length > 0 && (
             <div className="flex flex-col gap-2">
               <h3 className="text-[11px] font-semibold uppercase tracking-wide text-pos">{S.gauntlet.pickBoon}</h3>
               {offer.map((b) => (
@@ -283,6 +287,11 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
               ))}
               <p className="text-center text-[10px] text-muted">{S.gauntlet.boonNote}</p>
             </div>
+          )}
+          {won && offer && offer.length === 0 && (
+            <button type="button" onClick={advance} className={`mt-auto ${primaryBtn}`}>
+              {S.gauntlet.advance}
+            </button>
           )}
 
           {/* Derrota com escudo → retry */}

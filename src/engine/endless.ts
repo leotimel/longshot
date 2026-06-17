@@ -29,14 +29,15 @@ export function endlessSeed(sessionSeed: number, round: number): number {
 }
 
 /**
- * Adversário da rodada `round` (0-based): sobe ~1,6 posição de força por rodada
- * (com leve variação). Ultrapassado o topo do pool, devolve um clone do mais forte
- * com um bônus crescente nos ratings — escalada sem fim.
+ * Adversário da rodada `round` (0-based): sobe ~1,9 posição de força por rodada
+ * (com leve variação) — chega aos times de elite por volta da rodada ~30.
+ * Ultrapassado o topo do pool, devolve um clone do mais forte com um bônus crescente
+ * (até o teto de rating 99) — escalada sem fim.
  */
 export function endlessOpponent(sessionSeed: number, round: number): HistoricalTeam {
   const rng = mulberry32(endlessSeed(sessionSeed, round))
   const n = SORTED.length
-  const idx = Math.round(round * 1.6 + rng() * 3)
+  const idx = Math.round(round * 1.9 + rng() * 3)
   const base = SORTED[Math.min(idx, n - 1)]
   const overflow = idx - (n - 1)
   if (overflow <= 0) return base
