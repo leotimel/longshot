@@ -4,6 +4,7 @@ import type { DailyDraft } from '../engine/draft'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall, bestRating } from '../lib/playerStats'
+import { factFor } from '../lib/playerFacts'
 import { teamTraits } from '../lib/scouting'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats, TraitChips } from './TeamStats'
@@ -28,6 +29,7 @@ function PlayerCard({
   disabled: boolean
   onSelect: () => void
 }) {
+  const fact = factFor(player.name)
   return (
     <button
       type="button"
@@ -65,6 +67,9 @@ function PlayerCard({
           ))
         )}
       </div>
+      {!disabled && fact && (
+        <p className="mt-1 text-[10px] italic leading-tight text-muted">{fact}</p>
+      )}
     </button>
   )
 }
