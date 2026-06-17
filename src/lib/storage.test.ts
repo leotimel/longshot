@@ -50,6 +50,18 @@ describe('storage', () => {
     expect(s.bestStreak).toBe(3)
   })
 
+  it('ganha escudo a cada 10 dias e o escudo tolera uma lacuna', () => {
+    for (let i = 1; i <= 10; i++) confirmDay(rec(`2026-06-${String(i).padStart(2, '0')}`, 0))
+    expect(loadStats().streak).toBe(10)
+    expect(loadStats().freezes).toBe(1) // 1 escudo no 10º dia
+
+    // Pula o dia 11, joga o 12 → o escudo cobre a lacuna; streak segue.
+    confirmDay(rec('2026-06-12', 0))
+    const s = loadStats()
+    expect(s.streak).toBe(11)
+    expect(s.freezes).toBe(0) // consumiu o escudo
+  })
+
   it('selos acumulam por tipo; eliminação no First Round não dá selo', () => {
     confirmDay(rec('2026-06-10', 0)) // 🥉
     confirmDay(rec('2026-06-11', 0)) // 🥉

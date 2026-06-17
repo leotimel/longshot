@@ -121,6 +121,7 @@ export const strings = {
     eliminated: 'Eliminado no First Round',
     streak: 'streak',
     best: 'melhor',
+    freezes: 'escudos',
     badgesTitle: 'Selos conquistados',
     nextDraft: 'Próximo draft em',
     share: 'Compartilhar',

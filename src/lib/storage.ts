@@ -31,18 +31,18 @@ export interface Stats {
   bestStreak: number
   /** Contagem acumulada por tipo de selo: [🥉, 🥈, 🥇, 🏆]. */
   badges: [number, number, number, number]
+  /** Escudos: protegem o streak ao pular dias. Ganha 1 a cada 10 dias (máx 2). */
+  freezes: number
   history: Record<string, DayRecord>
 }
 
 function defaultStats(): Stats {
-  return { streak: 0, bestStreak: 0, badges: [0, 0, 0, 0], history: {} }
+  return { streak: 0, bestStreak: 0, badges: [0, 0, 0, 0], freezes: 0, history: {} }
 }
 
-/** Dia anterior (YYYY-MM-DD), calculado em UTC para evitar surpresas de fuso. */
-function previousDay(date: string): string {
-  const d = new Date(`${date}T00:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - 1)
-  return d.toISOString().slice(0, 10)
+/** Diferença em dias entre duas datas YYYY-MM-DD (a − b), em UTC. */
+function dayDiff(a: string, b: string): number {
+  return Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000)
 }
 
 export function loadStats(): Stats {
@@ -57,6 +57,7 @@ export function loadStats(): Stats {
         Array.isArray(p.badges) && p.badges.length === 4
           ? (p.badges as [number, number, number, number])
           : [0, 0, 0, 0],
+      freezes: typeof p.freezes === 'number' ? p.freezes : 0,
       history:
         p.history && typeof p.history === 'object'
           ? (p.history as Record<string, DayRecord>)
@@ -92,8 +93,29 @@ export function confirmDay(record: DayRecord): Stats {
   const stats = loadStats()
   if (stats.history[record.date]) return stats // já travado
 
-  const playedYesterday = stats.history[previousDay(record.date)] !== undefined
-  const streak = playedYesterday ? stats.streak + 1 : 1
+  // Streak: dia consecutivo soma; lacuna pode ser coberta por escudos.
+  const playedDates = Object.keys(stats.history)
+  let freezes = stats.freezes
+  let streak: number
+  if (playedDates.length === 0) {
+    streak = 1
+  } else {
+    const lastPlayed = [...playedDates].sort().at(-1)!
+    const missed = dayDiff(record.date, lastPlayed) - 1 // dias pulados
+    if (missed <= 0) {
+      streak = stats.streak + 1
+    } else if (freezes >= missed) {
+      streak = stats.streak + 1
+      freezes -= missed // gasta escudos para preservar o streak
+    } else {
+      streak = 1
+    }
+  }
+
+  // Ganha 1 escudo a cada 10 dias jogados (máx 2).
+  const daysPlayed = playedDates.length + 1
+  if (daysPlayed % 10 === 0) freezes = Math.min(2, freezes + 1)
+
   const badges = [...stats.badges] as [number, number, number, number]
   if (record.badge !== null) badges[record.badge] += 1
 
@@ -101,6 +123,7 @@ export function confirmDay(record: DayRecord): Stats {
     streak,
     bestStreak: Math.max(stats.bestStreak, streak),
     badges,
+    freezes,
     history: { ...stats.history, [record.date]: record },
   }
   save(next)

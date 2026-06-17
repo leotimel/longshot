@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { ResultModal } from './ResultModal'
 import type { DayRecord, Stats } from '../lib/storage'
 
-const stats: Stats = { streak: 3, bestStreak: 5, badges: [2, 1, 0, 1], history: {} }
+const stats: Stats = { streak: 3, bestStreak: 5, badges: [2, 1, 0, 1], freezes: 0, history: {} }
 const day: DayRecord = {
   date: '2026-06-13',
   team: ['a', 'b', 'c', 'd', 'e'],

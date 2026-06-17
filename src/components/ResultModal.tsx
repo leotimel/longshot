@@ -135,7 +135,7 @@ export function ResultModal({
         )}
 
         {/* Streak */}
-        <div className="mb-3 grid grid-cols-2 gap-2">
+        <div className={`mb-3 grid gap-2 ${stats.freezes > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <div className={statCard}>
             <div className="font-display text-2xl font-bold text-accent">🔥 {stats.streak}</div>
             <div className={statLabel}>{S.result.streak}</div>
@@ -144,6 +144,12 @@ export function ResultModal({
             <div className="font-display text-2xl font-bold">{stats.bestStreak}</div>
             <div className={statLabel}>{S.result.best}</div>
           </div>
+          {stats.freezes > 0 && (
+            <div className={statCard}>
+              <div className="font-display text-2xl font-bold">🛡 {stats.freezes}</div>
+              <div className={statLabel}>{S.result.freezes}</div>
+            </div>
+          )}
         </div>
 
         {/* Coleção de selos */}
