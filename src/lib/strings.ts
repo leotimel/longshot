@@ -105,6 +105,18 @@ export const strings = {
     runs: 'runs',
     avg: 'média',
     share: '🔗 Compartilhar',
+    // Dinâmicas (ascensão, chefe, modificador, evento)
+    ascension: (n: number) => `Ascensão ${n}`,
+    boss: '👑 CHEFE',
+    bossOf5: 'melhor de 5',
+    bossReward: '+1 escudo (chefe)',
+    modifier: 'Twist da rodada',
+    event: 'Evento',
+    rest: '🛌 Descanso',
+    restDesc: '+2 escudos — respire fundo',
+    bet: '🎲 Aposta',
+    betDesc: 'próxima rodada mais dura, vitória vale +2 escudos',
+    betActive: '🎲 Aposta ativa — adversário reforçado',
   },
 
   bracket: {

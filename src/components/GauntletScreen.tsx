@@ -2,14 +2,11 @@ import { useMemo, useState } from 'react'
 import type { Player, SeriesResult } from '../engine/types'
 import type { Bracket, DailyDraft } from '../engine/draft'
 import { dailyDraft } from '../engine/draft'
-import { endlessOpponent, simulateGauntletRound } from '../engine/endless'
+import { endlessOpponent, gauntletOpponent, simulateGauntletRound } from '../engine/endless'
 import { campaignStats } from '../lib/playerStats'
-import {
-  getGauntletStats,
-  recordGauntletRun,
-  type GauntletStats,
-} from '../lib/storage'
-import { initBuild, offerBoons, type Boon, type RunBuild } from '../lib/gauntletBoons'
+import { getGauntletStats, recordGauntletRun, type GauntletStats } from '../lib/storage'
+import { SHIELD_CAP, initBuild, offerBoons, type Boon, type RunBuild } from '../lib/gauntletBoons'
+import { gauntletAscension, isEventRound, roundPlan } from '../lib/gauntletRun'
 import { buildGauntletShare, shareText } from '../lib/share'
 import { playUnlock } from '../lib/sound'
 import { celebrate } from '../lib/confetti'
@@ -19,6 +16,7 @@ import { TeamStats } from './TeamStats'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 const newSeed = (): number => Math.floor(Math.random() * 1_000_000_000)
+const addShields = (s: RunBuild, n: number): RunBuild => ({ ...s, shields: Math.min(SHIELD_CAP, s.shields + n) })
 
 /** Cestinha (maior pontuador total) de uma série. */
 function seriesMvp(series: SeriesResult): { name: string; points: number } | null {
@@ -29,27 +27,29 @@ function seriesMvp(series: SeriesResult): { name: string; points: number } | nul
 }
 
 /**
- * Gauntlet infinito — modo livre, autocontido. Drafta um quinteto (times
- * aleatórios da sessão), enfrenta séries melhor-de-3 cada vez mais difíceis e, a
- * cada vitória, escolhe um BOON que fica pela run (roguelike). Escudos sobrevivem a
- * uma derrota. Não toca no diário/streak/stats.
+ * Gauntlet infinito — modo livre, autocontido. Drafta um quinteto, escolhe boons
+ * (roguelike) entre rodadas, encara rodadas-chefe (a cada 5), modificadores e eventos,
+ * e sobe de ASCENSÃO ao bater o recorde (dificuldade permanente). Não toca no diário.
  */
 export function GauntletScreen({ onExit }: { onExit: () => void }) {
   const [seed, setSeed] = useState(newSeed)
   const [phase, setPhase] = useState<'draft' | 'climb'>('draft')
   const [build, setBuild] = useState<RunBuild>(() => initBuild([]))
-  const [round, setRound] = useState(0) // rodada atual (0-based)
-  const [cleared, setCleared] = useState(0) // rodadas vencidas nesta run
-  const [attempt, setAttempt] = useState(0) // tentativa na rodada (retry com escudo)
+  const [round, setRound] = useState(0)
+  const [cleared, setCleared] = useState(0)
+  const [attempt, setAttempt] = useState(0)
+  const [bet, setBet] = useState(false)
   const [stats, setStats] = useState<GauntletStats>(getGauntletStats)
-  const [series, setSeries] = useState<SeriesResult | null>(null) // resultado da rodada
-  const [offer, setOffer] = useState<Boon[] | null>(null) // boons após vencer
-  const [activeBoons, setActiveBoons] = useState<Boon[]>([]) // build acumulado (ícones)
+  const [series, setSeries] = useState<SeriesResult | null>(null)
+  const [offer, setOffer] = useState<Boon[] | null>(null)
+  const [eventActive, setEventActive] = useState(false)
+  const [activeBoons, setActiveBoons] = useState<Boon[]>([])
   const [over, setOver] = useState(false)
   const [isRecord, setIsRecord] = useState(false)
   const [shieldNote, setShieldNote] = useState(false)
 
-  // Draft da sessão: times sorteados pela seed; o "caminho" mostra os 1ºs adversários.
+  // Ascensão (fixa na run) derivada do recorde; o "caminho" mostra os 1ºs adversários.
+  const ascension = useMemo(() => gauntletAscension(stats.best), [stats.best])
   const draft: DailyDraft = useMemo(
     () => ({
       date: `gauntlet-${seed}`,
@@ -58,10 +58,10 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     }),
     [seed],
   )
-  // Pool da sessão (para o boon de Reforço).
   const pool = useMemo<Player[]>(() => draft.draftTeams.flatMap((t) => t.roster), [draft])
 
-  const opponent = useMemo(() => endlessOpponent(seed, round), [seed, round])
+  const plan = useMemo(() => roundPlan(seed, round, ascension, bet), [seed, round, ascension, bet])
+  const opponent = useMemo(() => gauntletOpponent(seed, round, plan.opponentBump), [seed, round, plan])
   const mvp = useMemo(() => (series ? seriesMvp(series) : null), [series])
 
   const startRun = (picked: Player[]) => {
@@ -69,8 +69,10 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     setRound(0)
     setCleared(0)
     setAttempt(0)
+    setBet(false)
     setSeries(null)
     setOffer(null)
+    setEventActive(false)
     setActiveBoons([])
     setOver(false)
     setIsRecord(false)
@@ -80,20 +82,39 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
 
   const playRound = () => {
     setShieldNote(false)
-    const result = simulateGauntletRound(build.team, seed, round, build.boost, attempt)
+    const result = simulateGauntletRound(build.team, seed, round, {
+      boost: build.boost,
+      modifier: plan.modifier?.adjust,
+      opponentBump: plan.opponentBump,
+      wins: plan.wins,
+      attempt,
+    })
     setSeries(result)
+
     if (result.winner === 'player') {
       playUnlock()
-      celebrate(false)
-      setOffer(offerBoons(seed, round, build, pool))
+      celebrate(plan.isBoss)
+      // Recompensas: chefe (+1 escudo) e aposta vencida (+2 escudos).
+      let bonus = plan.isBoss ? 1 : 0
+      if (bet) {
+        bonus += 2
+        setBet(false)
+      }
+      const nb = bonus > 0 ? addShields(build, bonus) : build
+      if (bonus > 0) setBuild(nb)
+      // Evento (descanso/aposta) ou oferta de boon.
+      if (isEventRound(seed, round)) setEventActive(true)
+      else setOffer(offerBoons(seed, round, nb, pool))
       return
     }
-    if (build.shields > 0) return // derrota, mas pode gastar escudo (botão de retry)
+
+    if (build.shields > 0) return // derrota, mas pode gastar escudo (retry)
     // Sem escudo → fim da run.
     const beat = cleared > stats.best
     setStats(recordGauntletRun(cleared))
     setIsRecord(beat)
     setOver(true)
+    setBet(false)
     if (beat) {
       playUnlock()
       celebrate(true)
@@ -106,11 +127,21 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     setAttempt(0)
     setSeries(null)
     setOffer(null)
+    setEventActive(false)
   }
 
   const pickBoon = (boon: Boon) => {
     setBuild((b) => boon.apply(b, pool))
     setActiveBoons((a) => [...a, boon])
+    advance()
+  }
+
+  const chooseRest = () => {
+    setBuild((b) => addShields(b, 2))
+    advance()
+  }
+  const chooseBet = () => {
+    setBet(true)
     advance()
   }
 
@@ -126,7 +157,9 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     setPhase('draft')
     setSeries(null)
     setOffer(null)
+    setEventActive(false)
     setOver(false)
+    setBet(false)
   }
 
   const handleShare = () => void shareText(buildGauntletShare(cleared, stats.best))
@@ -153,7 +186,6 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
   const primaryBtn =
     'font-display rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90'
 
-  // Ícones do build acumulado (agrega repetidos: emoji ×n).
   const boonCounts = activeBoons.reduce<Map<string, number>>(
     (m, b) => m.set(b.emoji, (m.get(b.emoji) ?? 0) + 1),
     new Map(),
@@ -173,7 +205,9 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
         <h1 className="font-display text-xl font-bold uppercase tracking-wide">{S.gauntlet.title}</h1>
         <div className="min-h-11 rounded-lg border border-line px-3 py-1 text-center">
           <div className="font-display text-base font-bold leading-none text-accent">🏆 {stats.best}</div>
-          <div className="text-[9px] uppercase tracking-wide text-muted">{S.gauntlet.record}</div>
+          <div className="text-[9px] uppercase tracking-wide text-muted">
+            {ascension > 0 ? S.gauntlet.ascension(ascension) : S.gauntlet.record}
+          </div>
         </div>
       </header>
 
@@ -181,7 +215,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
       <div className="grid grid-cols-2 gap-2">
         <div className={statCard}>
           <div className="font-display text-2xl font-bold text-accent">{S.gauntlet.round(round + 1)}</div>
-          <div className={statLabel}>{S.gauntlet.bestOf3}</div>
+          <div className={statLabel}>{plan.isBoss ? S.gauntlet.bossOf5 : S.gauntlet.bestOf3}</div>
         </div>
         <div className={statCard}>
           <div className="font-display text-2xl font-bold">{cleared}</div>
@@ -213,9 +247,31 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
               {S.gauntlet.shieldUsed}
             </div>
           )}
+          {bet && (
+            <div className="rounded-lg border border-line bg-surface2 px-3 py-1.5 text-center text-[11px] font-semibold">
+              {S.gauntlet.betActive}
+            </div>
+          )}
+          {plan.isBoss ? (
+            <div className="ls-celebrate rounded-lg bg-accent px-3 py-2 text-center font-display text-lg font-bold uppercase tracking-wide text-on-accent">
+              {S.gauntlet.boss}
+            </div>
+          ) : (
+            plan.modifier && (
+              <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2">
+                <span className="text-2xl leading-none">{plan.modifier.emoji}</span>
+                <span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.modifier}</span>
+                  <span className="text-sm font-bold leading-tight">{plan.modifier.name}</span>
+                  <span className="ml-1 text-[11px] text-muted">— {plan.modifier.desc}</span>
+                </span>
+              </div>
+            )
+          )}
           <div>
-            <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-              {S.gauntlet.opponent}
+            <h2 className="mb-1 flex items-baseline justify-between text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <span>{S.gauntlet.opponent}</span>
+              {plan.opponentBump > 0 && <span className="text-accent">+{plan.opponentBump}</span>}
             </h2>
             <TeamStats team={opponent} title={`${opponent.name} ${opponent.season}`} />
           </div>
@@ -229,10 +285,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
       {series && (
         <section className="flex flex-1 flex-col gap-3">
           <div
-            className={[
-              'rounded-lg p-3 text-center',
-              won ? 'bg-accent-soft' : 'border border-line bg-surface',
-            ].join(' ')}
+            className={['rounded-lg p-3 text-center', won ? 'bg-accent-soft' : 'border border-line bg-surface'].join(' ')}
           >
             <div className={`font-display text-lg font-bold uppercase tracking-wide ${won ? 'text-accent' : 'text-muted'}`}>
               {won ? S.gauntlet.won : S.gauntlet.lost}
@@ -267,8 +320,33 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
             )}
           </div>
 
-          {/* Vitória → escolher um boon (ou avançar, se o build está no teto) */}
-          {won && offer && offer.length > 0 && (
+          {/* Vitória → evento, boons, ou avançar */}
+          {won && eventActive && (
+            <div className="flex flex-col gap-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-pos">{S.gauntlet.event}</h3>
+              <button
+                type="button"
+                onClick={chooseRest}
+                className="flex items-center gap-2 rounded-lg border border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold leading-tight">{S.gauntlet.rest}</span>
+                  <span className="block text-[11px] text-muted">{S.gauntlet.restDesc}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={chooseBet}
+                className="flex items-center gap-2 rounded-lg border border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold leading-tight">{S.gauntlet.bet}</span>
+                  <span className="block text-[11px] text-muted">{S.gauntlet.betDesc}</span>
+                </span>
+              </button>
+            </div>
+          )}
+          {won && !eventActive && offer && offer.length > 0 && (
             <div className="flex flex-col gap-2">
               <h3 className="text-[11px] font-semibold uppercase tracking-wide text-pos">{S.gauntlet.pickBoon}</h3>
               {offer.map((b) => (
@@ -288,7 +366,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
               <p className="text-center text-[10px] text-muted">{S.gauntlet.boonNote}</p>
             </div>
           )}
-          {won && offer && offer.length === 0 && (
+          {won && !eventActive && offer && offer.length === 0 && (
             <button type="button" onClick={advance} className={`mt-auto ${primaryBtn}`}>
               {S.gauntlet.advance}
             </button>

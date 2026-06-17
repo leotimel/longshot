@@ -17,7 +17,7 @@ const maxedBoost: GameAdjust = { ...BOON_CAPS }
 const winRate = (round: number, n = 60): number => {
   let wins = 0
   for (let s = 0; s < n; s++) {
-    if (simulateGauntletRound(best5, s * 13 + 1, round, maxedBoost).winner === 'player') wins += 1
+    if (simulateGauntletRound(best5, s * 13 + 1, round, { boost: maxedBoost }).winner === 'player') wins += 1
   }
   return wins / n
 }

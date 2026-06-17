@@ -20,6 +20,40 @@ export const GAUNTLET_WINS = 2
 const power = (t: HistoricalTeam): number =>
   t.teamRatings.offense + t.teamRatings.defense + t.teamRatings.clutch
 
+/**
+ * Aumenta as ratings de um time (ataque/defesa/clutch) em `n`. As ratings NÃO são
+ * clampadas no motor (só as probabilidades por arremesso), então `n` pode passar de
+ * 99 — é como ascensão/chefes furam o teto e ficam sempre mais difíceis.
+ */
+function bumpTeam(t: HistoricalTeam, n: number): HistoricalTeam {
+  if (n <= 0) return t
+  const r = t.teamRatings
+  return {
+    ...t,
+    id: `${t.id}+${n}`,
+    teamRatings: { ...r, offense: r.offense + n, defense: r.defense + n, clutch: r.clutch + n },
+  }
+}
+
+/** Adversário da rodada já reforçado (ascensão/chefe) — para exibir e simular igual. */
+export function gauntletOpponent(sessionSeed: number, round: number, opponentBump = 0): HistoricalTeam {
+  return bumpTeam(endlessOpponent(sessionSeed, round), opponentBump)
+}
+
+/** Opções de uma rodada do gauntlet (dificuldade extra + modificadores). */
+export interface GauntletRoundOpts {
+  /** Boost acumulado dos boons da run. */
+  boost?: GameAdjust
+  /** Modificador da rodada (player-side: mão fria, dia de 3…). */
+  modifier?: GameAdjust
+  /** Reforço no adversário (ascensão + chefe + azarão); pode passar de 99. */
+  opponentBump?: number
+  /** Vitórias para fechar a série (2 = melhor de 3; 3 = chefe melhor de 5). */
+  wins?: number
+  /** Tentativa nesta rodada (retry com escudo). */
+  attempt?: number
+}
+
 /** Times reais ordenados do mais fraco ao mais forte (base da escalada). */
 const SORTED: readonly HistoricalTeam[] = [...TEAMS].sort((a, b) => power(a) - power(b))
 
@@ -58,32 +92,30 @@ export function endlessOpponent(sessionSeed: number, round: number): HistoricalT
 }
 
 /**
- * Joga UMA rodada do gauntlet (melhor de 3) — determinística pela sessão+rodada.
- * Aplica a sinergia de era do quinteto somada ao `boost` da run (boons); sem
- * prancheta (quick-play). `attempt > 0` re-sorteia a MESMA rodada (retry com escudo)
- * sem mudar o adversário. Sem `boost`/`attempt` = comportamento original (baseline).
- *
- * @param boost   ajuste acumulado dos boons da run (ratings)
- * @param attempt nº da tentativa nesta rodada (0 = 1ª; >0 muda só a seed da série)
+ * Joga UMA rodada do gauntlet — determinística pela sessão+rodada. Combina a sinergia
+ * de era + boons da run + modificador da rodada (no time), e reforça o adversário pelo
+ * `opponentBump` (ascensão/chefe). `attempt > 0` re-sorteia a MESMA rodada (retry com
+ * escudo) sem mudar o adversário. Opções vazias = comportamento original (baseline).
  */
 export function simulateGauntletRound(
   team: Player[],
   sessionSeed: number,
   round: number,
-  boost?: GameAdjust,
-  attempt = 0,
+  opts: GauntletRoundOpts = {},
 ): SeriesResult {
+  const { boost, modifier, opponentBump = 0, wins = GAUNTLET_WINS, attempt = 0 } = opts
   const baseSeed =
     attempt === 0
       ? endlessSeed(sessionSeed, round)
       : hashString(`${sessionSeed}:gauntlet:${round}:a${attempt}`)
+  const adjust = mergeAdjust(mergeAdjust(synergyAdjust(team), boost), modifier)
   return simulateSeries(
     team,
-    endlessOpponent(sessionSeed, round),
+    gauntletOpponent(sessionSeed, round, opponentBump),
     baseSeed,
     undefined,
     undefined,
-    mergeAdjust(synergyAdjust(team), boost),
-    GAUNTLET_WINS,
+    adjust,
+    wins,
   )
 }

@@ -28,10 +28,10 @@ describe('gauntlet (endless)', () => {
     expect(deep.clutch).toBeLessThanOrEqual(99)
   })
 
-  it('boost/attempt: default inalterado; retry re-sorteia a mesma rodada', () => {
+  it('opts vazias = baseline; attempt>0 re-sorteia a mesma rodada', () => {
     const a = simulateGauntletRound(team, 99, 3)
-    expect(simulateGauntletRound(team, 99, 3, undefined, 0)).toEqual(a) // default == sem params
-    expect(JSON.stringify(simulateGauntletRound(team, 99, 3, undefined, 1))).not.toBe(JSON.stringify(a))
+    expect(simulateGauntletRound(team, 99, 3, {})).toEqual(a) // default == sem opts
+    expect(JSON.stringify(simulateGauntletRound(team, 99, 3, { attempt: 1 }))).not.toBe(JSON.stringify(a))
   })
 
   it('boost (boons) nunca reduz as vitórias do time nas mesmas seeds', () => {
@@ -40,8 +40,24 @@ describe('gauntlet (endless)', () => {
     const boost = { make: 0.06, clutch: 15, defense: 10 } // sem pace (não muda o nº de posses)
     for (let r = 0; r < 20; r++) {
       if (simulateGauntletRound(team, 5, r).winner === 'player') baseWins += 1
-      if (simulateGauntletRound(team, 5, r, boost).winner === 'player') boostWins += 1
+      if (simulateGauntletRound(team, 5, r, { boost }).winner === 'player') boostWins += 1
     }
     expect(boostWins).toBeGreaterThanOrEqual(baseWins)
+  })
+
+  it('opponentBump deixa o adversário mais forte (ascensão/chefe furam o teto)', () => {
+    let plain = 0
+    let bumped = 0
+    for (let r = 0; r < 20; r++) {
+      if (simulateGauntletRound(team, 3, r).winner === 'player') plain += 1
+      if (simulateGauntletRound(team, 3, r, { opponentBump: 30 }).winner === 'player') bumped += 1
+    }
+    expect(bumped).toBeLessThanOrEqual(plain)
+  })
+
+  it('wins controla o best-of (chefe = melhor de 5)', () => {
+    const s = simulateGauntletRound(team, 8, 4, { wins: 3 })
+    expect(s.games.length).toBeLessThanOrEqual(5)
+    expect(Math.max(s.gamesWon, s.gamesLost)).toBe(3)
   })
 })
