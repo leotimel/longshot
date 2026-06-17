@@ -9,6 +9,8 @@ import type {
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
 import { overall, bestRating, campaignStats } from '../lib/playerStats'
+import { playChampion } from '../lib/sound'
+import { celebrate } from '../lib/confetti'
 import { GameFeed } from './GameFeed'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats } from './TeamStats'
@@ -75,9 +77,13 @@ export function BracketView({
   useEffect(() => {
     if (gradual && !endedRef.current && revealed >= rounds.length) {
       endedRef.current = true
+      if (champion) {
+        playChampion()
+        celebrate(rounds.every((s) => s.gamesLost === 0)) // burst maior se 16-0
+      }
       onPlayoffEnd?.()
     }
-  }, [gradual, revealed, rounds.length, onPlayoffEnd])
+  }, [gradual, revealed, rounds, champion, onPlayoffEnd])
 
   const fullyRevealed = revealed >= rounds.length
   const roundsWon = rounds.slice(0, revealed).filter((s) => s.winner === 'player').length

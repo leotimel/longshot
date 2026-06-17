@@ -4,6 +4,8 @@ import type { LevelInfo } from '../lib/level'
 import { summarizeHistory } from '../lib/playerHistory'
 import { SKINS, isSkinUnlocked } from '../lib/skins'
 import { FRAMES, isFrameUnlocked } from '../lib/frames'
+import { isMuted, playLevelUp, toggleMuted } from '../lib/sound'
+import { celebrate } from '../lib/confetti'
 import { strings as S } from '../lib/strings'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
@@ -50,12 +52,21 @@ export function ResultModal({
   onClose: () => void
 }) {
   const [countdown, setCountdown] = useState(msToMidnight)
+  const [muted, setMutedState] = useState(isMuted)
   const hist = useMemo(() => summarizeHistory(stats.history), [stats.history])
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msToMidnight()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  // Comemoração ao subir de nível (uma vez, ao abrir o modal).
+  useEffect(() => {
+    if (leveledUp) {
+      playLevelUp()
+      celebrate()
+    }
+  }, [leveledUp])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -326,6 +337,15 @@ export function ResultModal({
             )}
           </div>
         )}
+
+          {/* Som */}
+          <button
+            type="button"
+            onClick={() => setMutedState(toggleMuted())}
+            className="mb-3 self-center rounded-lg border border-line px-3 py-1 text-[11px] font-semibold text-muted transition hover:bg-surface2"
+          >
+            {muted ? S.result.soundOff : S.result.soundOn}
+          </button>
 
           {/* Contador */}
           <div className="text-center">

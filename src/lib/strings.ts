@@ -127,6 +127,8 @@ export const strings = {
     share: 'Compartilhar',
     viewBracket: 'Ver Bracket',
     close: 'Fechar',
+    soundOn: '🔊 Som',
+    soundOff: '🔇 Som',
     // Histórico de jogadores (acumulado entre dias)
     playersTitle: 'Jogadores da carreira',
     scorers: 'Cestinhas (todos os tempos)',
