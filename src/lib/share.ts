@@ -69,6 +69,13 @@ export function buildShareText(day: DayRecord, streak: number): string {
   return [head, bracketRow(day.finalRound, day.champion), ...lineupLines(day.team)].join('\n')
 }
 
+/** Texto compartilhável de uma run do Gauntlet (não revela adversários). */
+export function buildGauntletShare(rounds: number, best: number): string {
+  const head = `⚔️ Longshot Gauntlet`
+  const line = `Sobrevivi a ${rounds} ${rounds === 1 ? 'rodada' : 'rodadas'}! 🔥 (recorde: ${best})`
+  return [head, line, LONGSHOT_URL].join('\n')
+}
+
 /** Tenta compartilhar via Web Share API, caindo para o clipboard. */
 export async function shareText(text: string): Promise<void> {
   try {

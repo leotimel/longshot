@@ -6,11 +6,12 @@
  * turbinados dos mais fortes). Cada rodada é uma série curta (melhor de 3),
  * determinística pela seed da sessão + índice da rodada. Não toca o jogo diário.
  */
-import type { HistoricalTeam, Player, SeriesResult } from './types'
+import type { GameAdjust, HistoricalTeam, Player, SeriesResult } from './types'
 import { TEAMS } from './data/teams'
 import { hashString } from './seed'
 import { mulberry32 } from './rng'
 import { simulateSeries } from './series'
+import { mergeAdjust } from './tactics'
 import { synergyAdjust } from './synergy'
 
 /** Vitórias para fechar uma rodada do gauntlet (melhor de 3). */
@@ -57,20 +58,31 @@ export function endlessOpponent(sessionSeed: number, round: number): HistoricalT
 
 /**
  * Joga UMA rodada do gauntlet (melhor de 3) — determinística pela sessão+rodada.
- * Aplica a sinergia de era do quinteto, como no diário; sem prancheta (quick-play).
+ * Aplica a sinergia de era do quinteto somada ao `boost` da run (boons); sem
+ * prancheta (quick-play). `attempt > 0` re-sorteia a MESMA rodada (retry com escudo)
+ * sem mudar o adversário. Sem `boost`/`attempt` = comportamento original (baseline).
+ *
+ * @param boost   ajuste acumulado dos boons da run (ratings)
+ * @param attempt nº da tentativa nesta rodada (0 = 1ª; >0 muda só a seed da série)
  */
 export function simulateGauntletRound(
   team: Player[],
   sessionSeed: number,
   round: number,
+  boost?: GameAdjust,
+  attempt = 0,
 ): SeriesResult {
+  const baseSeed =
+    attempt === 0
+      ? endlessSeed(sessionSeed, round)
+      : hashString(`${sessionSeed}:gauntlet:${round}:a${attempt}`)
   return simulateSeries(
     team,
     endlessOpponent(sessionSeed, round),
-    endlessSeed(sessionSeed, round),
+    baseSeed,
     undefined,
     undefined,
-    synergyAdjust(team),
+    mergeAdjust(synergyAdjust(team), boost),
     GAUNTLET_WINS,
   )
 }

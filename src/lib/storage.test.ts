@@ -3,10 +3,13 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   confirmDay,
   getDay,
+  getGauntletRecord,
+  getGauntletStats,
   getPlayerSeed,
   hasOnboarded,
   isLocked,
   loadStats,
+  recordGauntletRun,
   setOnboarded,
   type DayRecord,
 } from './storage'
@@ -86,5 +89,22 @@ describe('storage', () => {
     localStorage.setItem('longshot:v1', '{ não é json')
     expect(loadStats().history).toEqual({})
     expect(loadStats().streak).toBe(0)
+  })
+})
+
+describe('gauntlet stats', () => {
+  it('registra runs, soma rodadas e guarda o recorde', () => {
+    expect(getGauntletStats()).toEqual({ runs: 0, totalRounds: 0, best: 0 })
+    recordGauntletRun(4)
+    recordGauntletRun(7)
+    recordGauntletRun(2)
+    expect(getGauntletStats()).toEqual({ runs: 3, totalRounds: 13, best: 7 })
+    expect(getGauntletRecord()).toBe(7)
+  })
+
+  it('migra o recorde do formato v1 (só número)', () => {
+    localStorage.setItem('longshot:gauntlet:v1', '9')
+    expect(getGauntletStats()).toEqual({ runs: 0, totalRounds: 0, best: 9 })
+    expect(getGauntletRecord()).toBe(9)
   })
 })

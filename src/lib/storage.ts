@@ -233,28 +233,60 @@ export const setSkin = (id: string): void => setCosmetic(SKIN_KEY, id)
 export const getFrame = (): string => getCosmetic(FRAME_KEY, 'none')
 export const setFrame = (id: string): void => setCosmetic(FRAME_KEY, id)
 
-const GAUNTLET_KEY = 'longshot:gauntlet:v1'
+const GAUNTLET_KEY = 'longshot:gauntlet:v1' // legado: só o recorde (número)
+const GAUNTLET_KEY_V2 = 'longshot:gauntlet:v2'
 
-/** Recorde do Gauntlet infinito: maior nº de rodadas vencidas numa run. */
-export function getGauntletRecord(): number {
+/** Estatísticas acumuladas do Gauntlet (todas as runs). */
+export interface GauntletStats {
+  /** Nº de runs encerradas. */
+  runs: number
+  /** Soma de rodadas vencidas em todas as runs (p/ média). */
+  totalRounds: number
+  /** Maior nº de rodadas vencidas numa run (recorde). */
+  best: number
+}
+
+/** Lê as stats do Gauntlet, migrando do formato v1 (só o recorde) se preciso. */
+export function getGauntletStats(): GauntletStats {
   try {
-    const raw = localStorage.getItem(GAUNTLET_KEY)
-    const n = raw ? JSON.parse(raw) : 0
-    return typeof n === 'number' && n >= 0 ? n : 0
+    const raw = localStorage.getItem(GAUNTLET_KEY_V2)
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<GauntletStats>
+      return {
+        runs: typeof p.runs === 'number' && p.runs >= 0 ? p.runs : 0,
+        totalRounds: typeof p.totalRounds === 'number' && p.totalRounds >= 0 ? p.totalRounds : 0,
+        best: typeof p.best === 'number' && p.best >= 0 ? p.best : 0,
+      }
+    }
+    // Migração do v1: só havia o recorde.
+    const legacy = localStorage.getItem(GAUNTLET_KEY)
+    const n = legacy ? JSON.parse(legacy) : 0
+    const best = typeof n === 'number' && n >= 0 ? n : 0
+    return { runs: 0, totalRounds: 0, best }
   } catch {
-    return 0
+    return { runs: 0, totalRounds: 0, best: 0 }
   }
 }
 
-/** Grava o recorde do Gauntlet (só se for maior). Retorna o recorde vigente. */
-export function setGauntletRecord(rounds: number): number {
-  const best = Math.max(getGauntletRecord(), rounds)
+/** Recorde do Gauntlet (maior nº de rodadas vencidas). Usado pelas conquistas. */
+export function getGauntletRecord(): number {
+  return getGauntletStats().best
+}
+
+/** Registra o fim de uma run (rodadas vencidas) e retorna as stats atualizadas. */
+export function recordGauntletRun(rounds: number): GauntletStats {
+  const prev = getGauntletStats()
+  const next: GauntletStats = {
+    runs: prev.runs + 1,
+    totalRounds: prev.totalRounds + Math.max(0, rounds),
+    best: Math.max(prev.best, rounds),
+  }
   try {
-    localStorage.setItem(GAUNTLET_KEY, JSON.stringify(best))
+    localStorage.setItem(GAUNTLET_KEY_V2, JSON.stringify(next))
   } catch {
     // ignora (quota cheia / modo privado)
   }
-  return best
+  return next
 }
 
 const ACHIEVEMENTS_KEY = 'longshot:achievements:v1'

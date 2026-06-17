@@ -94,6 +94,17 @@ export const strings = {
     survived: (n: number) => `Você venceu ${n} ${n === 1 ? 'rodada' : 'rodadas'}`,
     newRecord: '🎉 Novo recorde!',
     again: '🔄 Jogar de novo',
+    // Boons (reforços entre rodadas)
+    pickBoon: 'Escolha um reforço:',
+    boonNote: 'vale pelo resto da run',
+    yourRun: 'Sua run',
+    shields: (n: number) => `🛡️ ${n}`,
+    shieldUsed: '🛡️ Escudo gasto — jogue de novo!',
+    noBoons: 'nenhum reforço ainda',
+    // Stats da run + share
+    runs: 'runs',
+    avg: 'média',
+    share: '🔗 Compartilhar',
   },
 
   bracket: {

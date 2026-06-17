@@ -4,7 +4,13 @@ import type { Bracket, DailyDraft } from '../engine/draft'
 import { dailyDraft } from '../engine/draft'
 import { endlessOpponent, simulateGauntletRound } from '../engine/endless'
 import { campaignStats } from '../lib/playerStats'
-import { getGauntletRecord, setGauntletRecord } from '../lib/storage'
+import {
+  getGauntletStats,
+  recordGauntletRun,
+  type GauntletStats,
+} from '../lib/storage'
+import { initBuild, offerBoons, type Boon, type RunBuild } from '../lib/gauntletBoons'
+import { buildGauntletShare, shareText } from '../lib/share'
 import { playUnlock } from '../lib/sound'
 import { celebrate } from '../lib/confetti'
 import { strings as S } from '../lib/strings'
@@ -24,19 +30,24 @@ function seriesMvp(series: SeriesResult): { name: string; points: number } | nul
 
 /**
  * Gauntlet infinito — modo livre, autocontido. Drafta um quinteto (times
- * aleatórios da sessão), enfrenta séries melhor-de-3 cada vez mais difíceis e
- * registra o recorde de rodadas vencidas. Não toca no diário/streak/stats.
+ * aleatórios da sessão), enfrenta séries melhor-de-3 cada vez mais difíceis e, a
+ * cada vitória, escolhe um BOON que fica pela run (roguelike). Escudos sobrevivem a
+ * uma derrota. Não toca no diário/streak/stats.
  */
 export function GauntletScreen({ onExit }: { onExit: () => void }) {
   const [seed, setSeed] = useState(newSeed)
   const [phase, setPhase] = useState<'draft' | 'climb'>('draft')
-  const [team, setTeam] = useState<Player[]>([])
+  const [build, setBuild] = useState<RunBuild>(() => initBuild([]))
   const [round, setRound] = useState(0) // rodada atual (0-based)
   const [cleared, setCleared] = useState(0) // rodadas vencidas nesta run
-  const [record, setRecord] = useState(getGauntletRecord)
+  const [attempt, setAttempt] = useState(0) // tentativa na rodada (retry com escudo)
+  const [stats, setStats] = useState<GauntletStats>(getGauntletStats)
   const [series, setSeries] = useState<SeriesResult | null>(null) // resultado da rodada
+  const [offer, setOffer] = useState<Boon[] | null>(null) // boons após vencer
+  const [activeBoons, setActiveBoons] = useState<Boon[]>([]) // build acumulado (ícones)
   const [over, setOver] = useState(false)
   const [isRecord, setIsRecord] = useState(false)
+  const [shieldNote, setShieldNote] = useState(false)
 
   // Draft da sessão: times sorteados pela seed; o "caminho" mostra os 1ºs adversários.
   const draft: DailyDraft = useMemo(
@@ -47,31 +58,40 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     }),
     [seed],
   )
+  // Pool da sessão (para o boon de Reforço).
+  const pool = useMemo<Player[]>(() => draft.draftTeams.flatMap((t) => t.roster), [draft])
 
   const opponent = useMemo(() => endlessOpponent(seed, round), [seed, round])
   const mvp = useMemo(() => (series ? seriesMvp(series) : null), [series])
 
   const startRun = (picked: Player[]) => {
-    setTeam(picked)
+    setBuild(initBuild(picked))
     setRound(0)
     setCleared(0)
+    setAttempt(0)
     setSeries(null)
+    setOffer(null)
+    setActiveBoons([])
     setOver(false)
     setIsRecord(false)
+    setShieldNote(false)
     setPhase('climb')
   }
 
   const playRound = () => {
-    const result = simulateGauntletRound(team, seed, round)
+    setShieldNote(false)
+    const result = simulateGauntletRound(build.team, seed, round, build.boost, attempt)
     setSeries(result)
     if (result.winner === 'player') {
       playUnlock()
       celebrate(false)
+      setOffer(offerBoons(seed, round))
       return
     }
-    // Derrota → fim da run.
-    const beat = cleared > record
-    setRecord(setGauntletRecord(cleared))
+    if (build.shields > 0) return // derrota, mas pode gastar escudo (botão de retry)
+    // Sem escudo → fim da run.
+    const beat = cleared > stats.best
+    setStats(recordGauntletRun(cleared))
     setIsRecord(beat)
     setOver(true)
     if (beat) {
@@ -80,18 +100,32 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     }
   }
 
-  const advance = () => {
+  const pickBoon = (boon: Boon) => {
+    setBuild((b) => boon.apply(b, pool))
+    setActiveBoons((a) => [...a, boon])
     setCleared((c) => c + 1)
     setRound((r) => r + 1)
+    setAttempt(0)
     setSeries(null)
+    setOffer(null)
+  }
+
+  const useShield = () => {
+    setBuild((b) => ({ ...b, shields: b.shields - 1 }))
+    setAttempt((a) => a + 1)
+    setSeries(null)
+    setShieldNote(true)
   }
 
   const restart = () => {
     setSeed(newSeed())
     setPhase('draft')
     setSeries(null)
+    setOffer(null)
     setOver(false)
   }
+
+  const handleShare = () => void shareText(buildGauntletShare(cleared, stats.best))
 
   if (phase === 'draft') {
     return (
@@ -109,8 +143,18 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
   }
 
   const won = series?.winner === 'player'
+  const canRetry = series !== null && !won && !over && build.shields > 0
   const statCard = 'rounded-lg border border-line p-2 text-center'
   const statLabel = 'text-[10px] font-medium uppercase tracking-wide text-muted'
+  const primaryBtn =
+    'font-display rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90'
+
+  // Ícones do build acumulado (agrega repetidos: emoji ×n).
+  const boonCounts = activeBoons.reduce<Map<string, number>>(
+    (m, b) => m.set(b.emoji, (m.get(b.emoji) ?? 0) + 1),
+    new Map(),
+  )
+  const avg = stats.runs > 0 ? (stats.totalRounds / stats.runs).toFixed(1) : '0'
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-canvas p-3 text-ink">
@@ -124,7 +168,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
         </button>
         <h1 className="font-display text-xl font-bold uppercase tracking-wide">{S.gauntlet.title}</h1>
         <div className="min-h-11 rounded-lg border border-line px-3 py-1 text-center">
-          <div className="font-display text-base font-bold leading-none text-accent">🏆 {record}</div>
+          <div className="font-display text-base font-bold leading-none text-accent">🏆 {stats.best}</div>
           <div className="text-[9px] uppercase tracking-wide text-muted">{S.gauntlet.record}</div>
         </div>
       </header>
@@ -141,26 +185,43 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
+      {/* Faixa do build (escudos + boons ativos) */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.yourRun}</span>
+        {build.shields > 0 && <span className="font-semibold">{S.gauntlet.shields(build.shields)}</span>}
+        {boonCounts.size === 0 && build.shields === 0 ? (
+          <span className="text-[11px] text-muted">{S.gauntlet.noBoons}</span>
+        ) : (
+          [...boonCounts].map(([emoji, n]) => (
+            <span key={emoji} className="tabular-nums">
+              {emoji}
+              {n > 1 && <span className="text-[11px] text-muted">×{n}</span>}
+            </span>
+          ))
+        )}
+      </div>
+
       {/* Rodada pronta para jogar */}
       {!series && !over && (
         <section className="flex flex-1 flex-col gap-3">
+          {shieldNote && (
+            <div className="rounded-lg border border-accent bg-accent-soft px-3 py-2 text-center text-sm font-semibold text-accent">
+              {S.gauntlet.shieldUsed}
+            </div>
+          )}
           <div>
             <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
               {S.gauntlet.opponent}
             </h2>
             <TeamStats team={opponent} title={`${opponent.name} ${opponent.season}`} />
           </div>
-          <button
-            type="button"
-            onClick={playRound}
-            className="font-display mt-auto rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
-          >
+          <button type="button" onClick={playRound} className={`mt-auto ${primaryBtn}`}>
             {S.gauntlet.play}
           </button>
         </section>
       )}
 
-      {/* Resultado da série (vitória ou derrota) */}
+      {/* Resultado da série */}
       {series && (
         <section className="flex flex-1 flex-col gap-3">
           <div
@@ -178,7 +239,6 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
             <div className="font-display mt-1 text-2xl font-bold tabular-nums">
               {series.gamesWon}–{series.gamesLost}
             </div>
-            {/* Placar jogo a jogo */}
             <div className="mt-2 flex flex-wrap justify-center gap-1">
               {series.games.map((g, i) => {
                 const w = g.homeScore > g.awayScore
@@ -203,16 +263,36 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
             )}
           </div>
 
-          {won && !over && (
-            <button
-              type="button"
-              onClick={advance}
-              className="font-display mt-auto rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
-            >
-              {S.gauntlet.advance}
+          {/* Vitória → escolher um boon */}
+          {won && offer && (
+            <div className="flex flex-col gap-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-pos">{S.gauntlet.pickBoon}</h3>
+              {offer.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => pickBoon(b)}
+                  className="flex items-center gap-2 rounded-lg border border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
+                >
+                  <span className="text-2xl leading-none">{b.emoji}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold leading-tight">{b.name}</span>
+                    <span className="block text-[11px] text-muted">{b.desc}</span>
+                  </span>
+                </button>
+              ))}
+              <p className="text-center text-[10px] text-muted">{S.gauntlet.boonNote}</p>
+            </div>
+          )}
+
+          {/* Derrota com escudo → retry */}
+          {canRetry && (
+            <button type="button" onClick={useShield} className={`mt-auto ${primaryBtn}`}>
+              {S.gauntlet.shields(build.shields)} · {S.gauntlet.advance}
             </button>
           )}
 
+          {/* Fim da run */}
           {over && (
             <div className="mt-auto flex flex-col gap-2 rounded-lg border border-line bg-surface p-3 text-center">
               <div className="font-display text-lg font-bold uppercase tracking-wide">{S.gauntlet.overTitle}</div>
@@ -222,9 +302,27 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
                 </div>
               )}
               <div className="text-sm font-medium">{S.gauntlet.survived(cleared)}</div>
-              <div className="text-[11px] text-muted">
-                {S.gauntlet.record}: <span className="font-mono font-semibold text-ink">{record}</span>
+              <div className="grid grid-cols-3 gap-2">
+                <div className={statCard}>
+                  <div className="font-display text-lg font-bold tabular-nums text-accent">{stats.best}</div>
+                  <div className={statLabel}>{S.gauntlet.record}</div>
+                </div>
+                <div className={statCard}>
+                  <div className="font-display text-lg font-bold tabular-nums">{avg}</div>
+                  <div className={statLabel}>{S.gauntlet.avg}</div>
+                </div>
+                <div className={statCard}>
+                  <div className="font-display text-lg font-bold tabular-nums">{stats.runs}</div>
+                  <div className={statLabel}>{S.gauntlet.runs}</div>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="rounded-lg border border-line bg-surface py-2 text-sm font-semibold transition hover:bg-surface2"
+              >
+                {S.gauntlet.share}
+              </button>
               <div className="mt-1 flex gap-2">
                 <button
                   type="button"

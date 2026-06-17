@@ -27,4 +27,21 @@ describe('gauntlet (endless)', () => {
     expect(deep.defense).toBeLessThanOrEqual(99)
     expect(deep.clutch).toBeLessThanOrEqual(99)
   })
+
+  it('boost/attempt: default inalterado; retry re-sorteia a mesma rodada', () => {
+    const a = simulateGauntletRound(team, 99, 3)
+    expect(simulateGauntletRound(team, 99, 3, undefined, 0)).toEqual(a) // default == sem params
+    expect(JSON.stringify(simulateGauntletRound(team, 99, 3, undefined, 1))).not.toBe(JSON.stringify(a))
+  })
+
+  it('boost (boons) nunca reduz as vitórias do time nas mesmas seeds', () => {
+    let baseWins = 0
+    let boostWins = 0
+    const boost = { make: 0.06, clutch: 15, defense: 10 } // sem pace (não muda o nº de posses)
+    for (let r = 0; r < 20; r++) {
+      if (simulateGauntletRound(team, 5, r).winner === 'player') baseWins += 1
+      if (simulateGauntletRound(team, 5, r, boost).winner === 'player') boostWins += 1
+    }
+    expect(boostWins).toBeGreaterThanOrEqual(baseWins)
+  })
 })
