@@ -27,14 +27,27 @@ para todo mundo no dia**, fácil de comparar e compartilhar.
 3. **Inicie o Playoff** — decisão irreversível por hoje.
 4. **Assista no seu ritmo:** avance **round a round**; em cada um veja o **scouting
    do adversário** (com traços tipo *Ritmo alto* · *Defesa elite*) e jogue **partida por
-   partida** (placar, play-by-play e box score, com "acelerar pro fim") ou **simule o
-   round inteiro**. Rounds não alcançados ficam ocultos.
+   partida** (placar, play-by-play e **box score com pontos, rebotes e assistências**, com
+   "acelerar pro fim") ou **simule o round inteiro**. Rounds não alcançados ficam ocultos.
 5. **Use a prancheta** (3 fichas no playoff inteiro): **Esquema da série**, **Timeout**
    (comeback quando está perdendo), **Takeover do craque** e **Sexto homem** — cada ação
    tem um custo e um trade-off. Leia os **traços do adversário e do seu time** para escolher.
-6. **Evolua e colecione:** ganhe **XP/níveis** (patentes de carreira), **selos** por
-   rodada máxima vencida (🥉🥈🥇🏆), desbloqueie **cosméticos** (cores, temas, molduras),
-   mantenha o **streak** e **compartilhe** o resultado estilo Wordle.
+6. **Evolua e colecione:** ganhe **XP/níveis** (patentes de carreira), desbloqueie um
+   **mural de conquistas**, colecione **selos** por rodada máxima vencida (🥉🥈🥇🏆) e
+   **cosméticos** (cores, temas, molduras), proteja o **streak** com **escudos** e
+   **compartilhe** estilo Wordle — tudo com **som e confete** nos grandes momentos.
+
+### ⚔️ Modo Gauntlet (infinito)
+
+Um modo livre, à parte do diário (**não afeta streak/stats**): drafte um quinteto
+rápido e encare uma **escalada infinita** de adversários cada vez mais fortes, em
+séries **melhor de 3**. A cada rodada vencida, escolha **1 de 3 boons** (estilo
+roguelike) que valem pela run inteira — buffs de time, **escudos** (sobrevivem a uma
+derrota) ou um **Reforço** que troca seu elo fraco por um craque. Os boons têm **teto
+por atributo** (o build plateia) e os adversários escalam sem parar, então **toda run
+tem fim** — vale o **recorde** de rodadas. Motor em
+[`engine/endless.ts`](src/engine/endless.ts), boons em
+[`lib/gauntletBoons.ts`](src/lib/gauntletBoons.ts).
 
 ---
 
@@ -54,8 +67,8 @@ Nada de `Math.random`. O acaso vem de um RNG **semeado**:
 
 Os **adversários** são definidos só pela data (iguais para todos — sustentam o
 "todo mundo enfrentou o Bulls 96 nas Finals" do share), enquanto a **sequência de
-times do draft** (com elencos em [`data/rosters.ts`](src/engine/data/rosters.ts)) é
-sorteada por jogador. Resultado: **mesmo time + data + táticas → mesmo bracket, sempre**.
+times do draft** (**62 times** com elencos em [`data/rosters.ts`](src/engine/data/rosters.ts))
+é sorteada por jogador. Resultado: **mesmo time + data + táticas → mesmo bracket, sempre**.
 
 ### Simulação de um jogo — [`sim.ts`](src/engine/sim.ts)
 `simulateGame(playerTeam, opponent, seed, adjust?)` joga **~100 posses por time** (o
@@ -92,6 +105,14 @@ então a prancheta nunca compromete a reprodutibilidade.
 - `simulateBracket(team, date, tactics?, sixthMan?)` carrega os 4 adversários do dia e
   simula as séries em sequência, parando na derrota. `champion` = venceu as quatro.
 
+### Química & escalada infinita — [`synergy.ts`](src/engine/synergy.ts) · [`endless.ts`](src/engine/endless.ts)
+- **Sinergia de era:** um quinteto com **3+ jogadores da mesma década** ganha um bônus
+  determinístico (clutch/acerto) — recompensa montar um time coeso, e entra como um
+  `GameAdjust` no `simulateBracket`.
+- **Gauntlet infinito:** `endlessOpponent` gera adversários numa escalada sem fim
+  (clones turbinados dos mais fortes além do topo do pool) e `simulateGauntletRound`
+  joga uma rodada **melhor de 3** combinando a química com os **boons** da run.
+
 ---
 
 ## ✨ Progressão & meta
@@ -108,9 +129,18 @@ Tudo **derivado do histórico** (nada de simulação é persistido), em `localSt
   **aproveitamento** e **maior vitória**.
 - **Conquista Invicto 🐐 (16-0)**: campeão sem perder nenhum jogo (as 4 séries varridas) —
   destaque no hero do campeão, marca 🐐 no share e contagem nos recordes.
+- **Mural de conquistas** ([`lib/achievements.ts`](src/lib/achievements.ts)): ~29 metas em
+  três categorias (Carreira · Estatísticas · Gauntlet), derivadas do histórico, com barra
+  de progresso nas bloqueadas e celebração ao desbloquear.
 - **Histórico de jogadores** (no 📊): cestinhas de todos os tempos, mais escalados,
   recordes e resumo de uso, **re-simulando** cada dia com as táticas usadas
   ([`lib/playerHistory.ts`](src/lib/playerHistory.ts)).
+- **Curiosidades dos jogadores** no draft ([`lib/playerFacts.ts`](src/lib/playerFacts.ts)):
+  uma frase de contexto para as lendas, dando identidade às escolhas.
+- **Escudos de streak**: ganhos a cada 10 dias, protegem a sequência quando você pula um dia.
+- **Som & confete** ([`lib/sound.ts`](src/lib/sound.ts) — Web Audio sintetizado, sem dep —
+  e [`lib/confetti.ts`](src/lib/confetti.ts)): respeitam `prefers-reduced-motion` e têm
+  toggle de mudo.
 - **Níveis & XP** ([`lib/level.ts`](src/lib/level.ts)): XP por quão longe você foi no
   playoff; patentes de carreira (Rookie → … → G.O.A.T.).
 - **Cosméticos desbloqueáveis por nível**: cores de acento e **temas completos**
@@ -137,19 +167,19 @@ convenção.
 
 | Camada | Papel |
 |--------|------|
-| [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times), seed, RNG, draft, simulação, **táticas**, série, bracket |
-| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `scouting`, `level`, `skins`, `frames`, `tactics` |
+| [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times), seed, RNG, draft, simulação, **táticas**, série, bracket, **sinergia**, **gauntlet** |
+| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `scouting`, `level`, `skins`, `frames`, `tactics`, `achievements`, `gauntletBoons`, `playerFacts`, `sound`, `confetti` |
 | [`src/hooks/`](src/hooks/) | `usePlayoff` orquestra draft → trava → simulação reativa (táticas) → persistência |
-| [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `TeamStats`, `CoachActions`, `CoachGuide`, `LevelBadge`, `ResultModal`, `Onboarding` |
+| [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `TeamStats`, `CoachActions`, `CoachGuide`, `LevelBadge`, `ResultModal`, `Onboarding`, `GauntletScreen` |
 
 ---
 
 ## 🧱 Stack
 
-Vite · React · TypeScript (modo `strict`) · TailwindCSS v4 · Vitest. Mobile-first,
-tema claro/escuro do sistema. As cores são **tokens semânticos** (variáveis CSS via
-`@theme` + `light-dark()`); o visual padrão é o **Hardwood clássico** e há **skins
-desbloqueáveis** (`data-theme`).
+Vite · React · TypeScript (modo `strict`) · TailwindCSS v4 · Vitest · canvas-confetti.
+PWA (instalável, offline). Mobile-first, tema claro/escuro do sistema. As cores são
+**tokens semânticos** (variáveis CSS via `@theme` + `light-dark()`); o visual padrão é o
+**Hardwood clássico** e há **skins desbloqueáveis** (`data-theme`).
 
 ## 🚀 Rodando localmente
 
@@ -161,8 +191,8 @@ npm run coverage   # testes + cobertura
 npm run build      # gera dist/ (typecheck + build de produção)
 ```
 
-O motor é coberto por testes determinísticos; a UI por testes em jsdom
-(Testing Library). **93 testes** no total.
+O motor é coberto por testes determinísticos (incluindo uma **guarda de equilíbrio**
+do Gauntlet); a UI por testes em jsdom (Testing Library). **117 testes** no total.
 
 ## ☁️ Deploy
 
