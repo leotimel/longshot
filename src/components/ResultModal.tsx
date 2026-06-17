@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { DayRecord, Stats } from '../lib/storage'
+import { getSeenAchievements, setSeenAchievements } from '../lib/storage'
 import type { LevelInfo } from '../lib/level'
 import { summarizeHistory } from '../lib/playerHistory'
+import { computeAchievements } from '../lib/achievements'
 import { SKINS, isSkinUnlocked } from '../lib/skins'
 import { FRAMES, isFrameUnlocked } from '../lib/frames'
-import { isMuted, playLevelUp, toggleMuted } from '../lib/sound'
+import { isMuted, playLevelUp, playUnlock, toggleMuted } from '../lib/sound'
 import { celebrate } from '../lib/confetti'
 import { strings as S } from '../lib/strings'
 
@@ -54,10 +56,28 @@ export function ResultModal({
   const [countdown, setCountdown] = useState(msToMidnight)
   const [muted, setMutedState] = useState(isMuted)
   const hist = useMemo(() => summarizeHistory(stats.history), [stats.history])
+  const achievements = useMemo(() => computeAchievements(stats, hist), [stats, hist])
+  const doneCount = achievements.filter((a) => a.done).length
+
+  // Conquistas novas desde a última abertura (calculado uma vez, ao montar).
+  const [newlyUnlocked] = useState<Set<string>>(() => {
+    const seen = new Set(getSeenAchievements())
+    return new Set(achievements.filter((a) => a.done && !seen.has(a.id)).map((a) => a.id))
+  })
 
   useEffect(() => {
     const id = setInterval(() => setCountdown(msToMidnight()), 1000)
     return () => clearInterval(id)
+  }, [])
+
+  // Comemora e marca como vistas as conquistas recém-desbloqueadas (uma vez).
+  useEffect(() => {
+    if (newlyUnlocked.size > 0) {
+      playUnlock()
+      celebrate()
+      setSeenAchievements(achievements.filter((a) => a.done).map((a) => a.id))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Comemoração ao subir de nível (uma vez, ao abrir o modal).
@@ -266,6 +286,52 @@ export function ResultModal({
               </div>
             </>
           )}
+        </div>
+
+        {/* Conquistas (mural) */}
+        <div className="mb-3">
+          <h3 className={sectionTitle}>{S.result.achievementsTitle(doneCount, achievements.length)}</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {[...achievements]
+              .sort((a, b) => {
+                const rank = (x: typeof a) => (newlyUnlocked.has(x.id) ? 2 : x.done ? 1 : 0)
+                const d = rank(b) - rank(a)
+                if (d !== 0) return d
+                if (!a.done && !b.done) return (b.progress ?? 0) - (a.progress ?? 0)
+                return 0
+              })
+              .map((a) => (
+                <div
+                  key={a.id}
+                  className={[
+                    'rounded-lg border p-2',
+                    a.done ? 'border-accent bg-accent-soft' : 'border-line opacity-70',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-lg leading-none ${a.done ? '' : 'grayscale'}`}>{a.emoji}</span>
+                    <span className="text-xs font-bold leading-tight">{a.name}</span>
+                    {newlyUnlocked.has(a.id) && (
+                      <span className="ml-auto rounded bg-accent px-1 text-[9px] font-bold uppercase tracking-wide text-on-accent">
+                        {S.result.achNew}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-[10px] leading-tight text-muted">{a.desc}</p>
+                  {!a.done && a.progress !== undefined && (
+                    <div className="mt-1">
+                      <div className="h-1 overflow-hidden rounded-full bg-surface2">
+                        <div
+                          className="h-full rounded-full bg-accent"
+                          style={{ width: `${Math.round(a.progress * 100)}%` }}
+                        />
+                      </div>
+                      <div className="mt-0.5 text-right text-[9px] tabular-nums text-muted">{a.progressLabel}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
         </div>
 
         {/* Cosméticos: skin + moldura */}

@@ -144,6 +144,9 @@ export const strings = {
     ppg: 'pts/jg',
     picks: (n: number) => `×${n}`,
     emptyHistory: 'Jogue alguns dias para acumular estatísticas dos jogadores.',
+    // Conquistas (mural)
+    achievementsTitle: (done: number, total: number) => `Conquistas ${done}/${total}`,
+    achNew: 'novo!',
   },
 
   level: {

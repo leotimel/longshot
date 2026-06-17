@@ -232,3 +232,25 @@ export const getSkin = (): string => getCosmetic(SKIN_KEY, 'hardwood')
 export const setSkin = (id: string): void => setCosmetic(SKIN_KEY, id)
 export const getFrame = (): string => getCosmetic(FRAME_KEY, 'none')
 export const setFrame = (id: string): void => setCosmetic(FRAME_KEY, id)
+
+const ACHIEVEMENTS_KEY = 'longshot:achievements:v1'
+
+/** Ids das conquistas que o jogador já viu desbloqueadas (para destacar as novas). */
+export function getSeenAchievements(): string[] {
+  try {
+    const raw = localStorage.getItem(ACHIEVEMENTS_KEY)
+    if (!raw) return []
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? (arr as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function setSeenAchievements(ids: string[]): void {
+  try {
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(ids))
+  } catch {
+    // ignora (quota cheia / modo privado)
+  }
+}

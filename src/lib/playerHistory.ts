@@ -1,4 +1,5 @@
 import { simulateBracket } from '../engine/bracket'
+import { dailyDraft } from '../engine/draft'
 import { playerById } from '../engine/data/rosters'
 import type { Player } from '../engine/types'
 import { isPerfectRun } from './playerStats'
@@ -25,6 +26,12 @@ export interface HistorySummary {
   bestCampaign: { points: number; date: string } | null
   /** Temporadas invictas (16-0) acumuladas. */
   perfectRuns: number
+  /** Séries vencidas após perder os 2 primeiros jogos (0-2). */
+  comebacks: number
+  /** Jogos-jogador com duplo-duplo (≥2 entre pts/reb/ast ≥10). */
+  doubleDoubles: number
+  /** Séries vencidas contra um time juggernaut (ataque e defesa de elite). */
+  davidWins: number
 }
 
 /**
@@ -37,6 +44,9 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
   let totalPoints = 0
   let daysPlayed = 0
   let perfectRuns = 0
+  let comebacks = 0
+  let doubleDoubles = 0
+  let davidWins = 0
   let recordGame: HistorySummary['recordGame'] = null
   let bestCampaign: HistorySummary['bestCampaign'] = null
 
@@ -60,8 +70,27 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
     const sixthMan = day.sixthManId ? playerById(day.sixthManId) : undefined
     const bracket = simulateBracket(team, day.date, day.tactics, sixthMan)
     if (isPerfectRun(bracket)) perfectRuns += 1
+    const opponents = dailyDraft(day.date).bracket // alinhado a bracket.rounds
     let campaignPoints = 0
-    for (const round of bracket.rounds) {
+    for (let ri = 0; ri < bracket.rounds.length; ri++) {
+      const round = bracket.rounds[ri]
+
+      // Virada (0-2): perdeu os 2 primeiros jogos e ainda venceu a série.
+      if (
+        round.winner === 'player' &&
+        round.games.length >= 2 &&
+        round.games[0].homeScore < round.games[0].awayScore &&
+        round.games[1].homeScore < round.games[1].awayScore
+      ) {
+        comebacks += 1
+      }
+
+      // Davi vs Golias: venceu uma série de um time com ataque E defesa de elite.
+      const opp = opponents[ri]
+      if (round.winner === 'player' && opp && opp.teamRatings.offense >= 92 && opp.teamRatings.defense >= 90) {
+        davidWins += 1
+      }
+
       for (const game of round.games) {
         for (const e of game.boxScore) {
           const cur = byId.get(e.playerId)
@@ -74,6 +103,8 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
           if (!recordGame || e.points > recordGame.points) {
             recordGame = { name: e.name, points: e.points, date: day.date }
           }
+          const cats = (e.points >= 10 ? 1 : 0) + (e.rebounds >= 10 ? 1 : 0) + (e.assists >= 10 ? 1 : 0)
+          if (cats >= 2) doubleDoubles += 1
         }
       }
     }
@@ -100,5 +131,8 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
     recordGame,
     bestCampaign,
     perfectRuns,
+    comebacks,
+    doubleDoubles,
+    davidWins,
   }
 }
