@@ -9,8 +9,8 @@ const game: GameResult = {
   awayScore: 99,
   playByPlay: ['Q4 · Curry crava de 3'],
   boxScore: [
-    { playerId: 'a', name: 'Stephen Curry', points: 40 },
-    { playerId: 'b', name: 'LeBron James', points: 30 },
+    { playerId: 'a', name: 'Stephen Curry', points: 40, rebounds: 5, assists: 8 },
+    { playerId: 'b', name: 'LeBron James', points: 30, rebounds: 9, assists: 7 },
   ],
 }
 

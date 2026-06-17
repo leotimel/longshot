@@ -54,11 +54,13 @@ export interface HistoricalTeam {
   description: string
 }
 
-/** Pontos de um jogador num jogo (box score de só pontos). */
+/** Linha do box score de um jogador num jogo (pontos, rebotes, assistências). */
 export interface BoxScoreEntry {
   playerId: string
   name: string
   points: number
+  rebounds: number
+  assists: number
 }
 
 /**

@@ -22,9 +22,31 @@ import type {
   PlayerRatings,
 } from './types'
 import { mulberry32 } from './rng'
+import { hashString } from './seed'
 
 const clamp = (x: number, lo: number, hi: number): number =>
   Math.max(lo, Math.min(hi, x))
+
+/**
+ * Distribui um total inteiro entre jogadores, proporcional aos pesos (+jitter
+ * determinístico do `rng`), somando exatamente `total`. Usado para rebotes/
+ * assistências — um stream à parte, sem tocar o RNG de pontuação.
+ */
+function distribute(total: number, weights: number[], rng: () => number): number[] {
+  const n = weights.length
+  if (n === 0 || total <= 0) return new Array(n).fill(0)
+  const w = weights.map((x) => Math.max(1, x) * (0.7 + 0.6 * rng()))
+  const sum = w.reduce((a, b) => a + b, 0) || 1
+  const raw = w.map((x) => (x / sum) * total)
+  const out = raw.map((x) => Math.floor(x))
+  const rem = total - out.reduce((a, b) => a + b, 0)
+  const order = raw
+    .map((x, i) => ({ frac: x - Math.floor(x), i }))
+    .sort((a, b) => b.frac - a.frac)
+    .map((o) => o.i)
+  for (let k = 0; k < rem; k++) out[order[k % n]]++
+  return out
+}
 
 /** Vantagem do quinteto montado: 5 estrelas jogam acima da média de seus ratings. */
 const PLAYER_MAKE_BONUS = 0.065
@@ -200,10 +222,20 @@ export function simulateGame(
     }
   }
 
-  const boxScore: BoxScoreEntry[] = roster.map((p) => ({
+  // Rebotes/assistências: stream separado (após as posses) → não altera os
+  // pontos do baseline. Totais plausíveis distribuídos por rebote/passe.
+  const boxRng = mulberry32(hashString(`${seed}:box`))
+  const teamReb = Math.round(poss * 0.42) // ~38-46 rebotes do time
+  const teamAst = Math.round(playerScore * 0.26) // ~ligado às cestas convertidas
+  const rebArr = distribute(teamReb, roster.map((p) => p.ratings.rebounding), boxRng)
+  const astArr = distribute(teamAst, roster.map((p) => p.ratings.passing), boxRng)
+
+  const boxScore: BoxScoreEntry[] = roster.map((p, i) => ({
     playerId: p.id,
     name: p.name,
     points: points.get(p.id) ?? 0,
+    rebounds: rebArr[i],
+    assists: astArr[i],
   }))
 
   return {

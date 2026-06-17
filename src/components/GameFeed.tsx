@@ -88,12 +88,20 @@ export function GameFeed({
         </ul>
       </div>
 
-      {/* Box score (só pontos) */}
+      {/* Box score (pts · reb · ast) */}
       <div>
         <h3 className={sectionLabel}>
           {S.game.boxScore} · {S.game.yourTeam.toLowerCase()} {revealed ? game.homeScore : ''}
         </h3>
         <ul className={card}>
+          <li className="flex items-center justify-between gap-2 border-b border-line px-3 py-1 text-[0.65rem] uppercase tracking-wide text-muted">
+            <span>{S.game.yourTeam}</span>
+            <span className="flex gap-3 font-mono tabular-nums">
+              <span className="w-7 text-right">pts</span>
+              <span className="w-7 text-right">reb</span>
+              <span className="w-7 text-right">ast</span>
+            </span>
+          </li>
           {box.map((e) => (
             <li
               key={e.playerId}
@@ -103,7 +111,11 @@ export function GameFeed({
                 {e.name}
                 {e.playerId === topScorer.playerId ? ' ⭐' : ''}
               </span>
-              <span className="font-mono font-semibold">{e.points}</span>
+              <span className="flex gap-3 font-mono tabular-nums">
+                <span className="w-7 text-right font-semibold">{e.points}</span>
+                <span className="w-7 text-right text-muted">{e.rebounds}</span>
+                <span className="w-7 text-right text-muted">{e.assists}</span>
+              </span>
             </li>
           ))}
         </ul>

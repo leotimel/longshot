@@ -46,6 +46,22 @@ describe('simulateGame', () => {
     expect(g.playByPlay.length).toBeLessThanOrEqual(10)
   })
 
+  it('box score traz rebotes/assistências plausíveis (totais de time)', () => {
+    for (let s = 1; s <= 30; s++) {
+      const g = simulateGame(team, opponent, s * 11)
+      const reb = g.boxScore.reduce((n, e) => n + e.rebounds, 0)
+      const ast = g.boxScore.reduce((n, e) => n + e.assists, 0)
+      expect(reb).toBeGreaterThan(25)
+      expect(reb).toBeLessThan(65)
+      expect(ast).toBeGreaterThan(8)
+      expect(ast).toBeLessThan(45)
+      for (const e of g.boxScore) {
+        expect(e.rebounds).toBeGreaterThanOrEqual(0)
+        expect(e.assists).toBeGreaterThanOrEqual(0)
+      }
+    }
+  })
+
   it('simula rápido (100 jogos < 250ms)', () => {
     const start = performance.now()
     for (let s = 0; s < 100; s++) simulateGame(team, opponent, s)
