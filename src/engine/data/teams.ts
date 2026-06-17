@@ -2,7 +2,7 @@
  * Times históricos da NBA — os adversários do bracket.
  *
  * Engine puro (sem DOM). Só dados: nome, temporada, teamRatings e uma descrição
- * curta — sem fotos nem logos. ~50 times: campeões + contenders icônicos, dos
+ * curta — sem fotos nem logos. ~60 times: campeões + contenders icônicos, dos
  * anos 60 aos 2020s.
  *
  * teamRatings 0–100, calibrados ENTRE SI ("mais forte que mediano, mas não
@@ -146,6 +146,18 @@ export const TEAMS: readonly HistoricalTeam[] = [
   { id: 'nets-2003', name: 'New Jersey Nets', season: '2002-03',
     teamRatings: { offense: 76, defense: 84, pace: 64, threePointRate: 45, clutch: 76 },
     description: "Jason Kidd lidera o Leste duas vezes seguidas." },
+  { id: 'sixers-2001', name: 'Philadelphia 76ers', season: '2000-01',
+    teamRatings: { offense: 82, defense: 90, pace: 70, threePointRate: 45, clutch: 86 },
+    description: "Allen Iverson MVP e Mutombo no garrafão. O coração que levou Filadélfia à final." },
+  { id: 'pacers-2000', name: 'Indiana Pacers', season: '1999-00',
+    teamRatings: { offense: 84, defense: 84, pace: 66, threePointRate: 48, clutch: 88 },
+    description: "Reggie Miller e o clutch eterno. A final improvável de 2000 contra os Lakers." },
+  { id: 'nuggets-2009', name: 'Denver Nuggets', season: '2008-09',
+    teamRatings: { offense: 88, defense: 84, pace: 70, threePointRate: 52, clutch: 84 },
+    description: "Carmelo Anthony e Chauncey Billups. Denver enfim à final do Oeste." },
+  { id: 'rockets-2008', name: 'Houston Rockets', season: '2007-08',
+    teamRatings: { offense: 86, defense: 86, pace: 64, threePointRate: 50, clutch: 82 },
+    description: "McGrady e Yao Ming. 22 vitórias seguidas, recorde da temporada." },
 
   // ── Anos 2010 ─────────────────────────────────────────────────────────────
   { id: 'heat-2012', name: 'Miami Heat', season: '2011-12',
@@ -178,6 +190,9 @@ export const TEAMS: readonly HistoricalTeam[] = [
   { id: 'raptors-2019', name: 'Toronto Raptors', season: '2018-19',
     teamRatings: { offense: 86, defense: 90, pace: 70, threePointRate: 74, clutch: 88 },
     description: "Kawhi Leonard e o salto que quicou quatro vezes no aro." },
+  { id: 'blazers-2019', name: 'Portland Trail Blazers', season: '2018-19',
+    teamRatings: { offense: 86, defense: 80, pace: 72, threePointRate: 72, clutch: 88 },
+    description: "Dame Time. Lillard e McCollum levam Portland à final do Oeste." },
 
   // ── Anos 2020 ─────────────────────────────────────────────────────────────
   { id: 'lakers-2020', name: 'Los Angeles Lakers', season: '2019-20',
@@ -198,4 +213,7 @@ export const TEAMS: readonly HistoricalTeam[] = [
   { id: 'suns-2021', name: 'Phoenix Suns', season: '2020-21',
     teamRatings: { offense: 88, defense: 84, pace: 72, threePointRate: 80, clutch: 84 },
     description: "Chris Paul leva Phoenix de volta à final após 28 anos." },
+  { id: 'heat-2020', name: 'Miami Heat', season: '2019-20',
+    teamRatings: { offense: 86, defense: 86, pace: 70, threePointRate: 78, clutch: 88 },
+    description: "Jimmy Butler e Bam Adebayo. O 5º cabeça de chave que chegou à final na bolha." },
 ]

@@ -319,6 +319,34 @@ export const ROSTERS: Record<string, Player[]> = {
     p('nets-2003-kmart', 'Kenyon Martin', 'PF', '2000s', [80, 72, 20, 84, 56, 80, 76]),
     p('nets-2003-collins', 'Jason Collins', 'C', '2000s', [50, 58, 5, 78, 48, 74, 58]),
   ],
+  'sixers-2001': [
+    p('sixers-2001-snow', 'Eric Snow', 'PG', '2000s', [78, 64, 30, 82, 78, 44, 72]),
+    p('sixers-2001-iverson', 'Allen Iverson', 'SG', '2000s', [95, 86, 70, 72, 74, 40, 92]),
+    p('sixers-2001-lynch', 'George Lynch', 'SF', '2000s', [74, 64, 40, 78, 52, 66, 66]),
+    p('sixers-2001-hill', 'Tyrone Hill', 'PF', '2000s', [66, 60, 5, 78, 48, 82, 66]),
+    p('sixers-2001-mutombo', 'Dikembe Mutombo', 'C', '2000s', [56, 60, 5, 92, 44, 88, 70]),
+  ],
+  'pacers-2000': [
+    p('pacers-2000-mjackson', 'Mark Jackson', 'PG', '2000s', [70, 70, 68, 74, 88, 56, 78]),
+    p('pacers-2000-miller', 'Reggie Miller', 'SG', '2000s', [74, 84, 90, 74, 62, 48, 92]),
+    p('pacers-2000-rose', 'Jalen Rose', 'SF', '2000s', [78, 80, 72, 70, 70, 56, 76]),
+    p('pacers-2000-daledavis', 'Dale Davis', 'PF', '2000s', [68, 60, 5, 82, 48, 84, 70]),
+    p('pacers-2000-smits', 'Rik Smits', 'C', '2000s', [54, 80, 30, 78, 54, 76, 76]),
+  ],
+  'nuggets-2009': [
+    p('nuggets-2009-billups', 'Chauncey Billups', 'PG', '2000s', [74, 82, 82, 80, 80, 48, 90]),
+    p('nuggets-2009-djones', 'Dahntay Jones', 'SG', '2000s', [78, 62, 50, 80, 46, 50, 64]),
+    p('nuggets-2009-melo', 'Carmelo Anthony', 'SF', '2000s', [80, 88, 74, 70, 70, 64, 84]),
+    p('nuggets-2009-kmart', 'Kenyon Martin', 'PF', '2000s', [80, 70, 20, 84, 54, 80, 74]),
+    p('nuggets-2009-nene', 'Nenê', 'C', '2000s', [72, 78, 20, 80, 60, 80, 72]),
+  ],
+  'rockets-2008': [
+    p('rockets-2008-alston', 'Rafer Alston', 'PG', '2000s', [80, 70, 72, 72, 74, 42, 70]),
+    p('rockets-2008-mcgrady', 'Tracy McGrady', 'SG', '2000s', [86, 86, 78, 76, 80, 64, 86]),
+    p('rockets-2008-battier', 'Shane Battier', 'SF', '2000s', [70, 70, 78, 86, 56, 58, 76]),
+    p('rockets-2008-scola', 'Luis Scola', 'PF', '2000s', [66, 78, 40, 74, 58, 80, 74]),
+    p('rockets-2008-yao', 'Yao Ming', 'C', '2000s', [50, 86, 50, 84, 56, 88, 80]),
+  ],
 
   // ── Anos 2010 ──────────────────────────────────────────────────────────────
   'heat-2012': [
@@ -391,6 +419,13 @@ export const ROSTERS: Record<string, Player[]> = {
     p('raptors-2019-siakam', 'Pascal Siakam', 'PF', '2010s', [82, 80, 68, 82, 66, 74, 76]),
     p('raptors-2019-gasol', 'Marc Gasol', 'C', '2010s', [56, 80, 68, 86, 82, 78, 78]),
   ],
+  'blazers-2019': [
+    p('blazers-2019-lillard', 'Damian Lillard', 'PG', '2010s', [82, 86, 86, 70, 78, 48, 92]),
+    p('blazers-2019-mccollum', 'CJ McCollum', 'SG', '2010s', [80, 84, 80, 72, 64, 50, 80]),
+    p('blazers-2019-harkless', 'Maurice Harkless', 'SF', '2010s', [78, 66, 64, 78, 50, 60, 68]),
+    p('blazers-2019-aminu', 'Al-Farouq Aminu', 'PF', '2010s', [72, 64, 70, 82, 52, 78, 68]),
+    p('blazers-2019-kanter', 'Enes Kanter', 'C', '2010s', [54, 80, 30, 60, 50, 86, 70]),
+  ],
 
   // ── Anos 2020 ──────────────────────────────────────────────────────────────
   'lakers-2020': [
@@ -434,6 +469,13 @@ export const ROSTERS: Record<string, Player[]> = {
     p('suns-2021-bridges', 'Mikal Bridges', 'SF', '2020s', [82, 76, 80, 86, 54, 58, 76]),
     p('suns-2021-crowder', 'Jae Crowder', 'PF', '2020s', [70, 72, 78, 80, 56, 66, 74]),
     p('suns-2021-ayton', 'Deandre Ayton', 'C', '2020s', [68, 80, 30, 80, 52, 86, 74]),
+  ],
+  'heat-2020': [
+    p('heat-2020-dragic', 'Goran Dragić', 'PG', '2020s', [80, 80, 74, 70, 76, 46, 80]),
+    p('heat-2020-drobinson', 'Duncan Robinson', 'SG', '2020s', [72, 78, 90, 62, 50, 44, 74]),
+    p('heat-2020-butler', 'Jimmy Butler', 'SF', '2020s', [82, 82, 60, 88, 78, 64, 90]),
+    p('heat-2020-crowder', 'Jae Crowder', 'PF', '2020s', [70, 72, 78, 80, 54, 64, 74]),
+    p('heat-2020-bam', 'Bam Adebayo', 'C', '2020s', [82, 76, 30, 88, 76, 82, 78]),
   ],
 }
 

@@ -53,9 +53,26 @@ const FACTS: Record<string, string> = {
   'Jayson Tatum': 'Asa pontuadora dos Celtics campeões de 2024.',
   'Devin Booker': 'Marcou 70 pontos num jogo aos 21 anos.',
   'Jamal Murray': 'Decisivo no título do Denver em 2023.',
+  'Allen Iverson': '1,83m e MVP em 2001 — coração de gigante.',
+  'Dikembe Mutombo': 'Tampão lendário e o famoso balançar de dedo.',
+  'Reggie Miller': 'Carrasco do clutch e das bolas de 3.',
+  'Carmelo Anthony': 'Melo — pontuador puro, mestre do jab step.',
+  'Chauncey Billups': 'Mr. Big Shot — FMVP das Finals em 2004.',
+  'Nenê': 'Pivô brasileiro, eficiente e durão no garrafão.',
+  'Tracy McGrady': '13 pontos em 33 segundos — clutch absurdo.',
+  'Yao Ming': 'Gigante de 2,29m, ponte da NBA com a China.',
+  'Damian Lillard': 'Dame Time — buzzer-beaters lendários.',
+  'CJ McCollum': 'Parceiro de Lillard; arsenal completo de arremessos.',
+  'Jimmy Butler': 'Himmy Buckets — implacável nos playoffs.',
+  'Bam Adebayo': 'Pivô moderno: defende as cinco posições e arma a jogada.',
 }
 
 /** Curiosidade do jogador (por nome), ou `undefined` se não houver. */
 export function factFor(name: string): string | undefined {
   return FACTS[name]
+}
+
+/** Nomes que têm curiosidade (para testes/guardas de consistência). */
+export function knownFactNames(): string[] {
+  return Object.keys(FACTS)
 }
