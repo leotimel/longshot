@@ -30,8 +30,20 @@ export interface HistorySummary {
   comebacks: number
   /** Jogos-jogador com duplo-duplo (≥2 entre pts/reb/ast ≥10). */
   doubleDoubles: number
+  /** Jogos-jogador com triplo-duplo (3 entre pts/reb/ast ≥10). */
+  tripleDoubles: number
   /** Séries vencidas contra um time juggernaut (ataque e defesa de elite). */
   davidWins: number
+  /** Títulos virados após estar 1-3 (ou pior) nas Finais. */
+  finalsComebacks: number
+  /** Rebotes somados em todas as campanhas. */
+  totalRebounds: number
+  /** Assistências somadas em todas as campanhas. */
+  totalAssists: number
+  /** Maior nº de rebotes de um jogador num único jogo. */
+  recordRebounds: number
+  /** Maior nº de assistências de um jogador num único jogo. */
+  recordAssists: number
 }
 
 /**
@@ -46,7 +58,13 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
   let perfectRuns = 0
   let comebacks = 0
   let doubleDoubles = 0
+  let tripleDoubles = 0
   let davidWins = 0
+  let finalsComebacks = 0
+  let totalRebounds = 0
+  let totalAssists = 0
+  let recordRebounds = 0
+  let recordAssists = 0
   let recordGame: HistorySummary['recordGame'] = null
   let bestCampaign: HistorySummary['bestCampaign'] = null
 
@@ -91,6 +109,19 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
         davidWins += 1
       }
 
+      // Virada nas Finais (round 3): campeão após estar 1-3 (ou pior). "Cleveland".
+      if (ri === 3 && round.winner === 'player') {
+        let pw = 0
+        let ow = 0
+        let down13 = false
+        for (const g of round.games) {
+          if (g.homeScore > g.awayScore) pw += 1
+          else ow += 1
+          if (ow === 3 && pw <= 1) down13 = true
+        }
+        if (down13) finalsComebacks += 1
+      }
+
       for (const game of round.games) {
         for (const e of game.boxScore) {
           const cur = byId.get(e.playerId)
@@ -100,11 +131,16 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
           cur.bestGame = Math.max(cur.bestGame, e.points)
           totalPoints += e.points
           campaignPoints += e.points
+          totalRebounds += e.rebounds
+          totalAssists += e.assists
+          recordRebounds = Math.max(recordRebounds, e.rebounds)
+          recordAssists = Math.max(recordAssists, e.assists)
           if (!recordGame || e.points > recordGame.points) {
             recordGame = { name: e.name, points: e.points, date: day.date }
           }
           const cats = (e.points >= 10 ? 1 : 0) + (e.rebounds >= 10 ? 1 : 0) + (e.assists >= 10 ? 1 : 0)
           if (cats >= 2) doubleDoubles += 1
+          if (cats === 3) tripleDoubles += 1
         }
       }
     }
@@ -133,6 +169,12 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
     perfectRuns,
     comebacks,
     doubleDoubles,
+    tripleDoubles,
     davidWins,
+    finalsComebacks,
+    totalRebounds,
+    totalAssists,
+    recordRebounds,
+    recordAssists,
   }
 }

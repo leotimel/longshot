@@ -3,7 +3,7 @@ import type { DayRecord, Stats } from '../lib/storage'
 import { getSeenAchievements, setSeenAchievements } from '../lib/storage'
 import type { LevelInfo } from '../lib/level'
 import { summarizeHistory } from '../lib/playerHistory'
-import { computeAchievements } from '../lib/achievements'
+import { ACH_CATEGORIES, computeAchievements } from '../lib/achievements'
 import { SKINS, isSkinUnlocked } from '../lib/skins'
 import { FRAMES, isFrameUnlocked } from '../lib/frames'
 import { isMuted, playLevelUp, playUnlock, toggleMuted } from '../lib/sound'
@@ -288,11 +288,12 @@ export function ResultModal({
           )}
         </div>
 
-        {/* Conquistas (mural) */}
+        {/* Conquistas (mural), agrupadas por categoria */}
         <div className="mb-3">
           <h3 className={sectionTitle}>{S.result.achievementsTitle(doneCount, achievements.length)}</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {[...achievements]
+          {ACH_CATEGORIES.map((cat) => {
+            const items = achievements
+              .filter((a) => a.category === cat.id)
               .sort((a, b) => {
                 const rank = (x: typeof a) => (newlyUnlocked.has(x.id) ? 2 : x.done ? 1 : 0)
                 const d = rank(b) - rank(a)
@@ -300,38 +301,50 @@ export function ResultModal({
                 if (!a.done && !b.done) return (b.progress ?? 0) - (a.progress ?? 0)
                 return 0
               })
-              .map((a) => (
-                <div
-                  key={a.id}
-                  className={[
-                    'rounded-lg border p-2',
-                    a.done ? 'border-accent bg-accent-soft' : 'border-line opacity-70',
-                  ].join(' ')}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-lg leading-none ${a.done ? '' : 'grayscale'}`}>{a.emoji}</span>
-                    <span className="text-xs font-bold leading-tight">{a.name}</span>
-                    {newlyUnlocked.has(a.id) && (
-                      <span className="ml-auto rounded bg-accent px-1 text-[9px] font-bold uppercase tracking-wide text-on-accent">
-                        {S.result.achNew}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-[10px] leading-tight text-muted">{a.desc}</p>
-                  {!a.done && a.progress !== undefined && (
-                    <div className="mt-1">
-                      <div className="h-1 overflow-hidden rounded-full bg-surface2">
-                        <div
-                          className="h-full rounded-full bg-accent"
-                          style={{ width: `${Math.round(a.progress * 100)}%` }}
-                        />
+            if (items.length === 0) return null
+            const catDone = items.filter((a) => a.done).length
+            return (
+              <div key={cat.id} className="mb-2">
+                <h4 className="mb-1 flex items-baseline justify-between text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  <span>{cat.label}</span>
+                  <span className="font-mono tabular-nums">{catDone}/{items.length}</span>
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {items.map((a) => (
+                    <div
+                      key={a.id}
+                      className={[
+                        'rounded-lg border p-2',
+                        a.done ? 'border-accent bg-accent-soft' : 'border-line opacity-70',
+                      ].join(' ')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-lg leading-none ${a.done ? '' : 'grayscale'}`}>{a.emoji}</span>
+                        <span className="text-[11px] font-bold leading-tight">{a.name}</span>
+                        {newlyUnlocked.has(a.id) && (
+                          <span className="ml-auto rounded bg-accent px-1 text-[9px] font-bold uppercase tracking-wide text-on-accent">
+                            {S.result.achNew}
+                          </span>
+                        )}
                       </div>
-                      <div className="mt-0.5 text-right text-[9px] tabular-nums text-muted">{a.progressLabel}</div>
+                      <p className="mt-0.5 text-[10px] leading-tight text-muted">{a.desc}</p>
+                      {!a.done && a.progress !== undefined && (
+                        <div className="mt-1">
+                          <div className="h-1 overflow-hidden rounded-full bg-surface2">
+                            <div
+                              className="h-full rounded-full bg-accent"
+                              style={{ width: `${Math.round(a.progress * 100)}%` }}
+                            />
+                          </div>
+                          <div className="mt-0.5 text-right text-[9px] tabular-nums text-muted">{a.progressLabel}</div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-          </div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Cosméticos: skin + moldura */}
