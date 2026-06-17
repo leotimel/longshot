@@ -47,6 +47,7 @@ export function BracketView({
   onPlayoffEnd,
   onOpenStats,
   onOpenHelp,
+  onOpenGauntlet,
 }: {
   bracket: BracketResult
   opponents: HistoricalTeam[]
@@ -63,6 +64,7 @@ export function BracketView({
   onPlayoffEnd?: () => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
+  onOpenGauntlet?: () => void
 }) {
   const { rounds, champion } = bracket
   const [revealed, setRevealed] = useState(() => (gradual ? 0 : rounds.length))
@@ -254,6 +256,11 @@ export function BracketView({
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.bracket.title}</h1>
         <div className="flex items-center gap-2">
           {level && onOpenStats && <LevelBadge level={level} onClick={onOpenStats} />}
+          {onOpenGauntlet && (
+            <button type="button" onClick={onOpenGauntlet} aria-label={S.a11y.gauntlet} className={ICON_BTN}>
+              {S.gauntlet.entry}
+            </button>
+          )}
           {onOpenHelp && (
             <button type="button" onClick={onOpenHelp} aria-label={S.a11y.help} className={ICON_BTN}>
               ?

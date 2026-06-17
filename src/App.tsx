@@ -121,6 +121,7 @@ function App() {
           }}
           onOpenStats={() => setStatsOpen(true)}
           onOpenHelp={() => setShowHelp(true)}
+          onOpenGauntlet={() => setMode('gauntlet')}
         />
       ) : (
         <DraftScreen
