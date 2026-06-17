@@ -79,21 +79,38 @@ export function DraftScreen({
   onStartPlayoff,
   onOpenStats,
   onOpenHelp,
+  onOpenGauntlet,
+  onExit,
   level,
   challengeTarget,
+  skipSixthMan = false,
+  startLabel,
+  startNote,
+  pathTitle,
+  pathTags,
 }: {
   draft: DailyDraft
   onStartPlayoff: (team: Player[], sixthManId?: string) => void
   onOpenStats?: () => void
   onOpenHelp?: () => void
+  /** Abre o modo Gauntlet (botão no cabeçalho do draft diário). */
+  onOpenGauntlet?: () => void
+  /** Sai da tela (usado no draft do Gauntlet para voltar). */
+  onExit?: () => void
   level?: LevelInfo
   challengeTarget?: string
+  /** Pula o passo do sexto homem (Gauntlet quick-play). */
+  skipSixthMan?: boolean
+  startLabel?: string
+  startNote?: string
+  pathTitle?: string
+  pathTags?: string[]
 }) {
   const [teamIndex, setTeamIndex] = useState(0)
   const [chosen, setChosen] = useState<Partial<Record<Position, Player>>>({})
   const [rerollUsed, setRerollUsed] = useState(false)
   // Sexto homem (opcional): undefined = ainda não decidido; null = pulou.
-  const [sixthMan, setSixthMan] = useState<Player | null | undefined>(undefined)
+  const [sixthMan, setSixthMan] = useState<Player | null | undefined>(skipSixthMan ? null : undefined)
 
   const fr = draft.bracket[0]
   const filledCount = POSITIONS.filter((pos) => chosen[pos]).length
@@ -124,9 +141,20 @@ export function DraftScreen({
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col gap-3 bg-canvas p-3 text-ink">
       <header className="flex items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.appName}</h1>
+        {onExit ? (
+          <button type="button" onClick={onExit} className="min-h-11 rounded-lg border border-line px-3 text-sm font-semibold transition hover:bg-surface2">
+            {S.gauntlet.exit}
+          </button>
+        ) : (
+          <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.appName}</h1>
+        )}
         <div className="flex items-center gap-2">
           {level && onOpenStats && <LevelBadge level={level} onClick={onOpenStats} />}
+          {onOpenGauntlet && (
+            <button type="button" onClick={onOpenGauntlet} aria-label={S.a11y.gauntlet} className={iconBtn}>
+              {S.gauntlet.entry}
+            </button>
+          )}
           {onOpenHelp && (
             <button type="button" onClick={onOpenHelp} aria-label={S.a11y.help} className={iconBtn}>
               ?
@@ -149,7 +177,7 @@ export function DraftScreen({
       {/* Bracket do dia */}
       <section>
         <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-          {S.draft.path}
+          {pathTitle ?? S.draft.path}
         </h2>
         <ol className="flex gap-1.5">
           {draft.bracket.map((t, i) => (
@@ -160,7 +188,7 @@ export function DraftScreen({
                 i === 0 ? 'border-accent bg-accent-soft' : 'border-line bg-surface',
               ].join(' ')}
             >
-              <div className="text-[9px] font-bold uppercase text-muted">{S.rounds.tags[i]}</div>
+              <div className="text-[9px] font-bold uppercase text-muted">{(pathTags ?? S.rounds.tags)[i]}</div>
               <div className="truncate text-[11px] font-semibold leading-tight">{shortName(t.name)}</div>
               <div className="text-[9px] text-muted">{t.season}</div>
             </li>
@@ -286,13 +314,13 @@ export function DraftScreen({
       {allChosen && sixthMan !== undefined && (
         <footer className="border-t-2 border-line pt-3">
           <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-medium text-accent">{S.draft.irreversible}</p>
+            <p className="text-[11px] font-medium text-accent">{startNote ?? S.draft.irreversible}</p>
             <button
               type="button"
               onClick={start}
               className="font-display rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
             >
-              {S.draft.start}
+              {startLabel ?? S.draft.start}
             </button>
           </div>
         </footer>

@@ -4,6 +4,7 @@ import { usePlayoff } from './hooks/usePlayoff'
 import { DraftScreen } from './components/DraftScreen'
 import { BracketView } from './components/BracketView'
 import { ResultModal } from './components/ResultModal'
+import { GauntletScreen } from './components/GauntletScreen'
 import { Onboarding } from './components/Onboarding'
 import { buildShareText, LONGSHOT_URL, shareText } from './lib/share'
 import { challengeTarget, readChallenge } from './lib/challenge'
@@ -53,6 +54,7 @@ function App() {
   } = usePlayoff(date)
   const [statsOpen, setStatsOpen] = useState(false)
   const [showHelp, setShowHelp] = useState(() => !hasOnboarded())
+  const [mode, setMode] = useState<'daily' | 'gauntlet'>('daily')
 
   // Cosméticos selecionados (skin aplicado no boot em main.tsx; aqui reaplica ao trocar).
   const [skin, setSkinState] = useState(getSkin)
@@ -93,6 +95,10 @@ function App() {
     void shareText(`${buildShareText(day, stats.streak)}\n${LONGSHOT_URL}`)
   }
 
+  if (mode === 'gauntlet') {
+    return <GauntletScreen onExit={() => setMode('daily')} />
+  }
+
   return (
     <>
       {locked && bracket ? (
@@ -122,6 +128,7 @@ function App() {
           onStartPlayoff={handleStart}
           onOpenStats={() => setStatsOpen(true)}
           onOpenHelp={() => setShowHelp(true)}
+          onOpenGauntlet={() => setMode('gauntlet')}
           level={displayLevel}
           challengeTarget={challengeBanner}
         />

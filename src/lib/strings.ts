@@ -15,6 +15,7 @@ export const strings = {
     stats: 'Estatísticas',
     help: 'Como jogar',
     resultDialog: 'Resultado e estatísticas',
+    gauntlet: 'Modo Gauntlet',
   },
 
   positions: {
@@ -68,6 +69,31 @@ export const strings = {
     pickPlayer: 'Escolha um jogador',
     reroll: '🔀 Re-sortear time',
     posTaken: 'já escolhido',
+  },
+
+  gauntlet: {
+    entry: '⚔️',
+    title: '⚔️ Gauntlet',
+    subtitle: 'Escalada infinita — quantas rodadas você aguenta?',
+    start: 'Iniciar Gauntlet →',
+    startNote: 'Modo livre: não afeta o streak nem as stats do diário.',
+    exit: '← Sair',
+    pathTitle: 'Primeiros adversários (vão ficando mais fortes)',
+    pathTags: ['1ª', '2ª', '3ª', '4ª'],
+    record: 'Recorde',
+    round: (n: number) => `Rodada ${n}`,
+    bestOf3: 'Melhor de 3',
+    opponent: 'Adversário desta rodada',
+    play: '▶ Jogar série',
+    won: '✓ Série vencida!',
+    lost: '✗ Série perdida',
+    advance: 'Avançar →',
+    seriesMvp: 'Cestinha da série',
+    games: 'Jogos',
+    overTitle: 'Fim da run',
+    survived: (n: number) => `Você venceu ${n} ${n === 1 ? 'rodada' : 'rodadas'}`,
+    newRecord: '🎉 Novo recorde!',
+    again: '🔄 Jogar de novo',
   },
 
   bracket: {

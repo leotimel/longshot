@@ -233,6 +233,30 @@ export const setSkin = (id: string): void => setCosmetic(SKIN_KEY, id)
 export const getFrame = (): string => getCosmetic(FRAME_KEY, 'none')
 export const setFrame = (id: string): void => setCosmetic(FRAME_KEY, id)
 
+const GAUNTLET_KEY = 'longshot:gauntlet:v1'
+
+/** Recorde do Gauntlet infinito: maior nº de rodadas vencidas numa run. */
+export function getGauntletRecord(): number {
+  try {
+    const raw = localStorage.getItem(GAUNTLET_KEY)
+    const n = raw ? JSON.parse(raw) : 0
+    return typeof n === 'number' && n >= 0 ? n : 0
+  } catch {
+    return 0
+  }
+}
+
+/** Grava o recorde do Gauntlet (só se for maior). Retorna o recorde vigente. */
+export function setGauntletRecord(rounds: number): number {
+  const best = Math.max(getGauntletRecord(), rounds)
+  try {
+    localStorage.setItem(GAUNTLET_KEY, JSON.stringify(best))
+  } catch {
+    // ignora (quota cheia / modo privado)
+  }
+  return best
+}
+
 const ACHIEVEMENTS_KEY = 'longshot:achievements:v1'
 
 /** Ids das conquistas que o jogador já viu desbloqueadas (para destacar as novas). */

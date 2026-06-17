@@ -52,12 +52,13 @@ export function simulateSeries(
   tactics?: SeriesTactics,
   sixthMan?: Player,
   baseAdjust?: GameAdjust,
+  winsNeeded: number = WINS_NEEDED,
 ): SeriesResult {
   const games: GameResult[] = []
   let playerWins = 0
   let opponentWins = 0
 
-  for (let g = 1; playerWins < WINS_NEEDED && opponentWins < WINS_NEEDED; g++) {
+  for (let g = 1; playerWins < winsNeeded && opponentWins < winsNeeded; g++) {
     const adjust = mergeAdjust(baseAdjust, adjustForGame(tactics, g, playerTeam, sixthMan))
     const game = decisiveGame(playerTeam, opponent, hashString(`${baseSeed}:${g}`), adjust)
     games.push(game)
@@ -66,7 +67,7 @@ export function simulateSeries(
   }
 
   return {
-    winner: playerWins >= WINS_NEEDED ? 'player' : 'opponent',
+    winner: playerWins >= winsNeeded ? 'player' : 'opponent',
     games,
     gamesWon: playerWins,
     gamesLost: opponentWins,
