@@ -37,6 +37,22 @@ function withSixthMan(team: Player[], sixthMan: Player): Player[] {
   return team.map((p) => (p.position === sixthMan.position ? sixthMan : p))
 }
 
+/** Soma dois ajustes (deltas somam; foco/lineup do segundo prevalecem). */
+export function mergeAdjust(a?: GameAdjust, b?: GameAdjust): GameAdjust | undefined {
+  if (!a) return b
+  if (!b) return a
+  return {
+    defense: (a.defense ?? 0) + (b.defense ?? 0) || undefined,
+    pace: (a.pace ?? 0) + (b.pace ?? 0) || undefined,
+    clutch: (a.clutch ?? 0) + (b.clutch ?? 0) || undefined,
+    make: (a.make ?? 0) + (b.make ?? 0) || undefined,
+    threeBias: (a.threeBias ?? 0) + (b.threeBias ?? 0) || undefined,
+    focusId: b.focusId ?? a.focusId,
+    focusBoost: b.focusBoost ?? a.focusBoost,
+    lineup: b.lineup ?? a.lineup,
+  }
+}
+
 /**
  * Constrói o ajuste de um jogo (1-based) a partir das táticas da série. Retorna
  * `undefined` quando nada se aplica → jogo idêntico ao baseline.

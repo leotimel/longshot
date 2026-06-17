@@ -7,6 +7,7 @@
  * ataque/defesa 74–95; bola de 3 por era 10–88).
  */
 import type { HistoricalTeam, Player } from '../engine/types'
+import { synergyOf } from '../engine/synergy'
 import { overall } from './playerStats'
 
 export interface Trait {
@@ -47,6 +48,10 @@ const avg = (team: Player[], key: keyof Player['ratings']): number =>
 export function teamTraits(team: Player[]): Trait[] {
   if (team.length === 0) return []
   const out: Trait[] = []
+
+  // Sinergia de era (coesão) — prioritária na lista (afeta a simulação).
+  const syn = synergyOf(team)
+  if (syn.era && syn.count >= 3) out.push({ label: `Sinergia ${syn.era} ×${syn.count}`, tone: 'strong' })
 
   const byOverall = [...team].sort((a, b) => overall(b) - overall(a))
   if (byOverall.length >= 2 && overall(byOverall[0]) - overall(byOverall[1]) >= 5) {

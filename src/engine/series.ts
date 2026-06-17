@@ -16,7 +16,7 @@ import type {
 } from './types'
 import { hashString } from './seed'
 import { simulateGame } from './sim'
-import { adjustForGame } from './tactics'
+import { adjustForGame, mergeAdjust } from './tactics'
 
 const WINS_NEEDED = 4
 
@@ -51,13 +51,14 @@ export function simulateSeries(
   baseSeed: number,
   tactics?: SeriesTactics,
   sixthMan?: Player,
+  baseAdjust?: GameAdjust,
 ): SeriesResult {
   const games: GameResult[] = []
   let playerWins = 0
   let opponentWins = 0
 
   for (let g = 1; playerWins < WINS_NEEDED && opponentWins < WINS_NEEDED; g++) {
-    const adjust = adjustForGame(tactics, g, playerTeam, sixthMan)
+    const adjust = mergeAdjust(baseAdjust, adjustForGame(tactics, g, playerTeam, sixthMan))
     const game = decisiveGame(playerTeam, opponent, hashString(`${baseSeed}:${g}`), adjust)
     games.push(game)
     if (game.homeScore > game.awayScore) playerWins++

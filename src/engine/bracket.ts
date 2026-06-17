@@ -10,6 +10,7 @@ import type { BracketResult, BracketTactics, Player, SeriesResult } from './type
 import { dailyDraft } from './draft'
 import { seedForSeries } from './seed'
 import { simulateSeries } from './series'
+import { synergyAdjust } from './synergy'
 
 /**
  * Simula o bracket inteiro de um dia para um time draftado. `tactics`/`sixthMan`
@@ -28,6 +29,7 @@ export function simulateBracket(
 ): BracketResult {
   const { bracket } = dailyDraft(date)
   const key = playerTeam.map((p) => p.id).join(',')
+  const synergy = synergyAdjust(playerTeam) // química de era (bônus determinístico)
   const rounds: SeriesResult[] = []
 
   for (let i = 0; i < bracket.length; i++) {
@@ -37,6 +39,7 @@ export function simulateBracket(
       seedForSeries(date, key, i),
       tactics?.[i],
       sixthMan,
+      synergy,
     )
     rounds.push(series)
     if (series.winner === 'opponent') break // eliminado: para aqui
