@@ -71,7 +71,7 @@ export function buildShareText(day: DayRecord, streak: number): string {
 }
 
 /** Texto compartilhável de uma run do Gauntlet (não revela adversários). */
-export function buildGauntletShare(rounds: number, best: number, config?: RunConfig): string {
+export function buildGauntletShare(rounds: number, best: number, config?: RunConfig, seedCode?: string): string {
   const head = `⚔️ Longshot Gauntlet`
   const line = `Sobrevivi a ${rounds} ${rounds === 1 ? 'rodada' : 'rodadas'}! 🔥 (recorde: ${best})`
   const out = [head, line]
@@ -86,6 +86,7 @@ export function buildGauntletShare(rounds: number, best: number, config?: RunCon
       .join(' ')
     out.push(`Intensidade: ${INTENSITY_NAMES[config.intensity] ?? config.intensity}${muts ? ` · ${muts}` : ''}`)
   }
+  if (seedCode) out.push(`Encare a mesma run — código: ${seedCode}`)
   out.push(LONGSHOT_URL)
   return out.join('\n')
 }

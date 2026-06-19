@@ -182,9 +182,9 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     setBet(false)
   }
 
-  const handleShare = () => void shareText(buildGauntletShare(cleared, stats.best, config))
-
   const seedCode = seed.toString(36)
+  const handleShare = () => void shareText(buildGauntletShare(cleared, stats.best, config, seedCode))
+
   const rerollSeed = () => {
     setSeed(newSeed())
     setSeedInput('')
@@ -549,6 +549,22 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
                 <div className={statCard}>
                   <div className="font-display text-lg font-bold tabular-nums">{stats.runs}</div>
                   <div className={statLabel}>{S.gauntlet.runs}</div>
+                </div>
+              </div>
+              {/* Código da run (copiar e mandar) */}
+              <div>
+                <div className={`mb-1 ${statLabel}`}>{S.gauntlet.seedCode}</div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 truncate rounded-lg border border-line bg-surface2 px-2 py-1.5 text-left font-mono text-sm">
+                    {seedCode}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={copyCode}
+                    className="min-h-11 rounded-lg border border-line px-3 text-[11px] font-semibold transition hover:bg-surface2"
+                  >
+                    {copied ? S.gauntlet.copied : S.gauntlet.copy}
+                  </button>
                 </div>
               </div>
               <button
