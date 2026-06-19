@@ -16,6 +16,7 @@ import type { GameAdjust, Player } from '../engine/types'
 import { mulberry32, shuffle } from '../engine/rng'
 import { hashString } from '../engine/seed'
 import { overall } from './playerStats'
+import { DEFAULT_CONFIG, type RunConfig } from './gauntletRun'
 
 /** Estado acumulado de uma run do Gauntlet. */
 export interface RunBuild {
@@ -104,11 +105,23 @@ export function boonEffective(boon: Boon, s: RunBuild, pool: Player[]): boolean 
 
 /**
  * Oferece até 3 boons distintos QUE AINDA FAZEM EFEITO neste build (determinístico
- * pela sessão+rodada). Pode devolver menos de 3 (ou 0) se o build estiver no teto —
+ * pela sessão+rodada). Respeita os mutadores: "sem escudos" tira o Fôlego; "só ataque"
+ * tira Fôlego e Muralha. Pode devolver menos de 3 (ou 0) se nada mais faz efeito —
  * nesse caso a UI mostra "Avançar" direto.
  */
-export function offerBoons(sessionSeed: number, round: number, s: RunBuild, pool: Player[]): Boon[] {
+export function offerBoons(
+  sessionSeed: number,
+  round: number,
+  s: RunBuild,
+  pool: Player[],
+  config: RunConfig = DEFAULT_CONFIG,
+): Boon[] {
   const rng = mulberry32(hashString(`${sessionSeed}:boon:${round}`))
-  const usable = BOONS.filter((b) => boonEffective(b, s, pool))
+  const allowed = BOONS.filter((b) => {
+    if ((config.noShields || config.attackOnly) && b.id === 'folego') return false
+    if (config.attackOnly && b.id === 'muralha') return false
+    return true
+  })
+  const usable = allowed.filter((b) => boonEffective(b, s, pool))
   return shuffle(usable, rng).slice(0, 3)
 }

@@ -12,6 +12,7 @@ import { overall } from './playerStats'
 import type { DayRecord } from './storage'
 import { tokensSpent } from './tactics'
 import { BADGE_EMOJI } from './badges'
+import { INTENSITY_NAMES, type RunConfig } from './gauntletRun'
 
 /** Epoch do jogo: 2026-06-01 é o Longshot #1. */
 export const LONGSHOT_EPOCH = '2026-06-01'
@@ -70,10 +71,23 @@ export function buildShareText(day: DayRecord, streak: number): string {
 }
 
 /** Texto compartilhável de uma run do Gauntlet (não revela adversários). */
-export function buildGauntletShare(rounds: number, best: number): string {
+export function buildGauntletShare(rounds: number, best: number, config?: RunConfig): string {
   const head = `⚔️ Longshot Gauntlet`
   const line = `Sobrevivi a ${rounds} ${rounds === 1 ? 'rodada' : 'rodadas'}! 🔥 (recorde: ${best})`
-  return [head, line, LONGSHOT_URL].join('\n')
+  const out = [head, line]
+  if (config) {
+    const muts = [
+      config.noShields && '🚫🛡️',
+      config.blitz && '⚡',
+      config.doubleBoss && '👑',
+      config.attackOnly && '⚔️',
+    ]
+      .filter(Boolean)
+      .join(' ')
+    out.push(`Intensidade: ${INTENSITY_NAMES[config.intensity] ?? config.intensity}${muts ? ` · ${muts}` : ''}`)
+  }
+  out.push(LONGSHOT_URL)
+  return out.join('\n')
 }
 
 /** Tenta compartilhar via Web Share API, caindo para o clipboard. */

@@ -24,11 +24,38 @@ const ASCENSION_RAMP = 15 // rodadas até a ascensão pesar 100% (rodada 1 = 0)
 const BET_BUMP = 10 // aposta: reforço extra na rodada apostada
 const EVENT_CHANCE = 0.22
 
+/** Nomes dos níveis de intensidade (0..3). */
+export const INTENSITY_NAMES = ['Tranquilo', 'Padrão', 'Difícil', 'Lendário'] as const
+
+/** Configuração escolhida pelo jogador para a run (intensidade + mutadores). */
+export interface RunConfig {
+  /** 0 Tranquilo · 1 Padrão · 2 Difícil · 3 Lendário (soma à ascensão). */
+  intensity: number
+  /** Hardcore: sem escudos (Fôlego some; recompensas de escudo suprimidas). */
+  noShields: boolean
+  /** Relâmpago: melhor de 1 por rodada (chefe = melhor de 3). */
+  blitz: boolean
+  /** Chefes em dobro: a cada 3 rodadas. */
+  doubleBoss: boolean
+  /** Só ataque: oferta de boons sem defesa/escudo. */
+  attackOnly: boolean
+}
+
+export const DEFAULT_CONFIG: RunConfig = {
+  intensity: 1,
+  noShields: false,
+  blitz: false,
+  doubleBoss: false,
+  attackOnly: false,
+}
+
 /** Nível de ascensão (fixo na run) derivado do recorde — dificuldade permanente. */
 export const gauntletAscension = (best: number): number => Math.floor(best / ASCENSION_PER)
 
-/** Rodada-chefe? (a cada BOSS_EVERY) */
-export const isBossRound = (round: number): boolean => (round + 1) % BOSS_EVERY === 0
+/** Rodada-chefe? (a cada 5, ou a cada 3 com o mutador "chefes em dobro"). */
+export function isBossRound(round: number, config: RunConfig = DEFAULT_CONFIG): boolean {
+  return (round + 1) % (config.doubleBoss ? 3 : BOSS_EVERY) === 0
+}
 
 export interface Modifier {
   id: string
@@ -51,16 +78,16 @@ const MODIFIERS: Modifier[] = [
 ]
 
 /** Modificador da rodada (determinístico) — só em rodadas normais, ~60% das vezes. */
-export function roundModifier(seed: number, round: number): Modifier | null {
-  if (isBossRound(round)) return null
+export function roundModifier(seed: number, round: number, config: RunConfig = DEFAULT_CONFIG): Modifier | null {
+  if (isBossRound(round, config)) return null
   const rng = mulberry32(hashString(`${seed}:mod:${round}`))
   if (rng() >= 0.6) return null
   return MODIFIERS[Math.floor(rng() * MODIFIERS.length)]
 }
 
 /** Tem evento (descanso/aposta) ANTES do boon nesta vitória? (não em rodada-chefe) */
-export function isEventRound(seed: number, round: number): boolean {
-  if (isBossRound(round)) return false
+export function isEventRound(seed: number, round: number, config: RunConfig = DEFAULT_CONFIG): boolean {
+  if (isBossRound(round, config)) return false
   return mulberry32(hashString(`${seed}:evt:${round}`))() < EVENT_CHANCE
 }
 
@@ -73,14 +100,26 @@ export interface RoundPlan {
   modifier: Modifier | null
 }
 
-/** Monta a rodada: chefe?, best-of, reforço do adversário e modificador. */
-export function roundPlan(seed: number, round: number, ascension: number, bet = false): RoundPlan {
-  const boss = isBossRound(round)
-  const modifier = roundModifier(seed, round)
-  // Ascensão CRESCE com a rodada: 0 na rodada 1, cheia por volta de ASCENSION_RAMP (platô).
-  let opponentBump = Math.round(ascension * ASCENSION_BUMP * Math.min(1, round / ASCENSION_RAMP))
+/**
+ * Monta a rodada: chefe?, best-of, reforço do adversário e modificador. A dificuldade
+ * efetiva = ascensão + intensidade escolhida (mesma rampa por rodada). Mutadores ajustam
+ * cadência de chefe (doubleBoss) e o best-of (blitz).
+ */
+export function roundPlan(
+  seed: number,
+  round: number,
+  ascension: number,
+  config: RunConfig = DEFAULT_CONFIG,
+  bet = false,
+): RoundPlan {
+  const boss = isBossRound(round, config)
+  const modifier = roundModifier(seed, round, config)
+  // Ascensão + intensidade CRESCEM com a rodada: 0 na rodada 1, cheias por volta da rampa.
+  const tier = ascension + config.intensity
+  let opponentBump = Math.round(tier * ASCENSION_BUMP * Math.min(1, round / ASCENSION_RAMP))
   if (boss) opponentBump += BOSS_BUMP
   if (bet) opponentBump += BET_BUMP
   if (modifier?.opponentBump) opponentBump += modifier.opponentBump
-  return { isBoss: boss, wins: boss ? BOSS_WINS : 2, opponentBump, modifier }
+  const wins = config.blitz ? (boss ? 2 : 1) : boss ? BOSS_WINS : 2
+  return { isBoss: boss, wins, opponentBump, modifier }
 }

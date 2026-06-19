@@ -4,15 +4,30 @@ import type { Bracket, DailyDraft } from '../engine/draft'
 import { dailyDraft } from '../engine/draft'
 import { endlessOpponent, gauntletOpponent, simulateGauntletRound } from '../engine/endless'
 import { campaignStats } from '../lib/playerStats'
-import { getGauntletStats, recordGauntletRun, type GauntletStats } from '../lib/storage'
+import {
+  getGauntletProfile,
+  getGauntletStats,
+  recordGauntletRun,
+  setGauntletIntensity,
+  type GauntletStats,
+} from '../lib/storage'
 import { SHIELD_CAP, initBuild, offerBoons, type Boon, type RunBuild } from '../lib/gauntletBoons'
-import { gauntletAscension, isEventRound, roundPlan } from '../lib/gauntletRun'
+import {
+  DEFAULT_CONFIG,
+  INTENSITY_NAMES,
+  gauntletAscension,
+  isEventRound,
+  roundPlan,
+  type RunConfig,
+} from '../lib/gauntletRun'
 import { buildGauntletShare, shareText } from '../lib/share'
 import { playUnlock } from '../lib/sound'
 import { celebrate } from '../lib/confetti'
 import { strings as S } from '../lib/strings'
 import { DraftScreen } from './DraftScreen'
 import { TeamStats } from './TeamStats'
+
+type MutKey = 'noShields' | 'blitz' | 'doubleBoss' | 'attackOnly'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 const newSeed = (): number => Math.floor(Math.random() * 1_000_000_000)
@@ -33,7 +48,10 @@ function seriesMvp(series: SeriesResult): { name: string; points: number } | nul
  */
 export function GauntletScreen({ onExit }: { onExit: () => void }) {
   const [seed, setSeed] = useState(newSeed)
-  const [phase, setPhase] = useState<'draft' | 'climb'>('draft')
+  const [phase, setPhase] = useState<'setup' | 'draft' | 'climb'>('setup')
+  const [config, setConfig] = useState<RunConfig>(() => ({ ...DEFAULT_CONFIG, intensity: getGauntletProfile().intensity }))
+  const [seedInput, setSeedInput] = useState('')
+  const [copied, setCopied] = useState(false)
   const [build, setBuild] = useState<RunBuild>(() => initBuild([]))
   const [round, setRound] = useState(0)
   const [cleared, setCleared] = useState(0)
@@ -60,7 +78,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
   )
   const pool = useMemo<Player[]>(() => draft.draftTeams.flatMap((t) => t.roster), [draft])
 
-  const plan = useMemo(() => roundPlan(seed, round, ascension, bet), [seed, round, ascension, bet])
+  const plan = useMemo(() => roundPlan(seed, round, ascension, config, bet), [seed, round, ascension, config, bet])
   const opponent = useMemo(() => gauntletOpponent(seed, round, plan.opponentBump), [seed, round, plan])
   const mvp = useMemo(() => (series ? seriesMvp(series) : null), [series])
 
@@ -94,17 +112,17 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     if (result.winner === 'player') {
       playUnlock()
       celebrate(plan.isBoss)
-      // Recompensas: chefe (+1 escudo) e aposta vencida (+2 escudos).
-      let bonus = plan.isBoss ? 1 : 0
+      // Recompensas em escudo: chefe (+1) e aposta vencida (+2) — nada no modo "sem escudos".
+      let bonus = config.noShields ? 0 : plan.isBoss ? 1 : 0
       if (bet) {
-        bonus += 2
+        if (!config.noShields) bonus += 2
         setBet(false)
       }
       const nb = bonus > 0 ? addShields(build, bonus) : build
       if (bonus > 0) setBuild(nb)
-      // Evento (descanso/aposta) ou oferta de boon.
-      if (isEventRound(seed, round)) setEventActive(true)
-      else setOffer(offerBoons(seed, round, nb, pool))
+      // Evento (descanso/aposta) ou oferta de boon. Sem eventos no modo "sem escudos".
+      if (!config.noShields && isEventRound(seed, round, config)) setEventActive(true)
+      else setOffer(offerBoons(seed, round, nb, pool, config))
       return
     }
 
@@ -154,7 +172,9 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
 
   const restart = () => {
     setSeed(newSeed())
-    setPhase('draft')
+    setSeedInput('')
+    setCopied(false)
+    setPhase('setup')
     setSeries(null)
     setOffer(null)
     setEventActive(false)
@@ -162,7 +182,135 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     setBet(false)
   }
 
-  const handleShare = () => void shareText(buildGauntletShare(cleared, stats.best))
+  const handleShare = () => void shareText(buildGauntletShare(cleared, stats.best, config))
+
+  const seedCode = seed.toString(36)
+  const rerollSeed = () => {
+    setSeed(newSeed())
+    setSeedInput('')
+    setCopied(false)
+  }
+  const copyCode = () => {
+    try {
+      void navigator.clipboard?.writeText(seedCode)
+      setCopied(true)
+    } catch {
+      // sem clipboard
+    }
+  }
+  const toggleMut = (key: MutKey) => setConfig((c) => ({ ...c, [key]: !c[key] }))
+  const begin = () => {
+    setGauntletIntensity(config.intensity)
+    const code = seedInput.trim()
+    if (code) {
+      const parsed = parseInt(code, 36)
+      if (Number.isFinite(parsed) && parsed > 0) setSeed(parsed)
+    }
+    setPhase('draft')
+  }
+
+  if (phase === 'setup') {
+    const chip = (active: boolean) =>
+      [
+        'min-h-11 rounded-lg border px-3 py-1.5 text-sm font-semibold transition',
+        active ? 'border-accent bg-accent-soft text-accent' : 'border-line hover:bg-surface2',
+      ].join(' ')
+    const muts: { key: MutKey; label: string; desc: string }[] = [
+      { key: 'noShields', label: S.gauntlet.mutNoShields, desc: S.gauntlet.mutNoShieldsDesc },
+      { key: 'blitz', label: S.gauntlet.mutBlitz, desc: S.gauntlet.mutBlitzDesc },
+      { key: 'doubleBoss', label: S.gauntlet.mutDoubleBoss, desc: S.gauntlet.mutDoubleBossDesc },
+      { key: 'attackOnly', label: S.gauntlet.mutAttackOnly, desc: S.gauntlet.mutAttackOnlyDesc },
+    ]
+    return (
+      <main className="mx-auto flex min-h-svh max-w-md flex-col gap-4 bg-canvas p-3 text-ink">
+        <header className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={onExit}
+            className="min-h-11 rounded-lg border border-line px-3 text-sm font-semibold transition hover:bg-surface2"
+          >
+            {S.gauntlet.exit}
+          </button>
+          <h1 className="font-display text-xl font-bold uppercase tracking-wide">{S.gauntlet.title}</h1>
+          <div className="min-h-11 rounded-lg border border-line px-3 py-1 text-center">
+            <div className="font-display text-base font-bold leading-none text-accent">🏆 {stats.best}</div>
+            <div className="text-[9px] uppercase tracking-wide text-muted">
+              {ascension > 0 ? S.gauntlet.ascension(ascension) : S.gauntlet.record}
+            </div>
+          </div>
+        </header>
+
+        <h2 className="font-display text-lg font-bold uppercase tracking-wide">{S.gauntlet.setupTitle}</h2>
+
+        {/* Intensidade */}
+        <div>
+          <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.intensity}</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {INTENSITY_NAMES.map((name, i) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setConfig((c) => ({ ...c, intensity: i }))}
+                className={chip(config.intensity === i)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mutadores */}
+        <div>
+          <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.mutators}</h3>
+          <div className="flex flex-col gap-2">
+            {muts.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => toggleMut(m.key)}
+                className={[
+                  'flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition',
+                  config[m.key] ? 'border-accent bg-accent-soft' : 'border-line hover:bg-surface2',
+                ].join(' ')}
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold leading-tight">{m.label}</span>
+                  <span className="block text-[11px] text-muted">{m.desc}</span>
+                </span>
+                <span className="text-lg">{config[m.key] ? '☑️' : '⬜'}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Seed compartilhável */}
+        <div>
+          <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.seedCode}</h3>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 truncate rounded-lg border border-line bg-surface2 px-2 py-1.5 font-mono text-sm">
+              {seedCode}
+            </code>
+            <button type="button" onClick={copyCode} className="min-h-11 rounded-lg border border-line px-2 text-[11px] font-semibold transition hover:bg-surface2">
+              {copied ? S.gauntlet.copied : S.gauntlet.copy}
+            </button>
+            <button type="button" onClick={rerollSeed} aria-label="nova seed" className="min-h-11 rounded-lg border border-line px-2 text-lg transition hover:bg-surface2">
+              🎲
+            </button>
+          </div>
+          <input
+            value={seedInput}
+            onChange={(e) => setSeedInput(e.target.value)}
+            placeholder={S.gauntlet.pasteSeed}
+            className="mt-2 w-full rounded-lg border border-line bg-surface px-2 py-1.5 font-mono text-sm"
+          />
+        </div>
+
+        <button type="button" onClick={begin} className={`font-display mt-auto rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90`}>
+          {S.gauntlet.begin}
+        </button>
+      </main>
+    )
+  }
 
   if (phase === 'draft') {
     return (

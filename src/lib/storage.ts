@@ -283,6 +283,36 @@ export function recordGauntletRun(rounds: number): GauntletStats {
   return next
 }
 
+const GAUNTLET_PROFILE_KEY = 'longshot:gauntlet:profile:v1'
+
+/** Preferências/meta do Gauntlet (intensidade lembrada; capitão virá depois). */
+export interface GauntletProfile {
+  /** Última intensidade escolhida (0..3). */
+  intensity: number
+}
+
+export function getGauntletProfile(): GauntletProfile {
+  try {
+    const raw = localStorage.getItem(GAUNTLET_PROFILE_KEY)
+    if (!raw) return { intensity: 1 }
+    const p = JSON.parse(raw) as Partial<GauntletProfile>
+    const intensity = typeof p.intensity === 'number' && p.intensity >= 0 && p.intensity <= 3 ? p.intensity : 1
+    return { intensity }
+  } catch {
+    return { intensity: 1 }
+  }
+}
+
+/** Salva a intensidade escolhida (lembrada na próxima run). */
+export function setGauntletIntensity(intensity: number): void {
+  try {
+    const next: GauntletProfile = { ...getGauntletProfile(), intensity }
+    localStorage.setItem(GAUNTLET_PROFILE_KEY, JSON.stringify(next))
+  } catch {
+    // ignora (quota cheia / modo privado)
+  }
+}
+
 const ACHIEVEMENTS_KEY = 'longshot:achievements:v1'
 
 /** Ids das conquistas que o jogador já viu desbloqueadas (para destacar as novas). */

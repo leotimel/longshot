@@ -117,6 +117,23 @@ export const strings = {
     bet: '🎲 Aposta',
     betDesc: 'próxima rodada mais dura, vitória vale +2 escudos',
     betActive: '🎲 Aposta ativa — adversário reforçado',
+    // Setup pré-run (intensidade + mutadores + seed)
+    setupTitle: 'Monte sua run',
+    intensity: 'Intensidade',
+    mutators: 'Mutadores (opcional)',
+    mutNoShields: 'Sem escudos',
+    mutNoShieldsDesc: 'hardcore: uma derrota encerra',
+    mutBlitz: 'Relâmpago',
+    mutBlitzDesc: 'melhor de 1 por rodada',
+    mutDoubleBoss: 'Chefes em dobro',
+    mutDoubleBossDesc: 'chefe a cada 3 rodadas',
+    mutAttackOnly: 'Só ataque',
+    mutAttackOnlyDesc: 'boons sem defesa/escudo',
+    seedCode: 'Código da run',
+    copy: 'Copiar',
+    copied: 'Copiado!',
+    pasteSeed: 'colar código…',
+    begin: 'Continuar →',
   },
 
   bracket: {

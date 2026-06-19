@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { gauntletAscension, isBossRound, isEventRound, roundModifier, roundPlan } from './gauntletRun'
+import { DEFAULT_CONFIG, gauntletAscension, isBossRound, isEventRound, roundModifier, roundPlan } from './gauntletRun'
 
 describe('gauntletRun (dinâmicas)', () => {
   it('ascensão sobe a cada 10 de recorde', () => {
@@ -23,7 +23,14 @@ describe('gauntletRun (dinâmicas)', () => {
     expect(boss.opponentBump).toBeGreaterThan(0)
 
     const base = roundPlan(1, 1, 0).opponentBump
-    expect(roundPlan(1, 1, 0, true).opponentBump).toBeGreaterThan(base) // aposta
+    expect(roundPlan(1, 1, 0, DEFAULT_CONFIG, true).opponentBump).toBeGreaterThan(base) // aposta
+  })
+
+  it('mutadores: chefes em dobro (a cada 3) e relâmpago (best-of-1)', () => {
+    const cfg = { ...DEFAULT_CONFIG, doubleBoss: true, blitz: true }
+    expect(isBossRound(2, cfg)).toBe(true) // (2+1)%3===0
+    expect(isBossRound(4, cfg)).toBe(false)
+    expect(roundPlan(1, 0, 0, cfg).wins).toBe(1) // relâmpago = melhor de 1
   })
 
   it('ascensão NÃO pesa na rodada 1, mas pesa no fundo (rampa)', () => {
