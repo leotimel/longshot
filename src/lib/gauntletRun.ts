@@ -19,7 +19,8 @@ export const BOSS_EVERY = 5
 const BOSS_BUMP = 8
 const BOSS_WINS = 3 // chefe = melhor de 5
 const ASCENSION_PER = 10 // a cada 10 de recorde, +1 nível de ascensão
-const ASCENSION_BUMP = 3 // reforço no adversário por nível de ascensão
+const ASCENSION_BUMP = 3 // reforço no adversário por nível de ascensão (no auge da rampa)
+const ASCENSION_RAMP = 15 // rodadas até a ascensão pesar 100% (rodada 1 = 0)
 const BET_BUMP = 10 // aposta: reforço extra na rodada apostada
 const EVENT_CHANCE = 0.22
 
@@ -76,7 +77,8 @@ export interface RoundPlan {
 export function roundPlan(seed: number, round: number, ascension: number, bet = false): RoundPlan {
   const boss = isBossRound(round)
   const modifier = roundModifier(seed, round)
-  let opponentBump = ascension * ASCENSION_BUMP
+  // Ascensão CRESCE com a rodada: 0 na rodada 1, cheia por volta de ASCENSION_RAMP (platô).
+  let opponentBump = Math.round(ascension * ASCENSION_BUMP * Math.min(1, round / ASCENSION_RAMP))
   if (boss) opponentBump += BOSS_BUMP
   if (bet) opponentBump += BET_BUMP
   if (modifier?.opponentBump) opponentBump += modifier.opponentBump

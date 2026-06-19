@@ -233,8 +233,8 @@ export const setSkin = (id: string): void => setCosmetic(SKIN_KEY, id)
 export const getFrame = (): string => getCosmetic(FRAME_KEY, 'none')
 export const setFrame = (id: string): void => setCosmetic(FRAME_KEY, id)
 
-const GAUNTLET_KEY = 'longshot:gauntlet:v1' // legado: só o recorde (número)
-const GAUNTLET_KEY_V2 = 'longshot:gauntlet:v2'
+// v3: placar reiniciado (o balanceamento mudou de vez; v1/v2 ficam para trás de propósito).
+const GAUNTLET_KEY_V3 = 'longshot:gauntlet:v3'
 
 /** Estatísticas acumuladas do Gauntlet (todas as runs). */
 export interface GauntletStats {
@@ -246,23 +246,17 @@ export interface GauntletStats {
   best: number
 }
 
-/** Lê as stats do Gauntlet, migrando do formato v1 (só o recorde) se preciso. */
+/** Lê as stats do Gauntlet. SEM migrar de v1/v2 — o placar foi reiniciado na v3. */
 export function getGauntletStats(): GauntletStats {
   try {
-    const raw = localStorage.getItem(GAUNTLET_KEY_V2)
-    if (raw) {
-      const p = JSON.parse(raw) as Partial<GauntletStats>
-      return {
-        runs: typeof p.runs === 'number' && p.runs >= 0 ? p.runs : 0,
-        totalRounds: typeof p.totalRounds === 'number' && p.totalRounds >= 0 ? p.totalRounds : 0,
-        best: typeof p.best === 'number' && p.best >= 0 ? p.best : 0,
-      }
+    const raw = localStorage.getItem(GAUNTLET_KEY_V3)
+    if (!raw) return { runs: 0, totalRounds: 0, best: 0 }
+    const p = JSON.parse(raw) as Partial<GauntletStats>
+    return {
+      runs: typeof p.runs === 'number' && p.runs >= 0 ? p.runs : 0,
+      totalRounds: typeof p.totalRounds === 'number' && p.totalRounds >= 0 ? p.totalRounds : 0,
+      best: typeof p.best === 'number' && p.best >= 0 ? p.best : 0,
     }
-    // Migração do v1: só havia o recorde.
-    const legacy = localStorage.getItem(GAUNTLET_KEY)
-    const n = legacy ? JSON.parse(legacy) : 0
-    const best = typeof n === 'number' && n >= 0 ? n : 0
-    return { runs: 0, totalRounds: 0, best }
   } catch {
     return { runs: 0, totalRounds: 0, best: 0 }
   }
@@ -282,7 +276,7 @@ export function recordGauntletRun(rounds: number): GauntletStats {
     best: Math.max(prev.best, rounds),
   }
   try {
-    localStorage.setItem(GAUNTLET_KEY_V2, JSON.stringify(next))
+    localStorage.setItem(GAUNTLET_KEY_V3, JSON.stringify(next))
   } catch {
     // ignora (quota cheia / modo privado)
   }

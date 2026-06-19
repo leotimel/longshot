@@ -16,15 +16,21 @@ describe('gauntletRun (dinâmicas)', () => {
     expect(isBossRound(3)).toBe(false)
   })
 
-  it('chefe é melhor de 5 e reforça; ascensão e aposta somam ao bump', () => {
+  it('chefe é melhor de 5 e reforça; aposta soma ao bump', () => {
     const boss = roundPlan(1, 4, 0)
     expect(boss.isBoss).toBe(true)
     expect(boss.wins).toBe(3)
     expect(boss.opponentBump).toBeGreaterThan(0)
 
     const base = roundPlan(1, 1, 0).opponentBump
-    expect(roundPlan(1, 1, 3).opponentBump).toBeGreaterThan(base) // ascensão
     expect(roundPlan(1, 1, 0, true).opponentBump).toBeGreaterThan(base) // aposta
+  })
+
+  it('ascensão NÃO pesa na rodada 1, mas pesa no fundo (rampa)', () => {
+    // rodada 0: ascensão não soma (só o modificador, igual nos dois) → rodada 1 sempre justa.
+    expect(roundPlan(1, 0, 5).opponentBump).toBe(roundPlan(1, 0, 0).opponentBump)
+    // rodada funda: ascensão alta deixa bem mais difícil.
+    expect(roundPlan(1, 30, 5).opponentBump).toBeGreaterThan(roundPlan(1, 30, 0).opponentBump)
   })
 
   it('modificador/evento determinísticos; rodada-chefe não tem nenhum', () => {

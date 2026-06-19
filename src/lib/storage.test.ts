@@ -102,9 +102,10 @@ describe('gauntlet stats', () => {
     expect(getGauntletRecord()).toBe(7)
   })
 
-  it('migra o recorde do formato v1 (só número)', () => {
+  it('ignora placares antigos (v1/v2) — reiniciado na v3', () => {
     localStorage.setItem('longshot:gauntlet:v1', '9')
-    expect(getGauntletStats()).toEqual({ runs: 0, totalRounds: 0, best: 9 })
-    expect(getGauntletRecord()).toBe(9)
+    localStorage.setItem('longshot:gauntlet:v2', JSON.stringify({ runs: 3, totalRounds: 30, best: 55 }))
+    expect(getGauntletStats()).toEqual({ runs: 0, totalRounds: 0, best: 0 })
+    expect(getGauntletRecord()).toBe(0)
   })
 })
