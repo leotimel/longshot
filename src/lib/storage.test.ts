@@ -3,13 +3,16 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   confirmDay,
   getDay,
+  getGauntletProfile,
   getGauntletRecord,
   getGauntletStats,
   getPlayerSeed,
   hasOnboarded,
   isLocked,
   loadStats,
+  recordGauntletMeta,
   recordGauntletRun,
+  setGauntletCaptain,
   setOnboarded,
   type DayRecord,
 } from './storage'
@@ -107,5 +110,28 @@ describe('gauntlet stats', () => {
     localStorage.setItem('longshot:gauntlet:v2', JSON.stringify({ runs: 3, totalRounds: 30, best: 55 }))
     expect(getGauntletStats()).toEqual({ runs: 0, totalRounds: 0, best: 0 })
     expect(getGauntletRecord()).toBe(0)
+  })
+})
+
+describe('gauntlet captain/profile', () => {
+  it('capitão: escolha grava e progresso acumula; bestRanked só em Padrão+', () => {
+    expect(getGauntletProfile().captain).toBeNull()
+    setGauntletCaptain('jordan')
+    expect(getGauntletProfile().captain?.id).toBe('jordan')
+
+    // intensidade 0 (Tranquilo) não conta pro bestRanked, mas o capitão acumula
+    recordGauntletMeta({ cleared: 40, intensity: 0, captain: { bossWins: 1, bestGame: 30 } })
+    let prof = getGauntletProfile()
+    expect(prof.bestRanked).toBe(0)
+    expect(prof.captain?.roundsWith).toBe(40)
+    expect(prof.captain?.bossWins).toBe(1)
+
+    // intensidade ≥ 1 conta pro bestRanked
+    recordGauntletMeta({ cleared: 52, intensity: 1, captain: { bossWins: 2, bestGame: 55 } })
+    prof = getGauntletProfile()
+    expect(prof.bestRanked).toBe(52)
+    expect(prof.captain?.roundsWith).toBe(92)
+    expect(prof.captain?.bestGame).toBe(55)
+    expect(prof.captain?.bestRound).toBe(52)
   })
 })

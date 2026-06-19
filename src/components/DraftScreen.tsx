@@ -88,6 +88,7 @@ export function DraftScreen({
   startNote,
   pathTitle,
   pathTags,
+  lockedPick,
 }: {
   draft: DailyDraft
   onStartPlayoff: (team: Player[], sixthManId?: string) => void
@@ -105,9 +106,13 @@ export function DraftScreen({
   startNote?: string
   pathTitle?: string
   pathTags?: string[]
+  /** Jogador fixo (capitão do Gauntlet) — pré-preenche a posição dele. */
+  lockedPick?: Player
 }) {
   const [teamIndex, setTeamIndex] = useState(0)
-  const [chosen, setChosen] = useState<Partial<Record<Position, Player>>>({})
+  const [chosen, setChosen] = useState<Partial<Record<Position, Player>>>(() =>
+    lockedPick ? { [lockedPick.position]: lockedPick } : {},
+  )
   const [rerollUsed, setRerollUsed] = useState(false)
   // Sexto homem (opcional): undefined = ainda não decidido; null = pulou.
   const [sixthMan, setSixthMan] = useState<Player | null | undefined>(skipSixthMan ? null : undefined)
@@ -171,6 +176,12 @@ export function DraftScreen({
       {challengeTarget && (
         <div className="rounded-lg bg-accent px-3 py-2 text-center text-sm font-semibold text-on-accent">
           {S.draft.beat(challengeTarget)}
+        </div>
+      )}
+
+      {lockedPick && (
+        <div className="rounded-lg border border-accent bg-accent-soft px-3 py-2 text-center text-sm font-semibold text-accent">
+          {S.gauntlet.captainLocked(shortName(lockedPick.name))}
         </div>
       )}
 

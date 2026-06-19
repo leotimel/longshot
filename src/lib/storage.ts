@@ -285,32 +285,105 @@ export function recordGauntletRun(rounds: number): GauntletStats {
 
 const GAUNTLET_PROFILE_KEY = 'longshot:gauntlet:profile:v1'
 
-/** Preferências/meta do Gauntlet (intensidade lembrada; capitão virá depois). */
+/** Progresso do capitão (contadores cumulativos que liberam boosts permanentes). */
+export interface CaptainState {
+  /** Id do jogador escolhido como capitão. */
+  id: string
+  /** Rodadas vencidas com o capitão (acumulado entre runs). */
+  roundsWith: number
+  /** Rodadas-chefe vencidas com o capitão (acumulado). */
+  bossWins: number
+  /** Maior pontuação do capitão num único jogo. */
+  bestGame: number
+  /** Rodada mais funda alcançada com o capitão. */
+  bestRound: number
+}
+
+/** Preferências/meta do Gauntlet (intensidade, recorde qualificado e capitão). */
 export interface GauntletProfile {
   /** Última intensidade escolhida (0..3). */
   intensity: number
+  /** Maior recorde feito em intensidade ≥ Padrão (desbloqueia o capitão). */
+  bestRanked: number
+  /** Capitão escolhido (ou null). */
+  captain: CaptainState | null
+}
+
+function readCaptain(c: unknown): CaptainState | null {
+  if (!c || typeof c !== 'object') return null
+  const p = c as Partial<CaptainState>
+  if (typeof p.id !== 'string' || !p.id) return null
+  const num = (x: unknown): number => (typeof x === 'number' && x >= 0 ? x : 0)
+  return {
+    id: p.id,
+    roundsWith: num(p.roundsWith),
+    bossWins: num(p.bossWins),
+    bestGame: num(p.bestGame),
+    bestRound: num(p.bestRound),
+  }
 }
 
 export function getGauntletProfile(): GauntletProfile {
   try {
     const raw = localStorage.getItem(GAUNTLET_PROFILE_KEY)
-    if (!raw) return { intensity: 1 }
+    if (!raw) return { intensity: 1, bestRanked: 0, captain: null }
     const p = JSON.parse(raw) as Partial<GauntletProfile>
-    const intensity = typeof p.intensity === 'number' && p.intensity >= 0 && p.intensity <= 3 ? p.intensity : 1
-    return { intensity }
+    return {
+      intensity: typeof p.intensity === 'number' && p.intensity >= 0 && p.intensity <= 3 ? p.intensity : 1,
+      bestRanked: typeof p.bestRanked === 'number' && p.bestRanked >= 0 ? p.bestRanked : 0,
+      captain: readCaptain(p.captain),
+    }
   } catch {
-    return { intensity: 1 }
+    return { intensity: 1, bestRanked: 0, captain: null }
+  }
+}
+
+function saveProfile(p: GauntletProfile): void {
+  try {
+    localStorage.setItem(GAUNTLET_PROFILE_KEY, JSON.stringify(p))
+  } catch {
+    // ignora (quota cheia / modo privado)
   }
 }
 
 /** Salva a intensidade escolhida (lembrada na próxima run). */
 export function setGauntletIntensity(intensity: number): void {
-  try {
-    const next: GauntletProfile = { ...getGauntletProfile(), intensity }
-    localStorage.setItem(GAUNTLET_PROFILE_KEY, JSON.stringify(next))
-  } catch {
-    // ignora (quota cheia / modo privado)
+  saveProfile({ ...getGauntletProfile(), intensity })
+}
+
+/** Define o capitão (escolha única). Reinicia o progresso dos desafios dele. */
+export function setGauntletCaptain(id: string): GauntletProfile {
+  const next: GauntletProfile = {
+    ...getGauntletProfile(),
+    captain: { id, roundsWith: 0, bossWins: 0, bestGame: 0, bestRound: 0 },
   }
+  saveProfile(next)
+  return next
+}
+
+/**
+ * Registra a meta ao fim de uma run: atualiza `bestRanked` (só em intensidade ≥ 1) e o
+ * progresso do capitão (se havia capitão). Retorna o perfil atualizado.
+ */
+export function recordGauntletMeta(s: {
+  cleared: number
+  intensity: number
+  captain: { bossWins: number; bestGame: number } | null
+}): GauntletProfile {
+  const prev = getGauntletProfile()
+  const next: GauntletProfile = { ...prev }
+  if (s.intensity >= 1) next.bestRanked = Math.max(prev.bestRanked, s.cleared)
+  if (prev.captain && s.captain) {
+    next.captain = {
+      ...prev.captain,
+      roundsWith: prev.captain.roundsWith + s.cleared,
+      bossWins: prev.captain.bossWins + s.captain.bossWins,
+      bestGame: Math.max(prev.captain.bestGame, s.captain.bestGame),
+      bestRound: Math.max(prev.captain.bestRound, s.cleared),
+    }
+  }
+  saveProfile(next)
+  return next
 }
 
 const ACHIEVEMENTS_KEY = 'longshot:achievements:v1'

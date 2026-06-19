@@ -134,6 +134,14 @@ export const strings = {
     copied: 'Copiado!',
     pasteSeed: 'colar código…',
     begin: 'Continuar →',
+    // Capitão
+    captain: 'Capitão',
+    captainLocked: (name: string) => `🧢 Capitão: ${name} (fixo)`,
+    captainHint: (cur: number, goal: number) => `🔒 Capitão — recorde ${Math.min(cur, goal)}/${goal} em Padrão+`,
+    chooseCaptain: '🧢 Escolher capitão',
+    captainPickTitle: 'Escolha seu capitão (definitivo)',
+    captainChallenges: 'Desafios do capitão',
+    back: '← Voltar',
   },
 
   bracket: {

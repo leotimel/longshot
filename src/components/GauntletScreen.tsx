@@ -1,17 +1,23 @@
 import { useMemo, useState } from 'react'
-import type { Player, SeriesResult } from '../engine/types'
+import type { Player, Position, SeriesResult } from '../engine/types'
+import { POSITIONS } from '../engine/types'
 import type { Bracket, DailyDraft } from '../engine/draft'
 import { dailyDraft } from '../engine/draft'
+import { ROSTERS } from '../engine/data/rosters'
 import { endlessOpponent, gauntletOpponent, simulateGauntletRound } from '../engine/endless'
-import { campaignStats } from '../lib/playerStats'
+import { campaignStats, overall } from '../lib/playerStats'
 import {
   getGauntletProfile,
   getGauntletStats,
+  recordGauntletMeta,
   recordGauntletRun,
+  setGauntletCaptain,
   setGauntletIntensity,
+  type GauntletProfile,
   type GauntletStats,
 } from '../lib/storage'
-import { SHIELD_CAP, initBuild, offerBoons, type Boon, type RunBuild } from '../lib/gauntletBoons'
+import { CAPTAIN_CHALLENGES, CAPTAIN_UNLOCK, captainPerks, isChallengeDone } from '../lib/gauntletCaptain'
+import { initBuild, offerBoons, SHIELD_CAP, type Boon, type RunBuild } from '../lib/gauntletBoons'
 import {
   DEFAULT_CONFIG,
   INTENSITY_NAMES,
@@ -41,6 +47,25 @@ function seriesMvp(series: SeriesResult): { name: string; points: number } | nul
   return p ? { name: p.name, points: p.points } : null
 }
 
+/** Maior pontuação do capitão (por id) num jogo da série. */
+function captainBestInSeries(series: SeriesResult, captainId: string): number {
+  let best = 0
+  for (const g of series.games) {
+    for (const e of g.boxScore) if (e.playerId === captainId && e.points > best) best = e.points
+  }
+  return best
+}
+
+/** Candidatos a capitão: 1 entrada por jogador (a de maior overall), por posição. */
+function captainPool(): Player[] {
+  const byName = new Map<string, Player>()
+  for (const p of Object.values(ROSTERS).flat()) {
+    const cur = byName.get(p.name)
+    if (!cur || overall(p) > overall(cur)) byName.set(p.name, p)
+  }
+  return [...byName.values()].sort((a, b) => overall(b) - overall(a))
+}
+
 /**
  * Gauntlet infinito — modo livre, autocontido. Drafta um quinteto, escolhe boons
  * (roguelike) entre rodadas, encara rodadas-chefe (a cada 5), modificadores e eventos,
@@ -65,6 +90,17 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
   const [over, setOver] = useState(false)
   const [isRecord, setIsRecord] = useState(false)
   const [shieldNote, setShieldNote] = useState(false)
+  // Capitão (meta-progressão) + rastreio da run atual.
+  const [profile, setProfile] = useState<GauntletProfile>(getGauntletProfile)
+  const [picking, setPicking] = useState(false)
+  const [pickPos, setPickPos] = useState<Position>('PG')
+  const [capBoss, setCapBoss] = useState(0)
+  const [capBest, setCapBest] = useState(0)
+
+  const captain = profile.captain
+  const perks = useMemo(() => (captain ? captainPerks(captain) : null), [captain])
+  const captainUnlocked = profile.bestRanked >= CAPTAIN_UNLOCK
+  const captainList = useMemo(() => captainPool(), [])
 
   // Ascensão (fixa na run) derivada do recorde; o "caminho" mostra os 1ºs adversários.
   const ascension = useMemo(() => gauntletAscension(stats.best), [stats.best])
@@ -83,11 +119,19 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
   const mvp = useMemo(() => (series ? seriesMvp(series) : null), [series])
 
   const startRun = (picked: Player[]) => {
-    setBuild(initBuild(picked))
+    // Largada com os perks do capitão (acerto da run + escudos), respeitando "sem escudos".
+    const base = initBuild(picked)
+    setBuild({
+      ...base,
+      boost: perks?.boost ?? {},
+      shields: config.noShields ? 0 : perks?.startShields ?? 0,
+    })
     setRound(0)
     setCleared(0)
     setAttempt(0)
     setBet(false)
+    setCapBoss(0)
+    setCapBest(0)
     setSeries(null)
     setOffer(null)
     setEventActive(false)
@@ -108,6 +152,12 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
       attempt,
     })
     setSeries(result)
+
+    // Rastreio do capitão (vale na vitória ou na derrota — um jogão conta sempre).
+    if (captain) {
+      setCapBest((x) => Math.max(x, captainBestInSeries(result, captain.id)))
+      if (result.winner === 'player' && plan.isBoss) setCapBoss((x) => x + 1)
+    }
 
     if (result.winner === 'player') {
       playUnlock()
@@ -130,6 +180,17 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     // Sem escudo → fim da run.
     const beat = cleared > stats.best
     setStats(recordGauntletRun(cleared))
+    // Meta: recorde qualificado (Padrão+) e progresso do capitão (inclui o jogão da derrota).
+    if (captain || config.intensity >= 1) {
+      const finalBest = captain ? Math.max(capBest, captainBestInSeries(result, captain.id)) : 0
+      setProfile(
+        recordGauntletMeta({
+          cleared,
+          intensity: config.intensity,
+          captain: captain ? { bossWins: capBoss, bestGame: finalBest } : null,
+        }),
+      )
+    }
     setIsRecord(beat)
     setOver(true)
     setBet(false)
@@ -208,6 +269,10 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
     }
     setPhase('draft')
   }
+  const pickCaptain = (id: string) => {
+    setProfile(setGauntletCaptain(id))
+    setPicking(false)
+  }
 
   if (phase === 'setup') {
     const chip = (active: boolean) =>
@@ -215,6 +280,49 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
         'min-h-11 rounded-lg border px-3 py-1.5 text-sm font-semibold transition',
         active ? 'border-accent bg-accent-soft text-accent' : 'border-line hover:bg-surface2',
       ].join(' ')
+
+    // Escolha do capitão (escolha única).
+    if (picking) {
+      return (
+        <main className="mx-auto flex h-svh max-w-md flex-col gap-3 bg-canvas p-3 text-ink">
+          <header className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setPicking(false)}
+              className="min-h-11 rounded-lg border border-line px-3 text-sm font-semibold transition hover:bg-surface2"
+            >
+              {S.gauntlet.back}
+            </button>
+            <h1 className="font-display text-base font-bold uppercase tracking-wide">{S.gauntlet.captainPickTitle}</h1>
+            <span className="w-11" />
+          </header>
+          <div className="grid grid-cols-5 gap-1">
+            {POSITIONS.map((pos) => (
+              <button key={pos} type="button" onClick={() => setPickPos(pos)} className={`min-h-11 rounded-lg border text-sm font-bold ${chip(pickPos === pos)}`}>
+                {pos}
+              </button>
+            ))}
+          </div>
+          <ul className="flex flex-1 flex-col gap-1 overflow-y-auto">
+            {captainList
+              .filter((p) => p.position === pickPos)
+              .map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => pickCaptain(p.id)}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-left transition hover:border-accent hover:bg-accent-soft"
+                  >
+                    <span className="truncate text-sm font-semibold">{p.name}</span>
+                    <span className="font-display shrink-0 text-lg font-bold text-accent">{overall(p)}</span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </main>
+      )
+    }
+
     const muts: { key: MutKey; label: string; desc: string }[] = [
       { key: 'noShields', label: S.gauntlet.mutNoShields, desc: S.gauntlet.mutNoShieldsDesc },
       { key: 'blitz', label: S.gauntlet.mutBlitz, desc: S.gauntlet.mutBlitzDesc },
@@ -283,6 +391,53 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
           </div>
         </div>
 
+        {/* Capitão */}
+        <div>
+          <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.captain}</h3>
+          {captain && perks?.player ? (
+            <div className="rounded-lg border border-accent bg-accent-soft p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold">🧢 {perks.player.name}</span>
+                <span className="font-display text-lg font-bold text-accent">{overall(perks.player)}</span>
+              </div>
+              <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                {S.gauntlet.captainChallenges}
+              </div>
+              <ul className="mt-1 grid grid-cols-2 gap-1">
+                {CAPTAIN_CHALLENGES.map((ch) => {
+                  const done = isChallengeDone(ch, captain)
+                  return (
+                    <li
+                      key={ch.id}
+                      className={[
+                        'rounded border px-1.5 py-1 text-[10px] leading-tight',
+                        done ? 'border-accent text-ink' : 'border-line text-muted',
+                      ].join(' ')}
+                    >
+                      <span className={done ? '' : 'grayscale'}>{ch.emoji}</span> <span className="font-semibold">{ch.name}</span>
+                      <span className="ml-1 font-mono tabular-nums">
+                        {done ? '✓' : `${Math.min(ch.cur(captain), ch.goal)}/${ch.goal}`}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ) : captainUnlocked ? (
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="w-full rounded-lg border border-accent bg-accent-soft py-2 text-sm font-bold text-accent transition hover:brightness-95"
+            >
+              {S.gauntlet.chooseCaptain}
+            </button>
+          ) : (
+            <div className="rounded-lg border border-dashed border-line px-3 py-2 text-center text-[11px] text-muted">
+              {S.gauntlet.captainHint(profile.bestRanked, CAPTAIN_UNLOCK)}
+            </div>
+          )}
+        </div>
+
         {/* Seed compartilhável */}
         <div>
           <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.seedCode}</h3>
@@ -323,6 +478,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
         startNote={S.gauntlet.startNote}
         pathTitle={S.gauntlet.pathTitle}
         pathTags={S.gauntlet.pathTags}
+        lockedPick={perks?.player}
       />
     )
   }
