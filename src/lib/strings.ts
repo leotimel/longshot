@@ -331,6 +331,9 @@ export const strings = {
     coachTitle: '📋 Prancheta do técnico',
     coach:
       'Você tem 3 fichas no playoff para virar uma série: Esquema, Timeout, Takeover e Sexto homem. Use quando estiver perdendo.',
+    gauntletTitle: '⚔️ Modo Gauntlet',
+    gauntlet:
+      'Toque no ⚔️ para o modo livre: uma escalada infinita de adversários, escolhendo um reforço (boon) a cada vitória. Tem intensidade, escudos, rodadas-chefe e um capitão a desbloquear. Não afeta seu streak.',
     gotIt: 'Entendi',
   },
 }

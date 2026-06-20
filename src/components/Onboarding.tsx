@@ -46,6 +46,11 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
           <p className="mt-1 text-[13px] text-muted">{S.onboarding.coach}</p>
         </div>
 
+        <div className="mt-2 rounded-lg border border-line bg-surface2 p-3">
+          <div className="font-display text-sm font-bold uppercase tracking-wide">{S.onboarding.gauntletTitle}</div>
+          <p className="mt-1 text-[13px] text-muted">{S.onboarding.gauntlet}</p>
+        </div>
+
         <button
           type="button"
           onClick={onClose}

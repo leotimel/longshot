@@ -37,17 +37,31 @@ para todo mundo no dia**, fácil de comparar e compartilhar.
    **cosméticos** (cores, temas, molduras), proteja o **streak** com **escudos** e
    **compartilhe** estilo Wordle — tudo com **som e confete** nos grandes momentos.
 
-### ⚔️ Modo Gauntlet (infinito)
+### ⚔️ Modo Gauntlet (roguelike infinito)
 
 Um modo livre, à parte do diário (**não afeta streak/stats**): drafte um quinteto
-rápido e encare uma **escalada infinita** de adversários cada vez mais fortes, em
-séries **melhor de 3**. A cada rodada vencida, escolha **1 de 3 boons** (estilo
-roguelike) que valem pela run inteira — buffs de time, **escudos** (sobrevivem a uma
-derrota) ou um **Reforço** que troca seu elo fraco por um craque. Os boons têm **teto
-por atributo** (o build plateia) e os adversários escalam sem parar, então **toda run
-tem fim** — vale o **recorde** de rodadas. Motor em
-[`engine/endless.ts`](src/engine/endless.ts), boons em
-[`lib/gauntletBoons.ts`](src/lib/gauntletBoons.ts).
+rápido e encare uma **escalada infinita** de adversários cada vez mais fortes. A cada
+rodada vencida, escolha **1 de 3 boons** que valem pela run inteira — buffs de time,
+**escudos** (sobrevivem a uma derrota) ou um **Reforço** que troca seu elo fraco por um
+craque. Os boons têm **teto por atributo** (o build plateia) e a dificuldade não para de
+subir, então **toda run tem fim** — vale o **recorde** de rodadas. Motor puro em
+[`engine/endless.ts`](src/engine/endless.ts); regras/dinâmicas em
+[`lib/gauntletRun.ts`](src/lib/gauntletRun.ts), boons em
+[`lib/gauntletBoons.ts`](src/lib/gauntletBoons.ts), capitão em
+[`lib/gauntletCaptain.ts`](src/lib/gauntletCaptain.ts).
+
+- **Monte sua run (setup):** escolha a **intensidade** (Tranquilo → Lendário), ligue
+  **mutadores** (sem escudos / relâmpago melhor-de-1 / chefes em dobro / só ataque) e
+  pegue o **código da run** (base36 da seed) para **encarar o mesmo gauntlet** que um amigo.
+- **Dinâmicas:** a **ascensão** (derivada do recorde, crescendo ao longo da run) deixa
+  tudo mais difícil de forma permanente; **rodadas-chefe** (a cada 5, melhor de 5);
+  **modificadores** por rodada (azarão, mão fria, dia de 3…); e **eventos** (descanso / aposta).
+- **Capitão** (meta-progressão): ao bater **recorde ≥ 50 em intensidade Padrão+** você
+  escolhe **um jogador fixo** (escolha única) que entra em todo time, e ganha **boosts
+  permanentes** cumprindo desafios (Veterano · Matador de gigantes · Astro · Lenda).
+
+Tudo determinístico pela **seed da run** + escolhas; o motor segue puro (`opts` opcional
+em `simulateGauntletRound` → sem opts, baseline idêntico).
 
 ---
 
@@ -168,7 +182,7 @@ convenção.
 | Camada | Papel |
 |--------|------|
 | [`src/engine/`](src/engine/) | motor puro: tipos, dados (elencos + times), seed, RNG, draft, simulação, **táticas**, série, bracket, **sinergia**, **gauntlet** |
-| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `scouting`, `level`, `skins`, `frames`, `tactics`, `achievements`, `gauntletBoons`, `playerFacts`, `sound`, `confetti` |
+| [`src/lib/`](src/lib/) | `storage`, `share`/`challenge`, `badges`, `playerStats`, `playerHistory`, `scouting`, `level`, `skins`, `frames`, `tactics`, `achievements`, `gauntletRun`/`gauntletBoons`/`gauntletCaptain`, `playerFacts`, `sound`, `confetti` |
 | [`src/hooks/`](src/hooks/) | `usePlayoff` orquestra draft → trava → simulação reativa (táticas) → persistência |
 | [`src/components/`](src/components/) | `DraftScreen`, `BracketView`, `GameFeed`, `TeamStats`, `CoachActions`, `CoachGuide`, `LevelBadge`, `ResultModal`, `Onboarding`, `GauntletScreen` |
 
@@ -192,7 +206,7 @@ npm run build      # gera dist/ (typecheck + build de produção)
 ```
 
 O motor é coberto por testes determinísticos (incluindo uma **guarda de equilíbrio**
-do Gauntlet); a UI por testes em jsdom (Testing Library). **117 testes** no total.
+do Gauntlet); a UI por testes em jsdom (Testing Library). **128 testes** no total.
 
 ## ☁️ Deploy
 
