@@ -8,10 +8,85 @@
  * `id` = `${teamId}-${sobrenome}` (único; o mesmo jogador em times diferentes é
  * uma entrada distinta, com ratings daquele ano).
  */
-import type { Era, Player, Position } from '../types'
+import type { Era, Player, PlayerSilhouette, Position } from '../types'
 
 /** [speed, shooting, threePoint, defense, passing, rebounding, clutch] */
 type R = [number, number, number, number, number, number, number]
+
+const SIL: Record<string, PlayerSilhouette> = {
+  Jordan:    { height: 'medium', build: 'average', features: [] },
+  Bird:      { height: 'tall',   build: 'average', features: [] },
+  Magic:     { height: 'tall',   build: 'average', features: [] },
+  Kareem:    { height: 'tall',   build: 'slim',    features: [] },
+  Wilt:      { height: 'tall',   build: 'stocky',  features: [] },
+  Russell:   { height: 'tall',   build: 'slim',    features: [] },
+  Shaq:      { height: 'tall',   build: 'stocky',  features: ['bald'] },
+  Iverson:   { height: 'short',  build: 'slim',    features: ['headband'] },
+  Malone:    { height: 'tall',   build: 'stocky',  features: [] },
+  Stockton:  { height: 'short',  build: 'average', features: [] },
+  Duncan:    { height: 'tall',   build: 'average', features: [] },
+  LeBron:    { height: 'tall',   build: 'stocky',  features: [] },
+  Kobe:      { height: 'medium', build: 'average', features: [] },
+  Curry:     { height: 'medium', build: 'slim',    features: [] },
+  Durant:    { height: 'tall',   build: 'slim',    features: [] },
+  Garnett:   { height: 'tall',   build: 'slim',    features: [] },
+  Hakeem:    { height: 'tall',   build: 'average', features: [] },
+  Barkley:   { height: 'medium', build: 'stocky',  features: [] },
+  Pippen:    { height: 'tall',   build: 'average', features: [] },
+  Wade:      { height: 'medium', build: 'average', features: [] },
+  Nowitzki:  { height: 'tall',   build: 'average', features: [] },
+  Thomas:    { height: 'short',  build: 'average', features: [] },
+  Robinson:  { height: 'tall',   build: 'average', features: [] },
+  Rodman:    { height: 'medium', build: 'slim',    features: [] },
+  West:      { height: 'medium', build: 'average', features: [] },
+  Robertson: { height: 'medium', build: 'average', features: [] },
+  Frazier:   { height: 'medium', build: 'average', features: [] },
+  Reed:      { height: 'tall',   build: 'average', features: [] },
+  Walton:    { height: 'tall',   build: 'average', features: ['afro'] },
+  Nash:      { height: 'medium', build: 'slim',    features: [] },
+  Parker:    { height: 'medium', build: 'slim',    features: [] },
+  Ginóbili:  { height: 'medium', build: 'average', features: [] },
+  Allen:     { height: 'medium', build: 'average', features: [] },
+  Pierce:    { height: 'medium', build: 'average', features: [] },
+  Paul:      { height: 'short',  build: 'average', features: [] },
+  Harden:    { height: 'medium', build: 'average', features: ['beard'] },
+  Westbrook: { height: 'medium', build: 'average', features: ['headband'] },
+  Leonard:   { height: 'tall',   build: 'stocky',  features: [] },
+  Giannis:   { height: 'tall',   build: 'slim',    features: [] },
+  Jokić:     { height: 'tall',   build: 'stocky',  features: [] },
+  Davis:     { height: 'tall',   build: 'slim',    features: [] },
+  Lillard:   { height: 'medium', build: 'average', features: [] },
+  McGrady:   { height: 'tall',   build: 'average', features: [] },
+  Yao:       { height: 'tall',   build: 'stocky',  features: [] },
+  Kidd:      { height: 'medium', build: 'average', features: [] },
+  Mutombo:   { height: 'tall',   build: 'slim',    features: [] },
+  Miller:    { height: 'medium', build: 'slim',    features: [] },
+  Havlicek:  { height: 'medium', build: 'average', features: [] },
+  Erving:    { height: 'medium', build: 'average', features: ['afro'] },
+  Irving:    { height: 'medium', build: 'slim',    features: [] },
+  James:     { height: 'tall',   build: 'stocky',  features: [] },
+  Bryant:    { height: 'medium', build: 'average', features: [] },
+  Johnson:   { height: 'tall',   build: 'average', features: [] },
+  Anthony:   { height: 'medium', build: 'average', features: [] },
+  Olajuwon:  { height: 'tall',   build: 'average', features: [] },
+  Antetokounmpo: { height: 'tall', build: 'slim',  features: [] },
+}
+
+function deriveSilhouette(position: Position, era: Era): PlayerSilhouette {
+  const isOld = era === '1960s' || era === '1970s' || era === '1980s'
+  const tall  = position === 'C' || position === 'PF'
+  const short = position === 'PG'
+  return {
+    height:   tall ? 'tall' : short ? 'short' : 'medium',
+    build:    tall && isOld ? 'stocky' : 'average',
+    features: [],
+  }
+}
+
+function silFor(name: string, position: Position, era: Era): PlayerSilhouette {
+  const lastName = name.trim().split(/\s+/).at(-1) ?? ''
+  return SIL[lastName] ?? deriveSilhouette(position, era)
+}
 
 function p(id: string, name: string, position: Position, era: Era, r: R): Player {
   return {
@@ -28,6 +103,7 @@ function p(id: string, name: string, position: Position, era: Era, r: R): Player
       rebounding: r[5],
       clutch: r[6],
     },
+    silhouette: silFor(name, position, era),
   }
 }
 

@@ -3,11 +3,13 @@ import { POSITIONS, type Player, type PlayerRatings, type Position } from '../en
 import type { DailyDraft } from '../engine/draft'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
-import { overall, bestRating } from '../lib/playerStats'
+import { overall } from '../lib/playerStats'
 import { factFor } from '../lib/playerFacts'
 import { teamTraits } from '../lib/scouting'
 import { LevelBadge } from './LevelBadge'
 import { TeamStats, TraitChips } from './TeamStats'
+import { LongshotLogo } from './ui/LongshotLogo'
+import { QuintetCard } from './ui/QuintetCard'
 
 function topRatings(p: Player, n: number): { label: string; value: number }[] {
   return (Object.keys(p.ratings) as (keyof PlayerRatings)[])
@@ -126,6 +128,10 @@ export function DraftScreen({
   const lineup = allChosen ? POSITIONS.map((pos) => chosen[pos] as Player) : []
   const avgOvr = lineup.length ? Math.round(lineup.reduce((s, p) => s + overall(p), 0) / lineup.length) : 0
   const lineupTraits = lineup.length ? teamTraits(lineup) : []
+  // Craque do quinteto (maior OVR) — ganha o halo dourado no card.
+  const starId = lineup.length
+    ? lineup.reduce((a, b) => (overall(b) > overall(a) ? b : a)).id
+    : undefined
 
   const pick = (player: Player) => {
     setChosen((prev) => ({ ...prev, [player.position]: player }))
@@ -151,7 +157,7 @@ export function DraftScreen({
             {S.gauntlet.exit}
           </button>
         ) : (
-          <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.appName}</h1>
+          <LongshotLogo />
         )}
         <div className="flex items-center gap-2">
           {level && onOpenStats && <LevelBadge level={level} onClick={onOpenStats} />}
@@ -298,19 +304,7 @@ export function DraftScreen({
             <ol className="grid grid-cols-5 gap-1.5">
               {POSITIONS.map((pos) => {
                 const p = chosen[pos] as Player
-                const best = bestRating(p)
-                return (
-                  <li key={pos} className="rounded-lg border border-line bg-surface p-1 text-center shadow-sm">
-                    <div className="rounded bg-accent-soft px-1 text-[9px] font-bold text-accent">{pos}</div>
-                    <div className="mt-0.5 truncate text-[10px] font-medium leading-tight" title={p.name}>
-                      {shortName(p.name)}
-                    </div>
-                    <div className="font-display text-lg font-bold leading-none text-accent">{overall(p)}</div>
-                    <div className="mt-0.5 text-[9px] text-muted">
-                      {S.ratings[best.key]} <span className="font-mono tabular-nums">{best.value}</span>
-                    </div>
-                  </li>
-                )
+                return <QuintetCard key={pos} player={p} highlighted={p.id === starId} />
               })}
             </ol>
             {sixthMan && (

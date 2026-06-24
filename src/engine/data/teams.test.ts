@@ -49,4 +49,10 @@ describe('times históricos', () => {
     expect(TEAMS.some((t) => t.teamRatings.offense >= 90)).toBe(true)
     expect(TEAMS.some((t) => t.teamRatings.offense <= 80)).toBe(true)
   })
+
+  it('todos os times têm abbr com 2-3 letras maiúsculas', () => {
+    for (const t of TEAMS) {
+      expect(t.abbr, t.id).toMatch(/^[A-Z]{2,3}$/)
+    }
+  })
 })

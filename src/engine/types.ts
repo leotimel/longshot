@@ -16,6 +16,13 @@ export type Position = (typeof POSITIONS)[number]
 export const ERAS = ['1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'] as const
 export type Era = (typeof ERAS)[number]
 
+/** Dados visuais de silhueta de um jogador (paramétrico; sem foto). */
+export interface PlayerSilhouette {
+  height: 'short' | 'medium' | 'tall'
+  build:  'slim'  | 'average' | 'stocky'
+  features: ('beard' | 'headband' | 'afro' | 'bald' | 'goatee' | 'locs')[]
+}
+
 /** Atributos de um jogador (cada um 0–100), refletindo o auge da carreira. */
 export interface PlayerRatings {
   speed: Rating
@@ -34,6 +41,7 @@ export interface Player {
   position: Position
   era: Era
   ratings: PlayerRatings
+  silhouette?: PlayerSilhouette
 }
 
 /** Atributos de um time histórico (cada um 0–100). */
@@ -50,6 +58,7 @@ export interface HistoricalTeam {
   id: string
   name: string
   season: string
+  abbr: string
   teamRatings: TeamRatings
   description: string
 }

@@ -54,7 +54,10 @@ login; estado em `localStorage`; deploy estático.
   `npm run coverage`): engine roda em **Node**; testes de UI optam por jsdom por
   arquivo (`// @vitest-environment jsdom`). Rodar os testes após mexer no engine.
 - **Jogadores reais, sem monetização** (hobby/portfólio; zona cinza de licença).
-  Sem fotos nem logos — só nome, posição, era e ratings.
+  Sem fotos de jogadores (usamos silhuetas SVG paramétricas por jogador, em
+  `components/ui/PlayerSilhouette`). Emblemas de time: logos reais via CDN da
+  ESPN com fallback SVG retro (`components/ui/TeamBadge`) — mesma zona cinza de
+  licença já aceita para os nomes.
 - Stack: Vite + React + TypeScript + **TailwindCSS v4** (`@tailwindcss/vite`,
   sem `tailwind.config.js`). Um prompt do playbook por vez; commit por fase.
 

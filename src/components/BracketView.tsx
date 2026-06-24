@@ -8,7 +8,7 @@ import type {
 } from '../engine/types'
 import type { LevelInfo } from '../lib/level'
 import { strings as S } from '../lib/strings'
-import { overall, bestRating, campaignStats } from '../lib/playerStats'
+import { campaignStats } from '../lib/playerStats'
 import { playChampion } from '../lib/sound'
 import { celebrate } from '../lib/confetti'
 import { GameFeed } from './GameFeed'
@@ -16,6 +16,9 @@ import { LevelBadge } from './LevelBadge'
 import { TeamStats } from './TeamStats'
 import { ComebackTactics, RoundTactics } from './CoachActions'
 import { CoachGuide } from './CoachGuide'
+import { LongshotLogo } from './ui/LongshotLogo'
+import { QuintetCard } from './ui/QuintetCard'
+import { TeamBadge } from './ui/TeamBadge'
 
 const shortName = (name: string) => name.trim().split(/\s+/).at(-1) ?? name
 
@@ -24,6 +27,22 @@ const ICON_BTN =
   'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-line text-lg leading-none'
 const WON = 'text-pos'
 const LOST = 'text-neg'
+
+// Tinta sutil de fundo por rodada (âmbar 1R · prata 2R · dourado CF · cinza F).
+const ROUND_TINT = [
+  'linear-gradient(to right, #fde68a55, #fffbeb00)',
+  'linear-gradient(to right, #e2e8f066, #f8fafc00)',
+  'linear-gradient(to right, #fcd34d66, #fffbeb00)',
+  'linear-gradient(to right, #cbd5e155, #f1f5f900)',
+]
+
+// Blocos coloridos dos totais da campanha (verde/azul/vermelho/âmbar em ciclo).
+const STAT_BLOCK = [
+  'linear-gradient(to bottom, #166534, #22C55E)',
+  'linear-gradient(to bottom, #1E40AF, #3B82F6)',
+  'linear-gradient(to bottom, #9F1239, #EF4444)',
+  'linear-gradient(to bottom, #92400E, #F59E0B)',
+]
 
 type View =
   | { kind: 'overview' }
@@ -253,7 +272,12 @@ export function BracketView({
   return (
     <main className={SHELL}>
       <header className="flex items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold uppercase tracking-wide">{S.bracket.title}</h1>
+        <div>
+          <LongshotLogo />
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+            {S.bracket.title}
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           {level && onOpenStats && <LevelBadge level={level} onClick={onOpenStats} />}
           {onOpenGauntlet && (
@@ -288,7 +312,10 @@ export function BracketView({
             </div>
           </div>
         ) : dayBadge ? (
-          <div className="rounded-lg border border-line bg-surface py-3 text-center text-lg font-bold shadow-sm">
+          <div
+            className="font-display rounded-lg py-2.5 text-center text-xl font-bold uppercase tracking-wide shadow-sm"
+            style={{ background: '#F59E0B', color: '#1c1917' }}
+          >
             {dayBadge} {S.rounds.names[roundsWon - 1]}
           </div>
         ) : (
@@ -297,7 +324,10 @@ export function BracketView({
           </div>
         )
       ) : (
-        <div className="text-center text-[11px] font-medium uppercase tracking-wide text-muted">
+        <div
+          className="font-display rounded-lg py-2.5 text-center text-xl font-bold uppercase tracking-wide shadow-sm"
+          style={{ background: '#F59E0B', color: '#1c1917' }}
+        >
           {S.rounds.names[revealed]}
         </div>
       )}
@@ -312,44 +342,20 @@ export function BracketView({
             {team.map((p) => {
               const cs = camp?.byPlayer.get(p.id)
               const isMvp = camp?.mvpId === p.id
-              const best = bestRating(p)
               return (
-                <li
+                <QuintetCard
                   key={p.id}
-                  className={[
-                    'rounded-lg bg-surface p-1 text-center shadow-sm',
-                    isMvp ? 'border-2 border-pos' : 'border border-line',
-                    frameRing,
-                  ].join(' ')}
-                >
-                  <div className="flex items-center justify-center gap-0.5">
-                    <span className="rounded bg-accent-soft px-1 text-[9px] font-bold text-accent">
-                      {p.position}
-                    </span>
-                    {isMvp && (
-                      <span className="text-[9px] leading-none" title={S.bracket.mvp}>
-                        ⭐
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 truncate text-[10px] font-medium leading-tight" title={p.name}>
-                    {shortName(p.name)}
-                  </div>
-                  <div className="font-display text-base font-bold leading-none text-accent">
-                    {overall(p)}
-                  </div>
-                  <div className="mt-0.5 text-[9px] text-muted">
-                    {isMvp && cs ? (
+                  player={p}
+                  highlighted={isMvp}
+                  ringClass={frameRing}
+                  footer={
+                    isMvp && cs ? (
                       <span className="font-mono tabular-nums">
                         {cs.ppg.toFixed(1)} {S.bracket.ppg}
                       </span>
-                    ) : (
-                      <span>
-                        {S.ratings[best.key]} <span className="font-mono tabular-nums">{best.value}</span>
-                      </span>
-                    )}
-                  </div>
-                </li>
+                    ) : undefined
+                  }
+                />
               )
             })}
           </ol>
@@ -358,9 +364,13 @@ export function BracketView({
           {camp && (
             <div className="mt-1.5 grid grid-cols-3 gap-1.5">
               {campCards.map((c, i) => (
-                <div key={i} className="rounded-lg border border-line bg-surface p-1.5 text-center shadow-sm">
-                  <div className={`font-display text-base font-bold tabular-nums ${c.tone ?? ''}`}>{c.value}</div>
-                  <div className="truncate text-[9px] uppercase tracking-wide text-muted">{c.label}</div>
+                <div
+                  key={i}
+                  className="rounded-lg p-1.5 text-center text-white shadow-sm"
+                  style={{ background: STAT_BLOCK[i % STAT_BLOCK.length] }}
+                >
+                  <div className="font-display text-lg font-bold tabular-nums">{c.value}</div>
+                  <div className="truncate text-[9px] uppercase tracking-wide opacity-90">{c.label}</div>
                 </div>
               ))}
             </div>
@@ -383,11 +393,13 @@ export function BracketView({
                   type="button"
                   onClick={() => setView({ kind: 'series', round: i })}
                   className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-left shadow-sm transition hover:bg-surface2"
+                  style={{ backgroundImage: ROUND_TINT[i] }}
                 >
                   <span className="w-6 shrink-0 text-center text-lg">{won ? S.badges.emoji[i] : '⬜'}</span>
                   <span className="w-7 shrink-0 text-[11px] font-bold uppercase text-muted">
                     {S.rounds.tags[i]}
                   </span>
+                  <TeamBadge abbr={opp.abbr} teamName={opp.name} size="sm" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold">{shortName(opp.name)}</span>
                     <span className="block text-[10px] text-muted">{opp.season}</span>
@@ -427,6 +439,7 @@ export function BracketView({
                     <span className="w-7 shrink-0 text-[11px] font-bold uppercase text-muted">
                       {S.rounds.tags[i]}
                     </span>
+                    <TeamBadge abbr={opp.abbr} teamName={opp.name} size="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">{shortName(opp.name)}</span>
                       <span className="block text-[10px] text-muted">{opp.season}</span>
@@ -478,6 +491,7 @@ export function BracketView({
                 <span className="w-7 shrink-0 text-[11px] font-bold uppercase text-muted">
                   {S.rounds.tags[i]}
                 </span>
+                <TeamBadge abbr={opp.abbr} teamName={opp.name} size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{shortName(opp.name)}</span>
                   <span className="block text-[10px] text-muted">{opp.season}</span>
