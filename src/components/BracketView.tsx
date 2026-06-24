@@ -36,14 +36,6 @@ const ROUND_TINT = [
   'linear-gradient(to right, #cbd5e155, #f1f5f900)',
 ]
 
-// Blocos coloridos dos totais da campanha (verde/azul/vermelho/âmbar em ciclo).
-const STAT_BLOCK = [
-  'linear-gradient(to bottom, #166534, #22C55E)',
-  'linear-gradient(to bottom, #1E40AF, #3B82F6)',
-  'linear-gradient(to bottom, #9F1239, #EF4444)',
-  'linear-gradient(to bottom, #92400E, #F59E0B)',
-]
-
 type View =
   | { kind: 'overview' }
   | { kind: 'playing'; round: number; game: number }
@@ -301,22 +293,22 @@ export function BracketView({
       {/* Status do dia: hero comemorativo (campeão) ou selo/eliminado/round atual. */}
       {fullyRevealed ? (
         champion ? (
-          <div className="ls-celebrate rounded-xl bg-gradient-to-b from-accent to-accent-2 px-4 py-5 text-center text-on-accent shadow-md">
-            <div className="text-5xl leading-none">🏆</div>
-            <div className="font-display mt-2 text-3xl font-bold uppercase tracking-wide">{S.bracket.championTitle}</div>
+          <div className="ls-celebrate rounded-xl bg-gradient-to-b from-accent to-accent-2 px-3 py-2.5 text-center text-on-accent shadow-md">
+            <div className="font-display text-2xl font-bold uppercase tracking-wide leading-none">
+              🏆 {S.bracket.championTitle}
+            </div>
             {perfect && (
-              <div className="font-display mt-1 text-base font-bold uppercase tracking-wide">{S.bracket.invicto}</div>
+              <div className="font-display mt-0.5 text-sm font-bold uppercase tracking-wide">{S.bracket.invicto}</div>
             )}
-            <div className="mt-0.5 text-xs font-medium opacity-90">
+            <div className="mt-0.5 text-[11px] font-medium opacity-90">
               {perfect ? S.bracket.invictoSub : S.bracket.championSub}
             </div>
           </div>
         ) : dayBadge ? (
-          <div
-            className="font-display rounded-lg py-2.5 text-center text-xl font-bold uppercase tracking-wide shadow-sm"
-            style={{ background: '#F59E0B', color: '#1c1917' }}
-          >
-            {dayBadge} {S.rounds.names[roundsWon - 1]}
+          <div className="rounded-lg border border-line bg-surface py-2 text-center shadow-sm">
+            <span className="font-display text-base font-bold uppercase tracking-wide">
+              {dayBadge} {S.rounds.names[roundsWon - 1]}
+            </span>
           </div>
         ) : (
           <div className="rounded-lg border border-line bg-surface py-3 text-center text-sm font-medium text-muted shadow-sm">
@@ -324,11 +316,10 @@ export function BracketView({
           </div>
         )
       ) : (
-        <div
-          className="font-display rounded-lg py-2.5 text-center text-xl font-bold uppercase tracking-wide shadow-sm"
-          style={{ background: '#F59E0B', color: '#1c1917' }}
-        >
-          {S.rounds.names[revealed]}
+        <div className="rounded-lg border border-line bg-surface py-2 text-center shadow-sm">
+          <span className="font-display text-base font-bold uppercase tracking-wide">
+            {S.rounds.names[revealed]}
+          </span>
         </div>
       )}
 
@@ -363,16 +354,23 @@ export function BracketView({
           {/* Totais da campanha (só ao fim). */}
           {camp && (
             <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-              {campCards.map((c, i) => (
-                <div
-                  key={i}
-                  className="rounded-lg p-1.5 text-center text-white shadow-sm"
-                  style={{ background: STAT_BLOCK[i % STAT_BLOCK.length] }}
-                >
-                  <div className="font-display text-lg font-bold tabular-nums">{c.value}</div>
-                  <div className="truncate text-[9px] uppercase tracking-wide opacity-90">{c.label}</div>
-                </div>
-              ))}
+              {campCards.map((c, i) => {
+                const teal = i < 3
+                return (
+                  <div
+                    key={i}
+                    className="rounded-lg p-1.5 text-center shadow-sm"
+                    style={
+                      teal
+                        ? { background: 'linear-gradient(to bottom, #0F766E, #14B8A6)', color: '#FFFFFF' }
+                        : { background: 'var(--color-surface2)', color: 'var(--color-ink)' }
+                    }
+                  >
+                    <div className="font-display text-lg font-bold tabular-nums">{c.value}</div>
+                    <div className="truncate text-[9px] uppercase tracking-wide opacity-90">{c.label}</div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </section>

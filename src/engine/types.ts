@@ -40,6 +40,8 @@ export interface Player {
   name: string
   position: Position
   era: Era
+  /** Abreviação do time de origem (ex: 'LAL', 'BOS') — só dado visual (jersey). */
+  teamAbbr?: string
   ratings: PlayerRatings
   silhouette?: PlayerSilhouette
 }

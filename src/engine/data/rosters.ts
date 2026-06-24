@@ -9,6 +9,7 @@
  * uma entrada distinta, com ratings daquele ano).
  */
 import type { Era, Player, PlayerSilhouette, Position } from '../types'
+import { TEAMS } from './teams'
 
 /** [speed, shooting, threePoint, defense, passing, rebounding, clutch] */
 type R = [number, number, number, number, number, number, number]
@@ -107,7 +108,7 @@ function p(id: string, name: string, position: Position, era: Era, r: R): Player
   }
 }
 
-export const ROSTERS: Record<string, Player[]> = {
+const _rawRosters: Record<string, Player[]> = {
   // ── Anos 60-70 ─────────────────────────────────────────────────────────────
   'celtics-1964': [
     p('celtics-1964-kcjones', 'K.C. Jones', 'PG', '1960s', [80, 62, 10, 90, 80, 50, 80]),
@@ -554,6 +555,17 @@ export const ROSTERS: Record<string, Player[]> = {
     p('heat-2020-bam', 'Bam Adebayo', 'C', '2020s', [82, 76, 30, 88, 76, 82, 78]),
   ],
 }
+
+// Injeta `teamAbbr` (dado visual da jersey) em cada jogador, derivado do time de
+// origem — sem tocar nos ~300 calls p(...). `teams.ts` só importa um tipo daqui,
+// então não há ciclo de import.
+const _abbrByTeam = new Map(TEAMS.map((t) => [t.id, t.abbr]))
+export const ROSTERS: Record<string, Player[]> = Object.fromEntries(
+  Object.entries(_rawRosters).map(([teamId, players]) => [
+    teamId,
+    players.map((pl) => ({ ...pl, teamAbbr: _abbrByTeam.get(teamId) ?? '' })),
+  ]),
+)
 
 const BY_ID: Map<string, Player> = new Map(
   Object.values(ROSTERS)

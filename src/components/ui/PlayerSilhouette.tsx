@@ -12,6 +12,11 @@ interface Props {
 const SKIN = '#C68642'
 const SKIN_DARK = '#A0522D'
 
+/**
+ * Busto flat de jogador, paramétrico. Desenhado para ser legível mesmo em
+ * size pequeno (56): cabeça + pescoço + braços + torso (jersey). As `features`
+ * (barba/faixa/afro/careca/cavanhaque/locs) adicionam detalhes opcionais.
+ */
 export function PlayerSilhouette({
   silhouette,
   jerseyPrimary,
@@ -21,63 +26,57 @@ export function PlayerSilhouette({
 }: Props) {
   const { height, build, features } = silhouette
 
-  // Parametric proportions
-  const headR    = size * 0.14
-  const neckH    = height === 'tall' ? size * 0.07 : size * 0.05
-  const shoulderW = build === 'stocky' ? size * 0.52 : build === 'slim' ? size * 0.36 : size * 0.44
-  const torsoH   = height === 'short' ? size * 0.30 : size * 0.24
-  const torsoY   = size * 0.38 + neckH
-  const torsoX   = (size - shoulderW) / 2
-
-  const headCY = size * 0.18
+  // Proporções relativas ao tamanho.
+  const headR = size * 0.15
   const headCX = size / 2
-  const neckX  = headCX - size * 0.05
-  const neckY  = headCY + headR
+  const headCY = size * (height === 'tall' ? 0.17 : height === 'short' ? 0.21 : 0.19)
+
+  const neckW = size * 0.1
+  const neckH = size * (height === 'tall' ? 0.08 : 0.06)
+  const neckY = headCY + headR
+  const torsoTop = neckY + neckH
+
+  const torsoH = size * (height === 'short' ? 0.34 : 0.3)
+  const shoulderW =
+    build === 'stocky' ? size * 0.56 : build === 'slim' ? size * 0.36 : size * 0.46
+  const torsoX = (size - shoulderW) / 2
+
+  const armW = neckW
+  const armH = torsoH * 0.62
 
   const isAfro = features.includes('afro')
   const isBald = features.includes('bald')
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      aria-hidden="true"
-    >
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
       {/* Halo dourado para jogador em destaque */}
       {highlighted && (
         <circle
           cx={headCX}
           cy={headCY}
-          r={headR + size * 0.06}
+          r={headR + size * 0.07}
           fill="none"
           stroke="#F59E0B"
           strokeWidth={size * 0.03}
-          opacity={0.5}
+          opacity={0.55}
         />
       )}
 
-      {/* Cabelo / topo da cabeça */}
+      {/* Afro — volume sobre o topo da cabeça */}
       {isAfro && (
         <ellipse
           cx={headCX}
-          cy={headCY - headR * 0.3}
-          rx={headR * 1.4}
-          ry={headR * 1.2}
+          cy={headCY - headR * 0.35}
+          rx={headR * 1.45}
+          ry={headR * 1.25}
           fill={SKIN_DARK}
         />
       )}
 
       {/* Cabeça */}
-      <ellipse
-        cx={headCX}
-        cy={headCY}
-        rx={headR}
-        ry={isBald ? headR * 1.05 : headR}
-        fill={SKIN}
-      />
+      <ellipse cx={headCX} cy={headCY} rx={headR} ry={isBald ? headR * 1.05 : headR} fill={SKIN} />
 
-      {/* Faixa na frente (headband) */}
+      {/* Faixa na fronte (headband) */}
       {features.includes('headband') && (
         <rect
           x={headCX - headR}
@@ -86,7 +85,7 @@ export function PlayerSilhouette({
           height={headR * 0.32}
           rx={headR * 0.1}
           fill={jerseySecondary}
-          opacity={0.9}
+          opacity={0.92}
         />
       )}
 
@@ -94,71 +93,82 @@ export function PlayerSilhouette({
       {features.includes('beard') && (
         <ellipse
           cx={headCX}
-          cy={headCY + headR * 0.55}
-          rx={headR * 0.7}
-          ry={headR * 0.45}
+          cy={headCY + headR * 0.6}
+          rx={headR * 0.72}
+          ry={headR * 0.5}
           fill={SKIN_DARK}
         />
       )}
 
-      {/* Cavanhaque (goatee — menor que barba) */}
+      {/* Cavanhaque (goatee — só quando não há barba completa) */}
       {features.includes('goatee') && !features.includes('beard') && (
         <ellipse
           cx={headCX}
-          cy={headCY + headR * 0.65}
-          rx={headR * 0.35}
+          cy={headCY + headR * 0.7}
+          rx={headR * 0.34}
           ry={headR * 0.28}
           fill={SKIN_DARK}
         />
       )}
 
-      {/* Locs — paths finos laterais */}
-      {features.includes('locs') && (
-        <>
-          {[-0.6, -0.3, 0.3, 0.6].map((offset) => (
-            <rect
-              key={offset}
-              x={headCX + offset * headR - size * 0.015}
-              y={headCY - headR * 0.2}
-              width={size * 0.03}
-              height={headR * 0.9}
-              rx={size * 0.01}
-              fill={SKIN_DARK}
-            />
-          ))}
-        </>
-      )}
+      {/* Locs — mechas finas descendo das laterais */}
+      {features.includes('locs') &&
+        [-0.7, -0.4, 0.4, 0.7].map((offset) => (
+          <rect
+            key={offset}
+            x={headCX + offset * headR - size * 0.015}
+            y={headCY - headR * 0.2}
+            width={size * 0.03}
+            height={headR * 1}
+            rx={size * 0.01}
+            fill={SKIN_DARK}
+          />
+        ))}
 
       {/* Pescoço */}
+      <rect x={headCX - neckW / 2} y={neckY - 1} width={neckW} height={neckH + 2} fill={SKIN} />
+
+      {/* Braços — saem dos ombros, levemente abertos, atrás do torso */}
       <rect
-        x={neckX}
-        y={neckY - 1}
-        width={size * 0.1}
-        height={neckH + 2}
+        x={torsoX - armW * 0.4}
+        y={torsoTop}
+        width={armW}
+        height={armH}
+        rx={armW * 0.5}
         fill={SKIN}
+        transform={`rotate(12 ${torsoX} ${torsoTop})`}
+      />
+      <rect
+        x={torsoX + shoulderW - armW * 0.6}
+        y={torsoTop}
+        width={armW}
+        height={armH}
+        rx={armW * 0.5}
+        fill={SKIN}
+        transform={`rotate(-12 ${torsoX + shoulderW} ${torsoTop})`}
       />
 
-      {/* Corpo / jersey */}
+      {/* Torso / jersey (regata) */}
       <rect
         x={torsoX}
-        y={torsoY}
+        y={torsoTop}
         width={shoulderW}
         height={torsoH}
-        rx={size * 0.04}
+        rx={size * 0.05}
         fill={jerseyPrimary}
       />
 
       {/* Número 00 na jersey */}
       <text
         x={headCX}
-        y={torsoY + torsoH * 0.62}
+        y={torsoTop + torsoH * 0.58}
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={torsoH * 0.38}
+        fontSize={torsoH * 0.36}
         fontWeight="bold"
         fontFamily="monospace"
         fill={jerseySecondary}
-        opacity={0.85}
+        opacity={0.9}
       >
         00
       </text>
