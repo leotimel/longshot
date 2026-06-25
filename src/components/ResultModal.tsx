@@ -3,6 +3,9 @@ import type { DayRecord, Stats } from '../lib/storage'
 import { getSeenAchievements, setSeenAchievements } from '../lib/storage'
 import type { LevelInfo } from '../lib/level'
 import { summarizeHistory } from '../lib/playerHistory'
+import { playerById } from '../engine/data/rosters'
+import { teamColors } from './ui/teamColors'
+import { PlayerSilhouette } from './ui/PlayerSilhouette'
 import { ACH_CATEGORIES, computeAchievements } from '../lib/achievements'
 import { SKINS, isSkinUnlocked } from '../lib/skins'
 import { FRAMES, isFrameUnlocked } from '../lib/frames'
@@ -57,6 +60,13 @@ export function ResultModal({
   const [muted, setMutedState] = useState(isMuted)
   const hist = useMemo(() => summarizeHistory(stats.history), [stats.history])
   const achievements = useMemo(() => computeAchievements(stats, hist), [stats, hist])
+
+  function silProps(playerId: string) {
+    const p = playerById(playerId)
+    if (!p?.silhouette) return null
+    const c = teamColors(p.teamAbbr ?? '')
+    return { silhouette: p.silhouette, jerseyPrimary: c.primary, jerseySecondary: c.secondary }
+  }
   const doneCount = achievements.filter((a) => a.done).length
 
   // Conquistas novas desde a última abertura (calculado uma vez, ao montar).
@@ -217,7 +227,11 @@ export function ResultModal({
                   <div className="font-display text-lg font-bold tabular-nums">{hist.distinctPlayers}</div>
                   <div className={statLabel}>{S.result.used}</div>
                 </div>
-                <div className={statCard}>
+                <div className={`${statCard} flex flex-col items-center`}>
+                  {hist.favorite && (() => {
+                    const sp = silProps(hist.favorite.playerId)
+                    return sp ? <PlayerSilhouette size={44} highlighted={false} {...sp} /> : null
+                  })()}
                   <div className="truncate text-sm font-bold">
                     {hist.favorite ? shortName(hist.favorite.name) : '—'}
                   </div>
@@ -245,6 +259,10 @@ export function ResultModal({
                     <div className="relative flex items-center justify-between gap-2 text-xs">
                       <span className="flex min-w-0 items-center gap-1.5">
                         <span className="w-3 shrink-0 text-right font-mono text-muted">{i + 1}</span>
+                        {i === 0 && (() => {
+                          const sp = silProps(c.playerId)
+                          return sp ? <span className="shrink-0"><PlayerSilhouette size={28} highlighted={false} {...sp} /></span> : null
+                        })()}
                         <span className="truncate font-semibold">{c.name}</span>
                         <span className="shrink-0 text-[10px] text-muted">{S.result.picks(c.picks)}</span>
                       </span>
@@ -266,9 +284,19 @@ export function ResultModal({
                   <div className="font-display text-lg font-bold tabular-nums">
                     {hist.recordGame ? hist.recordGame.points : '—'}
                   </div>
-                  <div className={`truncate ${statLabel}`}>
-                    {S.result.recordGame}
-                    {hist.recordGame ? ` · ${shortName(hist.recordGame.name)}` : ''}
+                  <div className={`${statLabel} flex items-center justify-center gap-0.5`}>
+                    <span className="truncate">{S.result.recordGame}</span>
+                    {hist.recordGame && (() => {
+                      const career = hist.scorers.find(s => s.name === hist.recordGame!.name)
+                      const sp = career ? silProps(career.playerId) : null
+                      return (
+                        <>
+                          <span>·</span>
+                          {sp && <PlayerSilhouette size={20} highlighted={false} {...sp} />}
+                          <span className="truncate">{shortName(hist.recordGame.name)}</span>
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
                 <div className={statCard}>
