@@ -43,9 +43,18 @@ export function GameFeed({
   const card = 'rounded-lg border border-line bg-surface shadow-sm'
   const sectionLabel = 'mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted'
 
+  // Tom sutil de cada linha do play-by-play por palavra-chave (fallback neutro).
+  const playTint = (line: string): string => {
+    const l = line.toLowerCase()
+    if (/de 3|do perímetro|bola de 3|triple|3 pts/.test(l)) return 'bg-accent-soft'
+    if (/virada|clutch|decisiv|cresceu/.test(l)) return 'bg-pos-soft'
+    if (/perde|perdeu|errou|turnover|roubada|bloqueio/.test(l)) return 'bg-neg/10'
+    return ''
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-muted">
+      <div className="font-display text-base font-bold uppercase tracking-wide text-muted">
         {totalGames !== undefined ? S.game.of(gameNumber, totalGames) : S.game.only(gameNumber)}
       </div>
 
@@ -79,12 +88,18 @@ export function GameFeed({
       {/* Play-by-play */}
       <div>
         <h3 className={sectionLabel}>{S.game.plays}</h3>
-        <ul className={`flex max-h-44 flex-col gap-0.5 overflow-y-auto p-2 ${card}`}>
-          {game.playByPlay.map((line, i) => (
-            <li key={i} className="font-mono text-[12px] leading-snug text-ink">
-              {line}
-            </li>
-          ))}
+        <ul className={`flex max-h-44 flex-col gap-1 overflow-y-auto p-2 ${card}`}>
+          {game.playByPlay.map((line, i) => {
+            const tint = playTint(line)
+            return (
+              <li
+                key={i}
+                className={`rounded px-1.5 py-0.5 font-mono text-[12px] leading-snug text-ink ${tint}`}
+              >
+                {line}
+              </li>
+            )
+          })}
         </ul>
       </div>
 
@@ -134,7 +149,7 @@ export function GameFeed({
           <button
             type="button"
             onClick={onNext}
-            className="min-h-11 flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-on-accent transition hover:brightness-95 active:brightness-90"
+            className="font-display min-h-11 flex-1 rounded-lg bg-accent py-2 text-lg font-bold uppercase tracking-wide text-on-accent transition hover:brightness-95 active:brightness-90"
           >
             {nextLabel}
           </button>

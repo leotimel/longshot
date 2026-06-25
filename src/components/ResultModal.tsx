@@ -115,7 +115,7 @@ export function ResultModal({
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[90svh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-line bg-surface text-ink shadow-xl"
       >
-        <div className="flex flex-1 flex-col overflow-y-auto p-4">
+        <div className="flex flex-1 flex-col overflow-y-auto bg-canvas p-4">
           {/* Nível & XP */}
         {level && (
           <div className="mb-3">
@@ -151,11 +151,11 @@ export function ResultModal({
 
         {/* Resultado do dia */}
         {day && (
-          <div className="mb-3 rounded-lg bg-accent-soft p-3 text-center">
+          <div className="mb-3 rounded-xl border border-accent bg-accent-soft p-3 text-center shadow-sm">
             {badge !== null ? (
               <>
-                <div className="text-4xl leading-none">{S.badges.emoji[badge]}</div>
-                <div className="font-display mt-1 text-lg font-bold uppercase tracking-wide text-accent">
+                <div className="text-5xl leading-none">{S.badges.emoji[badge]}</div>
+                <div className="font-display mt-1 text-2xl font-bold uppercase tracking-wide text-accent">
                   {S.badges.labels[badge]}
                 </div>
               </>
@@ -167,7 +167,7 @@ export function ResultModal({
 
         {/* Streak */}
         <div className={`mb-3 grid gap-2 ${stats.freezes > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <div className={statCard}>
+          <div className={`${statCard} border-accent bg-accent-soft`}>
             <div className="font-display text-2xl font-bold text-accent">🔥 {stats.streak}</div>
             <div className={statLabel}>{S.result.streak}</div>
           </div>
@@ -429,7 +429,7 @@ export function ResultModal({
           {/* Contador */}
           <div className="text-center">
             <div className={statLabel}>{S.result.nextDraft}</div>
-            <div className="font-mono text-xl font-bold">{fmtCountdown(countdown)}</div>
+            <div className="font-display text-4xl font-bold tabular-nums">{fmtCountdown(countdown)}</div>
           </div>
         </div>
 
@@ -439,7 +439,7 @@ export function ResultModal({
             <button
               type="button"
               onClick={onShare}
-              className="flex-1 rounded-lg bg-accent py-3 font-semibold text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
+              className="font-display min-h-11 flex-1 rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90"
             >
               {S.result.share}
             </button>
@@ -447,7 +447,7 @@ export function ResultModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-lg border border-line bg-surface py-3 font-semibold transition hover:bg-surface2"
+            className="min-h-11 flex-1 rounded-lg border border-line bg-surface py-3 text-sm font-semibold transition hover:bg-surface2"
           >
             {day ? S.result.viewBracket : S.result.close}
           </button>

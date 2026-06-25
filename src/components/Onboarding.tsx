@@ -32,9 +32,9 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
         {/* Caminho das 4 rodadas, cada uma com seu selo. */}
         <div className="mt-4 grid grid-cols-4 gap-1.5">
           {STEPS.map((i) => (
-            <div key={i} className="rounded-lg border border-line bg-surface2 p-2 text-center">
-              <div className="text-2xl leading-none">{S.badges.emoji[i]}</div>
-              <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-accent">
+            <div key={i} className="rounded-lg border border-line bg-surface2 p-2 text-center shadow-sm">
+              <div className="text-3xl leading-none">{S.badges.emoji[i]}</div>
+              <div className="font-display mt-1 text-sm font-bold uppercase tracking-wide text-accent">
                 {S.rounds.tags[i]}
               </div>
             </div>

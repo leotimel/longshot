@@ -20,7 +20,7 @@ function HelpRow({ left, fichas, onHelp }: { left: ReactNode; fichas: number; on
     <div className="mb-1.5 flex items-center justify-between gap-2">
       {left}
       <span className="flex items-center gap-2">
-        <span className="font-display text-[11px] font-bold text-accent">{S.tactics.fichas(fichas)}</span>
+        <span className="font-display rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-accent">{S.tactics.fichas(fichas)}</span>
         {onHelp && (
           <button type="button" onClick={onHelp} aria-label={S.tactics.help} className="text-[11px] text-muted underline">
             ⓘ {S.tactics.help}
@@ -50,7 +50,7 @@ export function RoundTactics({
   return (
     <div className="mb-2 rounded-lg border border-line bg-surface2 p-2">
       <HelpRow
-        left={<span className="text-[10px] font-semibold uppercase tracking-wide text-muted">{S.tactics.prepare}</span>}
+        left={<span className="font-display text-[11px] font-bold uppercase tracking-wide text-muted">{S.tactics.prepare}</span>}
         fichas={fichas}
         onHelp={onHelp}
       />
@@ -73,9 +73,9 @@ export function RoundTactics({
               disabled={disabled}
               onClick={() => onTactic(round, { scheme: id })}
               className={[
-                'rounded border px-1.5 py-1 text-left transition',
+                'rounded-lg border px-1.5 py-1 text-left transition',
                 active ? 'border-accent bg-accent-soft' : 'border-line',
-                disabled ? 'opacity-40' : 'hover:bg-surface',
+                disabled ? 'opacity-40' : 'hover:border-accent',
               ].join(' ')}
             >
               <span className="block text-[11px] font-semibold leading-tight">{S.tactics.schemes[id]}</span>
