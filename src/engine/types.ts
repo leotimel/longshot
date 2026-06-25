@@ -20,6 +20,7 @@ export type Era = (typeof ERAS)[number]
 export interface PlayerSilhouette {
   height: 'short' | 'medium' | 'tall'
   build:  'slim'  | 'average' | 'stocky'
+  skin?:  'light' | 'medium'  | 'dark'
   features: ('beard' | 'headband' | 'afro' | 'bald' | 'goatee' | 'locs')[]
 }
 

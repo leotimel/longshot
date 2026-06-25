@@ -8,9 +8,13 @@ interface Props {
   size?: number
 }
 
-// Neutral skin tone — generic, avoids any real-person likeness.
-const SKIN = '#C68642'
-const SKIN_DARK = '#A0522D'
+// Paleta de tons de pele (genéricos; evita semelhança com pessoa real). `dark` é o
+// tom mais escuro usado para sombras (barba, afro, locs) sobre a pele base.
+const SKIN_PALETTE = {
+  light:  { base: '#F4C591', dark: '#D4956A' },
+  medium: { base: '#C68642', dark: '#A0522D' },
+  dark:   { base: '#8D5524', dark: '#6B3E1C' },
+} as const
 
 /**
  * Busto flat de jogador, paramétrico. Desenhado para ser legível mesmo em
@@ -25,6 +29,9 @@ export function PlayerSilhouette({
   size = 80,
 }: Props) {
   const { height, build, features } = silhouette
+  const { base: SKIN, dark: SKIN_DARK } = SKIN_PALETTE[silhouette.skin ?? 'medium']
+  // Cabelo: louro/castanho claro p/ pele clara, quase preto p/ as demais.
+  const HAIR = silhouette.skin === 'light' ? '#8B6914' : '#2C1810'
 
   // Proporções relativas ao tamanho.
   const headR = size * 0.15
@@ -59,6 +66,17 @@ export function PlayerSilhouette({
           stroke="#F59E0B"
           strokeWidth={size * 0.03}
           opacity={0.55}
+        />
+      )}
+
+      {/* Cap de cabelo — "topo" escuro na cabeça (não para afro/careca) */}
+      {!isAfro && !isBald && (
+        <ellipse
+          cx={headCX}
+          cy={headCY - headR * 0.35}
+          rx={headR}
+          ry={headR * 0.55}
+          fill={HAIR}
         />
       )}
 
