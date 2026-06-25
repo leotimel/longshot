@@ -21,7 +21,8 @@ export interface PlayerSilhouette {
   height: 'short' | 'medium' | 'tall'
   build:  'slim'  | 'average' | 'stocky'
   skin?:  'light' | 'medium'  | 'dark'
-  features: ('beard' | 'headband' | 'afro' | 'bald' | 'goatee' | 'locs')[]
+  number?: number
+  features: ('beard' | 'headband' | 'afro' | 'bald' | 'goatee' | 'locs' | 'tattoo' | 'wristband')[]
 }
 
 /** Atributos de um jogador (cada um 0–100), refletindo o auge da carreira. */
