@@ -277,7 +277,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
   if (phase === 'setup') {
     const chip = (active: boolean) =>
       [
-        'min-h-11 rounded-lg border px-3 py-1.5 text-sm font-semibold transition',
+        'min-h-11 rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition',
         active ? 'border-accent bg-accent-soft text-accent' : 'border-line hover:bg-surface2',
       ].join(' ')
 
@@ -377,7 +377,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
                 type="button"
                 onClick={() => toggleMut(m.key)}
                 className={[
-                  'flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition',
+                  'flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-2 text-left transition',
                   config[m.key] ? 'border-accent bg-accent-soft' : 'border-line hover:bg-surface2',
                 ].join(' ')}
               >
@@ -395,7 +395,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
         <div>
           <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.captain}</h3>
           {captain && perks?.player ? (
-            <div className="rounded-lg border border-accent bg-accent-soft p-2.5">
+            <div className="rounded-lg border-2 border-accent bg-accent-soft p-2.5">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-bold">🧢 {perks.player.name}</span>
                 <span className="font-display text-lg font-bold text-accent">{overall(perks.player)}</span>
@@ -427,7 +427,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
             <button
               type="button"
               onClick={() => setPicking(true)}
-              className="w-full rounded-lg border border-accent bg-accent-soft py-2 text-sm font-bold text-accent transition hover:brightness-95"
+              className="w-full rounded-lg border-2 border-accent bg-accent-soft py-2 text-sm font-bold text-accent transition hover:brightness-95"
             >
               {S.gauntlet.chooseCaptain}
             </button>
@@ -485,7 +485,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
 
   const won = series?.winner === 'player'
   const canRetry = series !== null && !won && !over && build.shields > 0
-  const statCard = 'rounded-lg border border-line p-2 text-center'
+  const statCard = 'rounded-lg border border-line bg-surface p-2 text-center'
   const statLabel = 'text-[10px] font-medium uppercase tracking-wide text-muted'
   const primaryBtn =
     'font-display rounded-lg bg-accent py-3 text-lg font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95 active:brightness-90'
@@ -530,7 +530,11 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
       {/* Faixa do build (escudos + boons ativos) */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">{S.gauntlet.yourRun}</span>
-        {build.shields > 0 && <span className="font-semibold">{S.gauntlet.shields(build.shields)}</span>}
+        {build.shields > 0 && (
+          <span className="rounded bg-accent-soft px-1.5 py-0.5 font-semibold text-accent">
+            {S.gauntlet.shields(build.shields)}
+          </span>
+        )}
         {boonCounts.size === 0 && build.shields === 0 ? (
           <span className="text-[11px] text-muted">{S.gauntlet.noBoons}</span>
         ) : (
@@ -631,7 +635,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
               <button
                 type="button"
                 onClick={chooseRest}
-                className="flex items-center gap-2 rounded-lg border border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
+                className="flex items-center gap-2 rounded-lg border-2 border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
               >
                 <span className="min-w-0">
                   <span className="block text-sm font-bold leading-tight">{S.gauntlet.rest}</span>
@@ -641,7 +645,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
               <button
                 type="button"
                 onClick={chooseBet}
-                className="flex items-center gap-2 rounded-lg border border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
+                className="flex items-center gap-2 rounded-lg border-2 border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
               >
                 <span className="min-w-0">
                   <span className="block text-sm font-bold leading-tight">{S.gauntlet.bet}</span>
@@ -658,7 +662,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
                   key={b.id}
                   type="button"
                   onClick={() => pickBoon(b)}
-                  className="flex items-center gap-2 rounded-lg border border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
+                  className="flex items-center gap-2 rounded-lg border-2 border-line bg-surface p-2.5 text-left shadow-sm transition hover:border-accent hover:bg-accent-soft"
                 >
                   <span className="text-2xl leading-none">{b.emoji}</span>
                   <span className="min-w-0">
@@ -734,7 +738,7 @@ export function GauntletScreen({ onExit }: { onExit: () => void }) {
                 <button
                   type="button"
                   onClick={restart}
-                  className="flex-1 rounded-lg bg-accent py-2.5 font-semibold text-on-accent shadow-sm transition hover:brightness-95"
+                  className="font-display flex-1 rounded-lg bg-accent py-2.5 font-bold uppercase tracking-wide text-on-accent shadow-sm transition hover:brightness-95"
                 >
                   {S.gauntlet.again}
                 </button>
