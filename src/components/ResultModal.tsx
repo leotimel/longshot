@@ -280,23 +280,18 @@ export function ResultModal({
               {/* Recordes */}
               <h4 className={sectionTitle}>{S.result.records}</h4>
               <div className={`grid gap-2 ${hist.perfectRuns > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                <div className={statCard}>
+                <div className={`${statCard} flex flex-col items-center`}>
+                  {hist.recordGame && (() => {
+                    const career = hist.scorers.find(s => s.name === hist.recordGame!.name)
+                    const sp = career ? silProps(career.playerId) : null
+                    return sp ? <PlayerSilhouette size={32} highlighted={false} {...sp} /> : null
+                  })()}
                   <div className="font-display text-lg font-bold tabular-nums">
                     {hist.recordGame ? hist.recordGame.points : '—'}
                   </div>
-                  <div className={`${statLabel} flex items-center justify-center gap-0.5`}>
-                    <span className="truncate">{S.result.recordGame}</span>
-                    {hist.recordGame && (() => {
-                      const career = hist.scorers.find(s => s.name === hist.recordGame!.name)
-                      const sp = career ? silProps(career.playerId) : null
-                      return (
-                        <>
-                          <span>·</span>
-                          {sp && <PlayerSilhouette size={20} highlighted={false} {...sp} />}
-                          <span className="truncate">{shortName(hist.recordGame.name)}</span>
-                        </>
-                      )
-                    })()}
+                  <div className={`truncate ${statLabel}`}>
+                    {S.result.recordGame}
+                    {hist.recordGame ? ` · ${shortName(hist.recordGame.name)}` : ''}
                   </div>
                 </div>
                 <div className={statCard}>

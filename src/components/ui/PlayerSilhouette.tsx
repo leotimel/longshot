@@ -32,26 +32,27 @@ export function PlayerSilhouette({
   const { base: SKIN, dark: SKIN_DARK } = SKIN_PALETTE[silhouette.skin ?? 'medium']
   const HAIR = silhouette.skin === 'light' ? '#8B6914' : '#2C1810'
 
-  // Posição vertical da cabeça — altos ficam mais acima para dar espaço ao torso
-  const headR = size * 0.15
+  const headR  = size * 0.15
   const headCX = size / 2
-  const headCY = size * (height === 'tall' ? 0.17 : height === 'short' ? 0.22 : 0.19)
 
-  const neckW = size * 0.1
-  const neckH = size * (height === 'tall' ? 0.09 : height === 'short' ? 0.04 : 0.06)
-  const neckY = headCY + headR
-  const torsoTop = neckY + neckH
+  // torsoH proporcional à altura: altos têm torso mais longo no busto
+  const torsoH = size * (height === 'tall' ? 0.31 : height === 'short' ? 0.24 : 0.28)
+  const neckH  = size * (height === 'tall' ? 0.09 : height === 'short' ? 0.04 : 0.06)
 
-  // Torso mais longo para baixinhos, mais comprimido para os altos
-  const torsoH = size * (height === 'short' ? 0.38 : height === 'tall' ? 0.27 : 0.32)
+  // Âncora pela base: jersey sempre termina na mesma posição Y
+  const torsoBottom = size * 0.82
+  const torsoTop    = torsoBottom - torsoH
+  const neckY       = torsoTop - neckH
+  const headCY      = neckY - headR
 
   // Ombros mais exagerados para diferenciar builds
   const shoulderW =
     build === 'stocky' ? size * 0.64 : build === 'slim' ? size * 0.30 : size * 0.46
   const torsoX = (size - shoulderW) / 2
 
-  const armW = neckW
-  const armH = torsoH * 0.62
+  const neckW = size * 0.1
+  const armW  = neckW
+  const armH  = torsoH * 0.62
 
   const isAfro = features.includes('afro')
   const isBald = features.includes('bald')
@@ -59,7 +60,7 @@ export function PlayerSilhouette({
   const hasWristband = features.includes('wristband')
 
   // Número real na jersey; fontSize proporcional ao comprimento
-  const jerseyNum = silhouette.number !== undefined ? String(silhouette.number) : '?'
+  const jerseyNum = silhouette.number !== undefined ? String(silhouette.number) : ''
   const numFontSize = jerseyNum.length >= 2 ? torsoH * 0.28 : torsoH * 0.36
 
   return (

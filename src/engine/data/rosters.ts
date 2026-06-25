@@ -71,6 +71,10 @@ const SIL: Record<string, PlayerSilhouette> = {
   Anthony:   { height: 'medium', build: 'average', skin: 'dark',   number:  7, features: [] },
   Olajuwon:  { height: 'tall',   build: 'average', skin: 'dark',   number: 34, features: [] },
   Antetokounmpo: { height: 'tall', build: 'slim',  skin: 'dark',   number: 34, features: [] },
+  // Aliases por sobrenome — silFor() usa lastName; estes nomes não batem com as chaves acima
+  "Abdul-Jabbar": { height: 'tall', build: 'slim',    skin: 'dark', number: 33, features: [] },
+  "Chamberlain":  { height: 'tall', build: 'stocky',  skin: 'dark', number: 13, features: [] },
+  "O'Neal":       { height: 'tall', build: 'stocky',  skin: 'dark', number: 34, features: ['bald'] },
 }
 
 function deriveSilhouette(position: Position, era: Era): PlayerSilhouette {
