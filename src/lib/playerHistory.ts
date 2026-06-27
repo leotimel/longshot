@@ -74,8 +74,8 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
     const team = day.team
       .map((id) => playerById(id))
       .filter((p): p is Player => p !== undefined)
-    if (team.length !== day.team.length) continue // dia com id não resolvido → pula
 
+    // Conta picks para todos os jogadores resolvidos, independente de a simulação ser possível
     daysPlayed += 1
     for (const p of team) {
       const cur =
@@ -84,6 +84,9 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
       cur.picks += 1
       byId.set(p.id, cur)
     }
+
+    // Simulação só roda com time completo (ids parciais dariam resultado errado)
+    if (team.length !== day.team.length) continue
 
     const sixthMan = day.sixthManId ? playerById(day.sixthManId) : undefined
     const bracket = simulateBracket(team, day.date, day.tactics, sixthMan)
@@ -149,7 +152,23 @@ export function summarizeHistory(history: Record<string, DayRecord>): HistorySum
     }
   }
 
-  const careers = [...byId.values()]
+  // Merge por nome: mesmo jogador em times históricos diferentes → entrada única
+  const byName = new Map<string, PlayerCareer>()
+  for (const c of byId.values()) {
+    const existing = byName.get(c.name)
+    if (existing) {
+      existing.picks    += c.picks
+      existing.points   += c.points
+      existing.games    += c.games
+      existing.bestGame  = Math.max(existing.bestGame, c.bestGame)
+      // Aponta para o fragmento com mais pontos (silhueta mais relevante)
+      if (c.points > existing.points - c.points) existing.playerId = c.playerId
+    } else {
+      byName.set(c.name, { ...c })
+    }
+  }
+
+  const careers = [...byName.values()]
   for (const c of careers) c.ppg = c.games > 0 ? c.points / c.games : 0
 
   const scorers = [...careers].sort((a, b) => b.points - a.points)
